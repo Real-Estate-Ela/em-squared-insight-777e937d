@@ -9,6 +9,8 @@
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
   --color-positive: var(--positive);
   --color-risk: var(--risk);
+  --color-positive-soft: var(--positive-soft);
+  --color-risk-soft: var(--risk-soft);
   --color-grid: var(--grid);
 }
 
@@ -97,6 +99,8 @@
   /* #00875A */
   --positive: oklch(0.522 0.126 161.5);
   --risk: oklch(0.578 0.203 30.2);
+  --positive-soft: color-mix(in oklab, var(--positive) 10%, white);
+  --risk-soft: color-mix(in oklab, var(--risk) 10%, white);
   --grid: oklch(0.94 0.003 264.5);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -176,4 +180,22 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-muted-foreground);
+}
+
+@utility status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@utility status-dot {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  background-color: currentColor;
 }

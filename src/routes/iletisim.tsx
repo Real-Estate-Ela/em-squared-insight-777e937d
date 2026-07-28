@@ -21,10 +21,10 @@ export const Route = createFileRoute("/iletisim")({
 });
 
 const notices = [
-  { no: "01", t: "sahibinden.com entegrasyonu", d: "Aktif — ilan linki desteği" },
-  { no: "02", t: "hepsiemlak entegrasyonu", d: "Aktif — fiyat serisi eşleşmesi" },
-  { no: "03", t: "emlakjet entegrasyonu", d: "Aktif — mahalle medyanı" },
-  { no: "04", t: "TKGM parsel verisi", d: "Yakında — arsa analizi genişletmesi" },
+  { no: "01", t: "sahibinden.com entegrasyonu", d: "İlan linki desteği", s: "Aktif", tone: "text-positive", soft: "bg-positive-soft" },
+  { no: "02", t: "hepsiemlak entegrasyonu", d: "Fiyat serisi eşleşmesi", s: "Aktif", tone: "text-positive", soft: "bg-positive-soft" },
+  { no: "03", t: "emlakjet entegrasyonu", d: "Mahalle medyanı", s: "Aktif", tone: "text-positive", soft: "bg-positive-soft" },
+  { no: "04", t: "TKGM parsel verisi", d: "Arsa analizi genişletmesi", s: "Kesintili", tone: "text-risk", soft: "bg-risk-soft" },
 ];
 
 function Contact() {
@@ -84,7 +84,8 @@ function Contact() {
               Gönder
             </button>
             {sent && (
-              <p className="text-sm text-positive">
+              <p className="status-pill bg-positive-soft text-positive">
+                <span className="status-dot" />
                 Mesajınız alındı. 1 iş günü içinde dönüş yapılır.
               </p>
             )}
@@ -96,13 +97,16 @@ function Contact() {
               {notices.map((n) => (
                 <div
                   key={n.no}
-                  className="flex items-baseline justify-between gap-6 border-t border-border py-4 last:border-b"
+                  className="flex items-center justify-between gap-6 border-t border-border py-4 last:border-b"
                 >
                   <div className="min-w-0">
                     <p className="text-sm">{n.t}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{n.d}</p>
                   </div>
-                  <span className="label-mono shrink-0 text-primary">{n.no}</span>
+                  <span className={`status-pill shrink-0 ${n.soft} ${n.tone}`}>
+                    <span className="status-dot" />
+                    {n.s}
+                  </span>
                 </div>
               ))}
             </div>
