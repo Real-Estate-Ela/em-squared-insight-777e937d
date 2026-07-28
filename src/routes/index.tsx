@@ -40,9 +40,9 @@ const listings = [
 ];
 
 const nearby = [
-  { img: prop1, type: "Konut", title: "3+1 Daire — Ataşehir", dist: "480 m", roi: "%38", tone: "text-positive" },
-  { img: prop2, type: "Arsa", title: "İmarlı Parsel — Çekmeköy", dist: "2,1 km", roi: "%52", tone: "text-positive" },
-  { img: prop3, type: "Dükkan", title: "Cadde Üstü Dükkan — Kadıköy", dist: "1,3 km", roi: "%17", tone: "text-risk" },
+  { img: prop1, type: "Konut", title: "3+1 Daire — Ataşehir", dist: "480 m", roi: "%38", status: "Olumlu", tone: "text-positive", soft: "bg-positive-soft" },
+  { img: prop2, type: "Arsa", title: "İmarlı Parsel — Çekmeköy", dist: "2,1 km", roi: "%52", status: "Olumlu", tone: "text-positive", soft: "bg-positive-soft" },
+  { img: prop3, type: "Dükkan", title: "Cadde Üstü Dükkan — Kadıköy", dist: "1,3 km", roi: "%17", status: "Riskli", tone: "text-risk", soft: "bg-risk-soft" },
 ];
 
 function Home() {
@@ -108,9 +108,12 @@ function Home() {
       <section className="border-b border-border">
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <p className="label-mono">02 — Örnek Karar Çıktısı</p>
-          <div className="mt-6 grid gap-10 border border-border p-6 md:grid-cols-2 md:p-10">
+          <div className="mt-6 grid gap-10 border border-border border-l-2 border-l-positive p-6 md:grid-cols-2 md:p-10">
             <div>
-              <p className="label-mono">Karar</p>
+              <span className="status-pill bg-positive-soft text-positive">
+                <span className="status-dot" />
+                Karar — Olumlu
+              </span>
               <h2 className="mt-2 text-3xl text-positive md:text-4xl">
                 AL — 5 yıl tut
               </h2>
@@ -167,7 +170,12 @@ function Home() {
                     </td>
                     <td className="py-4 pr-4 text-muted-foreground">{l.m2}</td>
                     <td className="py-4 pr-4">{l.price}</td>
-                    <td className={`py-4 ${l.tone}`}>{l.delta}</td>
+                    <td className={`py-4 ${l.tone}`}>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="status-dot" />
+                        {l.delta}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -199,9 +207,15 @@ function Home() {
                     {n.type} · {n.dist}
                   </p>
                   <h3 className="mt-2 text-lg">{n.title}</h3>
-                  <div className="mt-4 flex items-baseline justify-between border-t border-border pt-3 text-sm">
-                    <span className="text-muted-foreground">5 yıl roi</span>
-                    <span className={n.tone}>{n.roi}</span>
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3 text-sm">
+                    <span className={`status-pill ${n.soft} ${n.tone}`}>
+                      <span className="status-dot" />
+                      {n.status}
+                    </span>
+                    <span className="flex items-baseline gap-2">
+                      <span className="label-mono">5 yıl roi</span>
+                      <span className={n.tone}>{n.roi}</span>
+                    </span>
                   </div>
                 </div>
               </article>
