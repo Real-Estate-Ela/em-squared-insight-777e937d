@@ -9,12 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
+import { Route as GorsellerRouteImport } from './routes/gorseller'
 import { Route as IndexRouteImport } from './routes/index'
 
+const IletisimRoute = IletisimRouteImport.update({
+  id: '/iletisim',
+  path: '/iletisim',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HakkimizdaRoute = HakkimizdaRouteImport.update({
   id: '/hakkimizda',
   path: '/hakkimizda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GorsellerRoute = GorsellerRouteImport.update({
+  id: '/gorseller',
+  path: '/gorseller',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,37 +37,59 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
+  '/iletisim': typeof IletisimRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
+  '/iletisim': typeof IletisimRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
+  '/iletisim': typeof IletisimRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/hakkimizda'
+  fullPaths: '/' | '/gorseller' | '/hakkimizda' | '/iletisim'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/hakkimizda'
-  id: '__root__' | '/' | '/hakkimizda'
+  to: '/' | '/gorseller' | '/hakkimizda' | '/iletisim'
+  id: '__root__' | '/' | '/gorseller' | '/hakkimizda' | '/iletisim'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GorsellerRoute: typeof GorsellerRoute
   HakkimizdaRoute: typeof HakkimizdaRoute
+  IletisimRoute: typeof IletisimRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/iletisim': {
+      id: '/iletisim'
+      path: '/iletisim'
+      fullPath: '/iletisim'
+      preLoaderRoute: typeof IletisimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hakkimizda': {
       id: '/hakkimizda'
       path: '/hakkimizda'
       fullPath: '/hakkimizda'
       preLoaderRoute: typeof HakkimizdaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gorseller': {
+      id: '/gorseller'
+      path: '/gorseller'
+      fullPath: '/gorseller'
+      preLoaderRoute: typeof GorsellerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,7 +104,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GorsellerRoute: GorsellerRoute,
   HakkimizdaRoute: HakkimizdaRoute,
+  IletisimRoute: IletisimRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
