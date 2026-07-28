@@ -24,17 +24,17 @@ export const Route = createFileRoute("/gorseller")({
 });
 
 const items = [
-  { img: prop1, type: "Konut", title: "3+1 Daire — Ataşehir", roi: "%38", tone: "text-positive", wide: true },
-  { img: prop2, type: "Arsa", title: "İmarlı Parsel — Çekmeköy", roi: "%52", tone: "text-positive", wide: false },
-  { img: prop3, type: "Dükkan", title: "Cadde Üstü Dükkan — Kadıköy", roi: "%17", tone: "text-risk", wide: false },
-  { img: mapView, type: "Harita", title: "Çevre yoğunluk haritası — Anadolu Yakası", roi: "—", tone: "", wide: true },
+  { img: prop1, type: "Konut", title: "3+1 Daire — Ataşehir", roi: "%38", status: "Olumlu", tone: "text-positive", soft: "bg-positive-soft", wide: true },
+  { img: prop2, type: "Arsa", title: "İmarlı Parsel — Çekmeköy", roi: "%52", status: "Olumlu", tone: "text-positive", soft: "bg-positive-soft", wide: false },
+  { img: prop3, type: "Dükkan", title: "Cadde Üstü Dükkan — Kadıköy", roi: "%17", status: "Riskli", tone: "text-risk", soft: "bg-risk-soft", wide: false },
+  { img: mapView, type: "Harita", title: "Çevre yoğunluk haritası — Anadolu Yakası", roi: "—", status: "Nötr", tone: "text-muted-foreground", soft: "bg-muted", wide: true },
 ];
 
 const bars = [
-  { k: "kira getirisi", v: 64 },
-  { k: "bölge fiyat artışı", v: 38 },
-  { k: "5 yıl roi", v: 41 },
-  { k: "arz yoğunluğu", v: 22 },
+  { k: "kira getirisi", v: 64, tone: "positive" },
+  { k: "bölge fiyat artışı", v: 38, tone: "positive" },
+  { k: "5 yıl roi", v: 41, tone: "positive" },
+  { k: "arz yoğunluğu", v: 22, tone: "risk" },
 ];
 
 function Visuals() {
@@ -65,12 +65,18 @@ function Visuals() {
                   height={768}
                   className={`w-full object-cover ${it.wide ? "aspect-[21/9]" : "aspect-[4/3]"}`}
                 />
-                <figcaption className="flex items-baseline justify-between gap-4 p-5">
+                <figcaption className="flex items-center justify-between gap-4 p-5">
                   <span className="min-w-0">
                     <span className="label-mono block">{it.type}</span>
                     <span className="mt-1 block text-sm">{it.title}</span>
                   </span>
-                  <span className={`shrink-0 text-sm ${it.tone}`}>{it.roi}</span>
+                  <span className="flex shrink-0 items-center gap-3">
+                    <span className={`status-pill ${it.soft} ${it.tone}`}>
+                      <span className="status-dot" />
+                      {it.status}
+                    </span>
+                    <span className={`text-sm ${it.tone}`}>{it.roi}</span>
+                  </span>
                 </figcaption>
               </figure>
             ))}
@@ -87,10 +93,15 @@ function Visuals() {
               <div key={b.k} className="border-t border-border py-5 last:border-b">
                 <div className="flex items-baseline justify-between text-sm">
                   <span className="text-muted-foreground">{b.k}</span>
-                  <span>%{String(b.v).replace(".", ",")}</span>
+                  <span className={b.tone === "risk" ? "text-risk" : "text-positive"}>
+                    %{String(b.v).replace(".", ",")}
+                  </span>
                 </div>
                 <div className="mt-3 h-1 w-full bg-grid">
-                  <div className="h-1 bg-primary" style={{ width: `${b.v}%` }} />
+                  <div
+                    className={`h-1 ${b.tone === "risk" ? "bg-risk" : "bg-positive"}`}
+                    style={{ width: `${b.v}%` }}
+                  />
                 </div>
               </div>
             ))}
