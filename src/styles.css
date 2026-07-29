@@ -232,6 +232,62 @@
   background-color: currentColor;
 }
 
+/* ---- Mouse-tracking card ---- */
+
+.mouse-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+.mouse-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    600px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    color-mix(in oklab, var(--glow-color, var(--primary)) 100%, transparent),
+    transparent 50%
+  );
+  opacity: var(--glow-opacity, 0);
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.mouse-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Glint shimmer on mouse-card hover */
+.mouse-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(1 0 0 / 4%),
+    transparent
+  );
+  transform: skewX(-15deg);
+  transition: left 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: 3;
+  border-radius: inherit;
+}
+
+.mouse-card:hover::after {
+  left: 120%;
+}
+
 /* ---- Motion & interaction ---- */
 
 @keyframes em-reveal {

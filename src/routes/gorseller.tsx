@@ -7,6 +7,7 @@ import prop3 from "@/assets/property-3.jpg";
 import mapView from "@/assets/map-view.jpg";
 import { Reveal } from "@/components/Reveal";
 import { Bars, TrendChart } from "@/components/Charts";
+import { MouseCard } from "@/components/MouseCard";
 
 export const Route = createFileRoute("/gorseller")({
   head: () => ({
@@ -161,7 +162,12 @@ function Visuals() {
                 delay={i * 80}
                 className={it.wide ? "md:col-span-2" : ""}
               >
-                <figure className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <MouseCard
+                  className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                  glowColor={it.positive ? "var(--positive)" : "var(--risk)"}
+                  tiltMax={5}
+                  glowOpacity={0.07}
+                >
                   <div className="relative overflow-hidden">
                     <img
                       src={it.img}
@@ -233,7 +239,7 @@ function Visuals() {
                       </div>
                     </div>
                   </div>
-                </figure>
+                </MouseCard>
               </Reveal>
             ))}
           </div>
@@ -254,17 +260,17 @@ function Visuals() {
               Ataşehir — mahalle kesiti
             </h2>
             <div className="mt-8 grid gap-6 md:grid-cols-2">
-              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <MouseCard className="rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--cyan)" tiltMax={4}>
                 <Bars data={bars} />
-              </div>
-              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              </MouseCard>
+              <MouseCard className="rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--positive)" tiltMax={4}>
                 <TrendChart
                   points={[21, 24, 23, 29, 34, 33, 39, 44, 47, 52, 55, 61]}
                   tone="positive"
                   label="m² fiyat trendi — 24 ay"
                   value="+%38"
                 />
-              </div>
+              </MouseCard>
             </div>
           </Reveal>
         </div>

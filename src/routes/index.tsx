@@ -9,6 +9,7 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { IstanbulSkyline } from "@/components/IstanbulSkyline";
+import { MouseCard, CountUp } from "@/components/MouseCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -263,13 +264,13 @@ function Home() {
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal>
             <p className="label-mono">Karar Raporu</p>
-            <div
+            <MouseCard
               className="mt-6 grid gap-10 overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm md:grid-cols-2 md:p-10"
-              style={{
-                borderLeft: "4px solid var(--positive)",
-              }}
+              glowColor="var(--positive)"
+              glowOpacity={0.06}
+              tiltMax={4}
             >
-              <div>
+              <div style={{ borderLeft: "4px solid var(--positive)", paddingLeft: "1.5rem" }}>
                 <span className="status-pill bg-positive/10 text-positive">
                   <span className="status-dot" />
                   Olumlu Karar
@@ -301,20 +302,20 @@ function Home() {
                   </div>
                 ))}
               </dl>
-            </div>
+            </MouseCard>
           </Reveal>
 
           <div className="mt-12 grid gap-10 md:grid-cols-3">
             <Reveal className="md:col-span-2">
-              <div className="rounded-xl border border-border bg-card p-6">
+              <MouseCard className="rounded-xl border border-border bg-card p-6" glowColor="var(--positive)" tiltMax={3}>
                 <TrendChart
                   points={trend}
                   tone="positive"
                   label="m² fiyat trendi — 24 ay"
                   value="+%38"
                 />
-              </div>
-              <div className="mt-4 rounded-xl border border-border bg-card p-6">
+              </MouseCard>
+              <MouseCard className="mt-4 rounded-xl border border-border bg-card p-6" glowColor="var(--risk)" tiltMax={3}>
                 <TrendChart
                   points={riskTrend}
                   tone="risk"
@@ -322,15 +323,15 @@ function Home() {
                   label="Ortalama satış süresi (gün)"
                   value="−26 gün"
                 />
-              </div>
+              </MouseCard>
             </Reveal>
             <Reveal delay={120} className="grid grid-cols-2 gap-6 self-center md:grid-cols-1">
-              <div className="flex items-center justify-center rounded-xl border border-border bg-card p-6">
+              <MouseCard className="flex items-center justify-center rounded-xl border border-border bg-card p-6" glowColor="var(--positive)" tiltMax={8}>
                 <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
-              </div>
-              <div className="flex items-center justify-center rounded-xl border border-border bg-card p-6">
+              </MouseCard>
+              <MouseCard className="flex items-center justify-center rounded-xl border border-border bg-card p-6" glowColor="var(--risk)" tiltMax={8}>
                 <Gauge value={22} tone="risk" caption="Risk Skoru" />
-              </div>
+              </MouseCard>
             </Reveal>
           </div>
         </div>
@@ -346,7 +347,7 @@ function Home() {
           <Reveal>
             <p className="label-mono">Platform Karşılaştırması</p>
             <h2 className="mt-3 text-2xl md:text-3xl">Aynı mülk, farklı platformlar</h2>
-            <div className="mt-8 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            <MouseCard className="mt-8 overflow-hidden rounded-xl border border-border bg-card shadow-sm" glowColor="var(--amber)" tiltMax={2}>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px] border-collapse text-sm">
                   <thead>
@@ -384,7 +385,7 @@ function Home() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </MouseCard>
           </Reveal>
         </div>
       </section>
@@ -412,9 +413,9 @@ function Home() {
           <Reveal>
             <p className="label-mono">Mahalle Kesiti</p>
             <h2 className="mt-3 text-2xl md:text-3xl">Ataşehir — metrik dağılımı</h2>
-            <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+            <MouseCard className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--cyan)" tiltMax={3}>
               <Bars data={bars} />
-            </div>
+            </MouseCard>
           </Reveal>
         </div>
       </section>
@@ -433,7 +434,12 @@ function Home() {
               { icon: FileCheck, title: "Karar raporunu al", desc: "Al/satma/bekle kararı, karşılaştırma tablosu ve detaylı rapor oluşturulur.", color: "var(--positive)", step: "3" },
             ].map((s, i) => (
               <Reveal key={s.step} delay={i * 100}>
-                <div className="relative flex flex-col items-center rounded-xl border border-border bg-card p-8 text-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <MouseCard
+                  className="relative flex flex-col items-center rounded-xl border border-border bg-card p-8 text-center shadow-sm"
+                  glowColor={s.color}
+                  tiltMax={10}
+                  glowOpacity={0.1}
+                >
                   <span
                     className="absolute -top-4 inline-grid h-8 w-8 place-items-center rounded-full text-sm font-bold text-white"
                     style={{ backgroundColor: s.color }}
@@ -448,7 +454,7 @@ function Home() {
                   </div>
                   <h3 className="mt-5 text-base font-semibold">{s.title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
-                </div>
+                </MouseCard>
               </Reveal>
             ))}
           </div>
