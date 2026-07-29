@@ -12,6 +12,12 @@
   --color-positive-soft: var(--positive-soft);
   --color-risk-soft: var(--risk-soft);
   --color-grid: var(--grid);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-cyan: var(--cyan);
+  --color-cyan-soft: var(--cyan-soft);
+  --color-purple: var(--purple);
+  --color-purple-soft: var(--purple-soft);
 }
 
 /*
@@ -102,6 +108,13 @@
   --positive-soft: color-mix(in oklab, var(--positive) 10%, white);
   --risk-soft: color-mix(in oklab, var(--risk) 10%, white);
   --grid: oklch(0.94 0.003 264.5);
+  /* Auxiliary palette */
+  --amber: oklch(0.75 0.18 75);
+  --amber-soft: color-mix(in oklab, var(--amber) 10%, white);
+  --cyan: oklch(0.72 0.12 200);
+  --cyan-soft: color-mix(in oklab, var(--cyan) 10%, white);
+  --purple: oklch(0.55 0.2 300);
+  --purple-soft: color-mix(in oklab, var(--purple) 10%, white);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -137,6 +150,12 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
+  --amber: oklch(0.8 0.16 75);
+  --amber-soft: color-mix(in oklab, var(--amber) 12%, oklch(0.2 0.04 264));
+  --cyan: oklch(0.78 0.11 200);
+  --cyan-soft: color-mix(in oklab, var(--cyan) 12%, oklch(0.2 0.04 264));
+  --purple: oklch(0.68 0.18 300);
+  --purple-soft: color-mix(in oklab, var(--purple) 12%, oklch(0.2 0.04 264));
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -343,6 +362,60 @@
   pointer-events: none;
 }
 
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Live data strip pulse */
+@keyframes em-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes em-number-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--positive);
+  animation: em-pulse 2s ease-in-out infinite;
+}
+
+@utility number-in {
+  animation: em-number-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Chart tooltip */
+@utility chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  box-shadow: 3px 3px 0 0 var(--color-foreground);
+  white-space: nowrap;
+  z-index: 20;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .reveal-in {
@@ -350,7 +423,9 @@
     animation: none !important;
   }
   .marquee-track,
-  .scanline::after {
+  .scanline::after,
+  .live-dot,
+  .number-in {
     animation: none !important;
   }
 }
