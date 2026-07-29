@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, Loader2, TrendingUp, Shield, MapPin, BarChart3 } from "lucide-react";
+import { ArrowUpRight, Check, Loader2, TrendingUp, Shield, MapPin, BarChart3, Link2, Cpu, FileCheck, MessageSquareQuote } from "lucide-react";
 import prop1 from "@/assets/property-1.jpg";
 import prop2 from "@/assets/property-2.jpg";
 import prop3 from "@/assets/property-3.jpg";
@@ -8,7 +8,8 @@ import mapView from "@/assets/map-view.jpg";
 import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
-import { LogoWatermark } from "@/components/Logo";
+import { IstanbulSkyline } from "@/components/IstanbulSkyline";
+import { Testimonials } from "@/components/Testimonials";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -119,7 +120,7 @@ function Home() {
           background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
         }}
       >
-        <LogoWatermark className="absolute -right-16 -top-16 hidden h-80 w-80 text-foreground opacity-[0.03] md:block" />
+        <IstanbulSkyline className="absolute bottom-0 left-0 right-0 hidden h-auto w-full text-foreground opacity-[0.06] md:block" />
         <div className="relative mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
           <Reveal>
             <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-3 py-1.5 text-sm font-medium text-positive">
@@ -415,7 +416,121 @@ function Home() {
             <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
               <Bars data={bars} />
             </div>
-            <div className="mt-10 flex flex-wrap gap-3">
+          </Reveal>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section>
+        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
+          <Reveal>
+            <p className="label-mono text-center">Nasıl Çalışır?</p>
+            <h2 className="mt-3 text-center text-2xl md:text-3xl">3 adımda yatırım kararı</h2>
+          </Reveal>
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
+            {[
+              { icon: Link2, title: "İlan linkini yapıştır", desc: "Sahibinden, Hepsiemlak veya Emlakjet'ten herhangi bir ilan linkini yapıştır.", color: "var(--primary)", step: "1" },
+              { icon: Cpu, title: "AI analiz etsin", desc: "Fiyat, kira getirisi, amortisman, çevre analizi ve risk skoru saniyeler içinde hesaplanır.", color: "var(--cyan)", step: "2" },
+              { icon: FileCheck, title: "Karar raporunu al", desc: "Al/satma/bekle kararı, karşılaştırma tablosu ve detaylı rapor oluşturulur.", color: "var(--positive)", step: "3" },
+            ].map((s, i) => (
+              <Reveal key={s.step} delay={i * 100}>
+                <div className="relative flex flex-col items-center rounded-xl border border-border bg-card p-8 text-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                  <span
+                    className="absolute -top-4 inline-grid h-8 w-8 place-items-center rounded-full text-sm font-bold text-white"
+                    style={{ backgroundColor: s.color }}
+                  >
+                    {s.step}
+                  </span>
+                  <div
+                    className="mt-2 flex h-14 w-14 items-center justify-center rounded-2xl"
+                    style={{ backgroundColor: `color-mix(in oklab, ${s.color} 12%, transparent)` }}
+                  >
+                    <s.icon className="h-6 w-6" style={{ color: s.color }} />
+                  </div>
+                  <h3 className="mt-5 text-base font-semibold">{s.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          {/* Connecting arrows (desktop only) */}
+          <div className="mt-4 hidden items-center justify-center gap-2 text-muted-foreground md:flex">
+            <span className="h-px w-20 bg-border" />
+            <span className="text-xs">Link</span>
+            <span className="h-px w-16 bg-border" />
+            <span className="text-lg">→</span>
+            <span className="h-px w-16 bg-border" />
+            <span className="text-xs">Analiz</span>
+            <span className="h-px w-16 bg-border" />
+            <span className="text-lg">→</span>
+            <span className="h-px w-16 bg-border" />
+            <span className="text-xs">Karar</span>
+            <span className="h-px w-20 bg-border" />
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section
+        style={{
+          background: "linear-gradient(180deg, var(--surface-warm) 0%, var(--background) 100%)",
+        }}
+      >
+        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
+          <Reveal>
+            <div className="flex items-center justify-center gap-2">
+              <MessageSquareQuote className="h-5 w-5 text-primary" />
+              <p className="label-mono">Kullanıcı Yorumları</p>
+            </div>
+            <h2 className="mt-3 text-center text-2xl md:text-3xl">
+              Yatırımcılar ne diyor?
+            </h2>
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="mt-10">
+              <Testimonials />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Trust badges */}
+      <section className="border-y border-border bg-card/50">
+        <div className="mx-auto max-w-6xl px-5 py-10 md:px-8">
+          <Reveal>
+            <p className="text-center text-sm text-muted-foreground">
+              Verilerimiz resmi ve güvenilir kaynaklardan beslenmektedir
+            </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              {[
+                { name: "TCMB", desc: "Merkez Bankası" },
+                { name: "TÜİK", desc: "İstatistik Kurumu" },
+                { name: "TKGM", desc: "Tapu Kadastro" },
+                { name: "SPK", desc: "Sermaye Piyasası" },
+                { name: "BDDK", desc: "Bankacılık Düzenleme" },
+              ].map((b) => (
+                <span
+                  key={b.name}
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm shadow-sm transition-colors hover:bg-muted"
+                  title={b.desc}
+                >
+                  <Shield className="h-3.5 w-3.5 text-positive" />
+                  <span className="font-semibold">{b.name}</span>
+                  <span className="hidden text-xs text-muted-foreground sm:inline">
+                    {b.desc}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section>
+        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
+          <Reveal>
+            <div className="flex flex-wrap items-center justify-center gap-4">
               <button type="button" className="btn-tactile btn-tactile-primary">
                 İlan analiz et
               </button>

@@ -6,7 +6,7 @@ import prop3 from "@/assets/property-3.jpg";
 import mapView from "@/assets/map-view.jpg";
 import { Reveal } from "@/components/Reveal";
 import { Bars, TrendChart } from "@/components/Charts";
-import { LogoWatermark } from "@/components/Logo";
+
 
 export const Route = createFileRoute("/gorseller")({
   head: () => ({
@@ -50,7 +50,6 @@ function Visuals() {
   return (
     <div>
       <section className="relative overflow-hidden border-b border-border">
-        <LogoWatermark className="absolute -right-12 top-0 hidden h-72 w-72 text-foreground opacity-[0.05] md:block" />
         <div className="relative mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
           <Reveal>
             <p className="label-mono flex items-center gap-3">
