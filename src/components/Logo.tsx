@@ -65,13 +65,3 @@ export function LogoWatermark({ className = "" }: { className?: string }) {
     </svg>
   );
 }
-
-function LegacyWordmark({ className = "" }: { className?: string }) {
-  return (
-    <span
-      className={`font-display font-bold tracking-[-0.045em] text-foreground ${className}`}
-    >
-      emlakmetric
-    </span>
-  );
-}

@@ -8,7 +8,7 @@ import mapView from "@/assets/map-view.jpg";
 import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
-import { EmSquareMark } from "@/components/Logo";
+import { LogoWatermark } from "@/components/Logo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -106,7 +106,7 @@ function Home() {
     <div>
       {/* Hero */}
       <section id="analiz" className="relative overflow-hidden border-b border-border">
-        <EmSquareMark className="pointer-events-none absolute -right-10 -top-10 hidden h-72 w-72 text-[6rem] opacity-[0.06] md:block" />
+        <LogoWatermark className="absolute -right-16 -top-16 hidden h-80 w-80 text-foreground opacity-[0.05] md:block" />
         <div className="relative mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
           <Reveal>
             <p className="label-mono flex items-center gap-3">
