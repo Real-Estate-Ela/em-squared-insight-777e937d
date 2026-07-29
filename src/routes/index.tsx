@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, Loader2 } from "lucide-react";
+import { ArrowUpRight, Check, Loader2, TrendingUp, Shield, MapPin, BarChart3 } from "lucide-react";
 import prop1 from "@/assets/property-1.jpg";
 import prop2 from "@/assets/property-2.jpg";
 import prop3 from "@/assets/property-3.jpg";
@@ -17,9 +17,9 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "İlan linkini yapıştır; kira getirisi, amortisman, 5 yıl ROI ve çevre analizini saniyeler içinde gör. Konut, arsa ve ticari mülk için veri odaklı analiz terminali.",
+          "İlan linkini yapıştır; kira getirisi, amortisman, 5 yıl ROI ve çevre analizini saniyeler içinde gör. Konut, arsa ve ticari mülk için veri odaklı analiz.",
       },
-      { property: "og:title", content: "emlakmetric — Gayrimenkul analiz terminali" },
+      { property: "og:title", content: "emlakmetric — Gayrimenkul analiz platformu" },
       {
         property: "og:description",
         content:
@@ -33,10 +33,17 @@ export const Route = createFileRoute("/")({
 const tabs = ["Konut", "Arsa", "Dükkan/Ticari"] as const;
 
 const metrics = [
-  { label: "kira getirisi", value: "%6,4", tone: "text-positive" },
-  { label: "amortisman", value: "15,6 yıl", tone: "" },
-  { label: "5 yıl roi", value: "%41", tone: "text-positive" },
-  { label: "arz yoğunluğu riski", value: "yüksek", tone: "text-risk" },
+  { label: "Kira getirisi", value: "%6,4", tone: "text-positive" },
+  { label: "Amortisman", value: "15,6 yıl", tone: "" },
+  { label: "5 yıl ROI", value: "%41", tone: "text-positive" },
+  { label: "Arz yoğunluğu riski", value: "Yüksek", tone: "text-risk" },
+];
+
+const highlights = [
+  { icon: TrendingUp, label: "ROI Analizi", desc: "5 yıllık getiri tahmini", color: "var(--positive)" },
+  { icon: MapPin, label: "Çevre Analizi", desc: "Mahalle bazlı veri", color: "var(--cyan)" },
+  { icon: Shield, label: "Risk Skoru", desc: "Arz ve talep dengesi", color: "var(--amber)" },
+  { icon: BarChart3, label: "Karşılaştırma", desc: "3 platformdan fiyat", color: "var(--purple)" },
 ];
 
 const listings = [
@@ -53,20 +60,20 @@ const slides: Slide[] = [
 ];
 
 const steps = [
-  "ilan verisi çekiliyor",
-  "mahalle medyanı hesaplanıyor",
-  "kira çarpanı & amortisman",
-  "çevre analizi ve karar",
+  "İlan verisi çekiliyor",
+  "Mahalle medyanı hesaplanıyor",
+  "Kira çarpanı & amortisman",
+  "Çevre analizi ve karar",
 ];
 
 const trend = [18, 22, 21, 27, 31, 29, 36, 42, 40, 48, 54, 61];
 const riskTrend = [62, 58, 60, 51, 47, 49, 42, 38, 35, 33, 30, 26];
 
 const bars = [
-  { k: "kira getirisi", v: 64, tone: "positive" as const },
-  { k: "bölge fiyat artışı", v: 38, tone: "cyan" as const },
-  { k: "likidite (satış hızı)", v: 55, tone: "amber" as const },
-  { k: "arz yoğunluğu", v: 22, tone: "risk" as const },
+  { k: "Kira getirisi", v: 64, tone: "positive" as const },
+  { k: "Bölge fiyat artışı", v: 38, tone: "cyan" as const },
+  { k: "Likidite (satış hızı)", v: 55, tone: "amber" as const },
+  { k: "Arz yoğunluğu", v: 22, tone: "risk" as const },
 ];
 
 function Home() {
@@ -105,18 +112,30 @@ function Home() {
   return (
     <div>
       {/* Hero */}
-      <section id="analiz" className="relative overflow-hidden border-b border-border">
-        <LogoWatermark className="absolute -right-16 -top-16 hidden h-80 w-80 text-foreground opacity-[0.05] md:block" />
+      <section
+        id="analiz"
+        className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+        }}
+      >
+        <LogoWatermark className="absolute -right-16 -top-16 hidden h-80 w-80 text-foreground opacity-[0.03] md:block" />
         <div className="relative mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
           <Reveal>
-            <p className="label-mono flex items-center gap-3">
-              <span className="status-dot text-positive" />
-              01 — Analiz Terminali
-            </p>
-            <h1 className="mt-5 max-w-3xl text-4xl leading-[1.05] md:text-6xl">
-              İlan linkini yapıştır. Getiri, çevre analizi ve yatırım kararı{" "}
-              <span className="text-positive">20 saniyede</span>.
+            <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-3 py-1.5 text-sm font-medium text-positive">
+              <span className="live-dot" style={{ width: 6, height: 6 }} />
+              Analiz platformu aktif
+            </div>
+            <h1 className="mt-6 max-w-3xl text-4xl leading-[1.08] md:text-6xl">
+              İlan linkini yapıştır,{" "}
+              <span className="bg-gradient-to-r from-primary to-cyan bg-clip-text text-transparent">
+                yatırım kararını
+              </span>{" "}
+              20 saniyede al.
             </h1>
+            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
+              Konut, arsa ve ticari mülk için getiri analizi, çevre değerlendirmesi ve risk skoru.
+            </p>
           </Reveal>
 
           <Reveal delay={90}>
@@ -126,10 +145,10 @@ function Home() {
                   key={t}
                   type="button"
                   onClick={() => setTab(t)}
-                  className={`border px-4 py-2 text-xs uppercase tracking-[0.14em] transition-all duration-200 ${
+                  className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
                     tab === t
-                      ? "border-primary bg-primary text-primary-foreground shadow-[3px_3px_0_0_var(--foreground)]"
-                      : "border-border text-muted-foreground hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                      : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   {t}
@@ -142,10 +161,10 @@ function Home() {
                 e.preventDefault();
                 runAnalysis();
               }}
-              className="mt-5 grid grid-cols-1 border border-foreground transition-shadow duration-200 focus-within:shadow-[5px_5px_0_0_var(--positive)] sm:grid-cols-[minmax(0,1fr)_auto]"
+              className="mt-5 grid grid-cols-1 overflow-hidden rounded-xl border border-border bg-card shadow-lg shadow-black/5 transition-shadow duration-200 focus-within:shadow-xl focus-within:shadow-primary/10 sm:grid-cols-[minmax(0,1fr)_auto]"
             >
-              <div className="flex min-w-0 items-center gap-3 px-4 py-4">
-                <span className="text-positive">&gt;</span>
+              <div className="flex min-w-0 items-center gap-3 px-5 py-4">
+                <MapPin className="h-4 w-4 shrink-0 text-primary" />
                 <input
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -154,32 +173,35 @@ function Home() {
                   className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>
-              <button type="submit" className="btn-tactile btn-tactile-primary rounded-none">
+              <button
+                type="submit"
+                className="m-1.5 flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
+              >
                 {done ? "Analiz Et" : <Loader2 className="h-4 w-4 animate-spin" />}
                 {done ? null : "Analiz ediliyor"}
               </button>
             </form>
 
             {/* Analysis progress */}
-            <div className="mt-5 border border-border">
+            <div className="mt-5 overflow-hidden rounded-xl border border-border bg-card">
               {steps.map((s, i) => {
                 const active = !done && step === i;
                 const complete = done || step > i;
                 return (
                   <div
                     key={s}
-                    className={`flex items-center justify-between gap-4 border-b border-border px-4 py-3 text-xs last:border-b-0 ${
-                      active ? "scanline bg-positive-soft" : ""
+                    className={`flex items-center justify-between gap-4 border-b border-border px-5 py-3.5 text-sm last:border-b-0 transition-colors ${
+                      active ? "bg-positive/5" : ""
                     }`}
                   >
                     <span className="flex items-center gap-3">
                       <span
-                        className={`inline-grid h-4 w-4 place-items-center border ${
+                        className={`inline-grid h-5 w-5 place-items-center rounded-full transition-colors ${
                           complete
-                            ? "border-positive bg-positive text-background"
+                            ? "bg-positive text-white"
                             : active
-                              ? "border-primary text-primary"
-                              : "border-border text-muted-foreground"
+                              ? "border-2 border-primary text-primary"
+                              : "border border-border text-muted-foreground"
                         }`}
                       >
                         {complete ? <Check className="h-3 w-3" /> : null}
@@ -188,38 +210,48 @@ function Home() {
                         {s}
                       </span>
                     </span>
-                    <span className="label-mono">
-                      {complete ? "tamam" : active ? "çalışıyor" : "bekliyor"}
+                    <span
+                      className={`text-xs font-medium ${
+                        complete
+                          ? "text-positive"
+                          : active
+                            ? "text-primary"
+                            : "text-muted-foreground"
+                      }`}
+                    >
+                      {complete ? "Tamam" : active ? "Çalışıyor..." : "Bekliyor"}
                     </span>
                   </div>
                 );
               })}
             </div>
 
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-sm text-muted-foreground">
               Desteklenen kaynaklar: sahibinden.com · hepsiemlak.com · emlakjet.com
             </p>
           </Reveal>
         </div>
 
-        {/* Marquee ticker */}
-        <div className="overflow-hidden border-t border-border bg-muted py-2">
-          <div className="marquee-track">
-            {[0, 1].map((dup) => (
-              <div key={dup} className="flex shrink-0 items-center gap-8 pr-8">
-                {[
-                  ["ataşehir", "+%38", true],
-                  ["çekmeköy arsa", "+%52", true],
-                  ["kadıköy dükkan", "−%6", false],
-                  ["ümraniye", "+%21", true],
-                  ["beylikdüzü", "−%3", false],
-                  ["maltepe", "+%14", true],
-                ].map(([k, v, ok]) => (
-                  <span key={String(k) + dup} className="label-mono flex items-center gap-2">
-                    {k}
-                    <span className={ok ? "text-positive" : "text-risk"}>{v}</span>
-                  </span>
-                ))}
+        {/* Feature highlights */}
+        <div className="border-y border-border bg-card/60 backdrop-blur-sm">
+          <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4">
+            {highlights.map((h, i) => (
+              <div
+                key={h.label}
+                className={`flex items-center gap-3 px-5 py-4 ${
+                  i < highlights.length - 1 ? "border-r border-border" : ""
+                }`}
+              >
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                  style={{ backgroundColor: `color-mix(in oklab, ${h.color} 12%, transparent)` }}
+                >
+                  <h.icon className="h-4 w-4" style={{ color: h.color }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{h.label}</p>
+                  <p className="text-xs text-muted-foreground">{h.desc}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -227,17 +259,24 @@ function Home() {
       </section>
 
       {/* Decision card */}
-      <section id="karar" className="border-b border-border">
+      <section id="karar">
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal>
-            <p className="label-mono">02 — Karar Çıktısı</p>
-            <div className="mt-6 grid gap-10 border border-border border-l-4 border-l-positive p-6 transition-colors duration-300 hover:bg-positive-soft md:grid-cols-2 md:p-10">
+            <p className="label-mono">Karar Raporu</p>
+            <div
+              className="mt-6 grid gap-10 overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm md:grid-cols-2 md:p-10"
+              style={{
+                borderLeft: "4px solid var(--positive)",
+              }}
+            >
               <div>
-                <span className="status-pill bg-positive-soft text-positive">
+                <span className="status-pill bg-positive/10 text-positive">
                   <span className="status-dot" />
-                  Karar — Olumlu
+                  Olumlu Karar
                 </span>
-                <h2 className="mt-2 text-3xl text-positive md:text-4xl">AL — 5 yıl tut</h2>
+                <h2 className="mt-3 text-3xl text-foreground md:text-4xl">
+                  Al — <span className="text-positive">5 yıl tut</span>
+                </h2>
                 <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
                   Bölge fiyat artışı son 24 ayda %38. İlan, mahalle medyanının %9 altında
                   listelenmiş. Tek risk kalemi: yüksek arz yoğunluğu.
@@ -255,10 +294,10 @@ function Home() {
                 {metrics.map((m) => (
                   <div
                     key={m.label}
-                    className="flex items-baseline justify-between border-t border-border py-4 transition-colors last:border-b hover:bg-background"
+                    className="flex items-baseline justify-between border-t border-border py-4 last:border-b"
                   >
                     <dt className="text-sm text-muted-foreground">{m.label}</dt>
-                    <dd className={`text-sm ${m.tone}`}>{m.value}</dd>
+                    <dd className={`text-sm font-semibold ${m.tone}`}>{m.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -267,92 +306,94 @@ function Home() {
 
           <div className="mt-12 grid gap-10 md:grid-cols-3">
             <Reveal className="md:col-span-2">
-              <TrendChart
-                points={trend}
-                tone="positive"
-                label="m² fiyat trendi — 24 ay"
-                value="+%38"
-              />
-              <div className="mt-8">
+              <div className="rounded-xl border border-border bg-card p-6">
+                <TrendChart
+                  points={trend}
+                  tone="positive"
+                  label="m² fiyat trendi — 24 ay"
+                  value="+%38"
+                />
+              </div>
+              <div className="mt-4 rounded-xl border border-border bg-card p-6">
                 <TrendChart
                   points={riskTrend}
                   tone="risk"
                   height={110}
-                  label="ortalama satış süresi (gün)"
+                  label="Ortalama satış süresi (gün)"
                   value="−26 gün"
                 />
               </div>
             </Reveal>
             <Reveal delay={120} className="grid grid-cols-2 gap-6 self-center md:grid-cols-1">
-              <Gauge value={41} tone="positive" caption="5 yıl roi" />
-              <Gauge value={22} tone="risk" caption="risk skoru" />
+              <div className="flex items-center justify-center rounded-xl border border-border bg-card p-6">
+                <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
+              </div>
+              <div className="flex items-center justify-center rounded-xl border border-border bg-card p-6">
+                <Gauge value={22} tone="risk" caption="Risk Skoru" />
+              </div>
             </Reveal>
           </div>
         </div>
       </section>
 
       {/* Comparison */}
-      <section className="border-b border-border">
+      <section
+        style={{
+          background: "linear-gradient(180deg, var(--surface-warm) 0%, var(--background) 100%)",
+        }}
+      >
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal>
-            <p className="label-mono">03 — Platform Karşılaştırması</p>
+            <p className="label-mono">Platform Karşılaştırması</p>
             <h2 className="mt-3 text-2xl md:text-3xl">Aynı mülk, farklı platformlar</h2>
-            <div className="mt-8 overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-sm">
-                <thead>
-                  <tr className="border-y border-border">
-                    {["platform", "ilan", "m²", "fiyat", "sapma"].map((h) => (
-                      <th key={h} className="label-mono py-3 text-left font-normal">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {listings.map((l) => (
-                    <tr
-                      key={l.platform}
-                      className={`group border-b border-border transition-colors duration-200 ${
-                        l.positive ? "hover:bg-positive-soft" : "hover:bg-risk-soft"
-                      }`}
-                    >
-                      <td
-                        className={`border-l-2 py-4 pl-3 pr-4 transition-colors ${
-                          l.positive
-                            ? "border-l-transparent group-hover:border-l-positive"
-                            : "border-l-transparent group-hover:border-l-risk"
-                        }`}
-                      >
-                        {l.platform}
-                      </td>
-                      <td className="py-4 pr-4 text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          {l.url}
-                          <ArrowUpRight className="h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                        </span>
-                      </td>
-                      <td className="py-4 pr-4 text-muted-foreground">{l.m2}</td>
-                      <td className="py-4 pr-4">{l.price}</td>
-                      <td className={`py-4 ${l.positive ? "text-positive" : "text-risk"}`}>
-                        <span className="inline-flex items-center gap-2">
-                          <span className="status-dot" />
-                          {l.delta}
-                        </span>
-                      </td>
+            <div className="mt-8 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      {["Platform", "İlan", "m²", "Fiyat", "Sapma"].map((h) => (
+                        <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {listings.map((l) => (
+                      <tr
+                        key={l.platform}
+                        className="group border-b border-border transition-colors duration-200 last:border-b-0 hover:bg-muted/30"
+                      >
+                        <td className="px-5 py-4 font-medium">{l.platform}</td>
+                        <td className="px-5 py-4 text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5">
+                            {l.url}
+                            <ArrowUpRight className="h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-muted-foreground">{l.m2}</td>
+                        <td className="px-5 py-4 font-medium">{l.price}</td>
+                        <td className={`px-5 py-4 font-medium ${l.positive ? "text-positive" : "text-risk"}`}>
+                          <span className="inline-flex items-center gap-2">
+                            <span className="status-dot" />
+                            {l.delta}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </Reveal>
         </div>
       </section>
 
       {/* Slider */}
-      <section className="border-b border-border">
+      <section>
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal>
-            <p className="label-mono">04 — Yakın Çevre Analizi</p>
+            <p className="label-mono">Yakın Çevre Analizi</p>
             <h2 className="mt-3 text-2xl md:text-3xl">Çevredeki arsa, konut ve dükkanlar</h2>
             <div className="mt-8">
               <AnalysisSlider slides={slides} />
@@ -362,12 +403,16 @@ function Home() {
       </section>
 
       {/* Bars */}
-      <section>
+      <section
+        style={{
+          background: "linear-gradient(180deg, var(--surface-mint) 0%, var(--background) 100%)",
+        }}
+      >
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal>
-            <p className="label-mono">05 — Mahalle Kesiti</p>
+            <p className="label-mono">Mahalle Kesiti</p>
             <h2 className="mt-3 text-2xl md:text-3xl">Ataşehir — metrik dağılımı</h2>
-            <div className="mt-8">
+            <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
               <Bars data={bars} />
             </div>
             <div className="mt-10 flex flex-wrap gap-3">
