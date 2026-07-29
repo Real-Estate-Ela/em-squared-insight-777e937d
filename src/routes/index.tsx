@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, Loader2, TrendingUp, Shield, MapPin, BarChart3, Link2, Cpu, FileCheck, MessageSquareQuote } from "lucide-react";
+import { ArrowUpRight, Check, Loader2, TrendingUp, MapPin, BarChart3, Shield, Link2, Cpu, FileCheck } from "lucide-react";
 import prop1 from "@/assets/property-1.jpg";
 import prop2 from "@/assets/property-2.jpg";
 import prop3 from "@/assets/property-3.jpg";
@@ -9,7 +9,6 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { IstanbulSkyline } from "@/components/IstanbulSkyline";
-import { Testimonials } from "@/components/Testimonials";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -470,77 +469,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section
-        style={{
-          background: "linear-gradient(180deg, var(--surface-warm) 0%, var(--background) 100%)",
-        }}
-      >
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal>
-            <div className="flex items-center justify-center gap-2">
-              <MessageSquareQuote className="h-5 w-5 text-primary" />
-              <p className="label-mono">Kullanıcı Yorumları</p>
-            </div>
-            <h2 className="mt-3 text-center text-2xl md:text-3xl">
-              Yatırımcılar ne diyor?
-            </h2>
-          </Reveal>
-          <Reveal delay={100}>
-            <div className="mt-10">
-              <Testimonials />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Trust badges */}
-      <section className="border-y border-border bg-card/50">
-        <div className="mx-auto max-w-6xl px-5 py-10 md:px-8">
-          <Reveal>
-            <p className="text-center text-sm text-muted-foreground">
-              Verilerimiz resmi ve güvenilir kaynaklardan beslenmektedir
-            </p>
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-              {[
-                { name: "TCMB", desc: "Merkez Bankası" },
-                { name: "TÜİK", desc: "İstatistik Kurumu" },
-                { name: "TKGM", desc: "Tapu Kadastro" },
-                { name: "SPK", desc: "Sermaye Piyasası" },
-                { name: "BDDK", desc: "Bankacılık Düzenleme" },
-              ].map((b) => (
-                <span
-                  key={b.name}
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm shadow-sm transition-colors hover:bg-muted"
-                  title={b.desc}
-                >
-                  <Shield className="h-3.5 w-3.5 text-positive" />
-                  <span className="font-semibold">{b.name}</span>
-                  <span className="hidden text-xs text-muted-foreground sm:inline">
-                    {b.desc}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section>
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <button type="button" className="btn-tactile btn-tactile-primary">
-                İlan analiz et
-              </button>
-              <button type="button" className="btn-tactile btn-tactile-risk">
-                Riskli bölgeleri filtrele
-              </button>
-            </div>
-          </Reveal>
-        </div>
-      </section>
     </div>
   );
 }
