@@ -199,3 +199,158 @@
   height: 0.375rem;
   background-color: currentColor;
 }
+
+/* ---- Motion & interaction ---- */
+
+@keyframes em-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes em-draw {
+  from {
+    stroke-dashoffset: var(--dash, 1000);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes em-scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes em-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility reveal {
+  opacity: 0;
+}
+
+@utility reveal-in {
+  animation: em-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@utility marquee-track {
+  display: flex;
+  width: max-content;
+  animation: em-marquee 32s linear infinite;
+}
+
+/* Tactile buttons */
+@utility btn-tactile {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.9rem 1.4rem;
+  border: 1px solid var(--color-foreground);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  box-shadow: 4px 4px 0 0 var(--color-foreground);
+  transition:
+    transform 0.12s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.12s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+@utility btn-tactile-primary {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  box-shadow: 4px 4px 0 0 var(--foreground);
+}
+
+@utility btn-tactile-positive {
+  border-color: var(--positive);
+  background-color: var(--positive);
+  color: var(--color-background);
+  box-shadow: 4px 4px 0 0 var(--foreground);
+}
+
+@utility btn-tactile-risk {
+  border-color: var(--risk);
+  background-color: var(--risk);
+  color: var(--color-background);
+  box-shadow: 4px 4px 0 0 var(--foreground);
+}
+
+.btn-tactile:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 var(--foreground);
+}
+
+.btn-tactile:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 var(--foreground);
+}
+
+.btn-tactile:focus-visible {
+  outline: 2px solid var(--positive);
+  outline-offset: 3px;
+}
+
+@utility hover-lift {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+@utility scanline {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--positive) 22%, transparent),
+    transparent
+  );
+  animation: em-scan 2.2s linear infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-in {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+  .marquee-track,
+  .scanline::after {
+    animation: none !important;
+  }
+}

@@ -33,11 +33,7 @@ export function Header() {
               {l.label}
             </Link>
           ))}
-          <Link
-            to="/"
-            hash="analiz"
-            className="bg-primary px-4 py-2.5 text-xs uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90"
-          >
+          <Link to="/" hash="analiz" className="btn-tactile btn-tactile-primary px-4 py-2.5">
             İlan Analiz Et
           </Link>
         </nav>
@@ -68,7 +64,7 @@ export function Header() {
             to="/"
             hash="analiz"
             onClick={() => setOpen(false)}
-            className="block bg-primary px-5 py-3 text-xs uppercase tracking-[0.14em] text-primary-foreground"
+            className="btn-tactile btn-tactile-primary m-4 w-[calc(100%-2rem)]"
           >
             İlan Analiz Et
           </Link>
