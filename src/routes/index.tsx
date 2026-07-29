@@ -64,8 +64,8 @@ const riskTrend = [62, 58, 60, 51, 47, 49, 42, 38, 35, 33, 30, 26];
 
 const bars = [
   { k: "kira getirisi", v: 64, tone: "positive" as const },
-  { k: "bölge fiyat artışı", v: 38, tone: "positive" as const },
-  { k: "likidite (satış hızı)", v: 55, tone: "primary" as const },
+  { k: "bölge fiyat artışı", v: 38, tone: "cyan" as const },
+  { k: "likidite (satış hızı)", v: 55, tone: "amber" as const },
   { k: "arz yoğunluğu", v: 22, tone: "risk" as const },
 ];
 
