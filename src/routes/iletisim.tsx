@@ -79,7 +79,7 @@ function Contact() {
             </div>
             <button
               type="submit"
-              className="bg-primary px-6 py-3.5 text-xs uppercase tracking-[0.18em] text-primary-foreground transition-opacity hover:opacity-90"
+              className="btn-tactile btn-tactile-primary"
             >
               Gönder
             </button>
