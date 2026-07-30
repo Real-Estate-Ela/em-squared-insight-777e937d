@@ -2,8 +2,6 @@
 
 Gayrimenkul yatırım analiz terminali. İlan linkini yapıştır — getiri, çevre analizi ve yatırım kararı saniyeler içinde.
 
-**Canlı:** [em-squared-insight.lovable.app](https://em-squared-insight.lovable.app)
-
 ---
 
 ## Özellikler
