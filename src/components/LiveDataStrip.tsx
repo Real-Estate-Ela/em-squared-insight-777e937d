@@ -4,26 +4,24 @@ type Metric = {
   label: string;
   value: number;
   suffix: string;
-  tone: "positive" | "risk" | "amber" | "cyan" | "primary";
+  tone: "positive" | "risk" | "primary";
   prefix?: string;
 };
 
 const baseMetrics: Metric[] = [
   { label: "İstanbul m²", value: 42650, suffix: " ₺", tone: "positive", prefix: "" },
-  { label: "Kira Getirisi", value: 5.8, suffix: "%", tone: "cyan", prefix: "" },
-  { label: "Arz Endeksi", value: 1247, suffix: "", tone: "amber", prefix: "" },
+  { label: "Kira Getirisi", value: 5.8, suffix: "%", tone: "primary", prefix: "" },
+  { label: "Arz Endeksi", value: 1247, suffix: "", tone: "risk", prefix: "" },
   { label: "ROI (5Y)", value: 38, suffix: "%", tone: "positive", prefix: "+" },
   { label: "Amortisman", value: 16.2, suffix: " yıl", tone: "primary", prefix: "" },
-  { label: "Talep Skoru", value: 74, suffix: "/100", tone: "cyan", prefix: "" },
+  { label: "Talep Skoru", value: 74, suffix: "/100", tone: "primary", prefix: "" },
   { label: "Volatilite", value: 12.5, suffix: "%", tone: "risk", prefix: "" },
-  { label: "Aktif İlan", value: 84320, suffix: "", tone: "amber", prefix: "" },
+  { label: "Aktif İlan", value: 84320, suffix: "", tone: "risk", prefix: "" },
 ];
 
 const toneColor: Record<string, string> = {
   positive: "var(--positive)",
   risk: "var(--risk)",
-  amber: "var(--amber)",
-  cyan: "var(--cyan)",
   primary: "var(--primary)",
 };
 

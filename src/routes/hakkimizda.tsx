@@ -62,12 +62,12 @@ function About() {
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
           <Reveal variant="blur">
             <p className="label-mono flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: "var(--amber)" }} />
+              <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: "var(--risk)" }} />
               Hakkımızda
             </p>
             <h1 className="mt-5 max-w-3xl text-4xl leading-[1.05] md:text-5xl">
               Gayrimenkul kararı sezgiyle değil,{" "}
-              <span className="bg-gradient-to-r from-amber to-positive bg-clip-text text-transparent">
+              <span className="text-risk font-bold">
                 veriyle
               </span>{" "}
               verilir.
@@ -88,11 +88,11 @@ function About() {
               <Reveal key={s.k} delay={i * 80} variant="scale">
                 <MouseCard
                   className="rounded-xl border border-border bg-card p-5 text-center shadow-sm"
-                  glowColor="var(--amber)"
+                  glowColor="var(--risk)"
                   tiltMax={8}
                   glowOpacity={0.06}
                 >
-                  <p className="font-display text-3xl font-bold tracking-tight" style={{ color: "var(--amber)" }}>
+                  <p className="font-display text-3xl font-bold tracking-tight" style={{ color: "var(--risk)" }}>
                     {s.v}
                   </p>
                   <p className="label-mono mt-2">{s.k}</p>

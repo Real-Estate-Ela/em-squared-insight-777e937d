@@ -76,7 +76,7 @@ const filters = ["Tümü", "Konut", "Arsa", "Dükkan", "Harita"] as const;
 
 const bars = [
   { k: "Kira getirisi", v: 64, tone: "positive" as const },
-  { k: "Bölge fiyat artışı", v: 38, tone: "cyan" as const },
+  { k: "Bölge fiyat artışı", v: 38, tone: "primary" as const },
   { k: "5 yıl ROI", v: 41, tone: "primary" as const },
   { k: "Arz yoğunluğu", v: 22, tone: "risk" as const },
 ];
@@ -127,7 +127,7 @@ function Visuals() {
             </p>
             <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] md:text-5xl">
               Analiz edilen{" "}
-              <span className="bg-gradient-to-r from-primary to-cyan bg-clip-text text-transparent">
+              <span className="text-risk font-bold">
                 mülkler
               </span>
             </h1>
@@ -263,7 +263,7 @@ function Visuals() {
               Ataşehir — mahalle kesiti
             </h2>
             <div className="mt-8 grid gap-6 md:grid-cols-2">
-              <MouseCard className="rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--cyan)" tiltMax={4}>
+              <MouseCard className="rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--primary)" tiltMax={4}>
                 <Bars data={bars} />
               </MouseCard>
               <MouseCard className="rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--positive)" tiltMax={4}>

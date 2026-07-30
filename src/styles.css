@@ -12,10 +12,6 @@
   --color-positive-soft: var(--positive-soft);
   --color-risk-soft: var(--risk-soft);
   --color-grid: var(--grid);
-  --color-amber: var(--amber);
-  --color-amber-soft: var(--amber-soft);
-  --color-cyan: var(--cyan);
-  --color-cyan-soft: var(--cyan-soft);
 }
 
 /*
@@ -86,12 +82,12 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.184 0.011 264.5);
   /* section tint backgrounds */
-  --surface-warm: oklch(0.975 0.006 80);
+  --surface-warm: oklch(0.975 0.006 30);
   --surface-cool: oklch(0.975 0.008 240);
   --surface-mint: oklch(0.975 0.008 165);
   /* page-level tints for route transitions */
-  --page-about: oklch(0.98 0.006 75);
-  --page-contact: oklch(0.98 0.008 200);
+  --page-about: oklch(0.98 0.006 30);
+  --page-contact: oklch(0.98 0.008 160);
   --page-gallery: oklch(0.98 0.006 265);
   /* #1B4DFF */
   --primary: oklch(0.514 0.256 265.6);
@@ -115,10 +111,6 @@
   --risk-soft: color-mix(in oklab, var(--risk) 10%, white);
   --grid: oklch(0.94 0.003 264.5);
   /* Auxiliary palette */
-  --amber: oklch(0.75 0.18 75);
-  --amber-soft: color-mix(in oklab, var(--amber) 10%, white);
-  --cyan: oklch(0.72 0.12 200);
-  --cyan-soft: color-mix(in oklab, var(--cyan) 10%, white);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -154,10 +146,6 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
-  --amber: oklch(0.8 0.16 75);
-  --amber-soft: color-mix(in oklab, var(--amber) 12%, oklch(0.2 0.04 264));
-  --cyan: oklch(0.78 0.11 200);
-  --cyan-soft: color-mix(in oklab, var(--cyan) 12%, oklch(0.2 0.04 264));
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -334,6 +322,43 @@
 }
 
 @keyframes em-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes em-silhouette-cycle {
+  0%, 20% { opacity: 1; }
+  25%, 45% { opacity: 0; }
+  50%, 70% { opacity: 0; }
+  75%, 95% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes em-silhouette-cycle-2 {
+  0%, 20% { opacity: 0; }
+  25%, 45% { opacity: 1; }
+  50%, 70% { opacity: 0; }
+  75%, 95% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes em-silhouette-cycle-3 {
+  0%, 20% { opacity: 0; }
+  25%, 45% { opacity: 0; }
+  50%, 70% { opacity: 1; }
+  75%, 95% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes em-silhouette-cycle-4 {
+  0%, 20% { opacity: 0; }
+  25%, 45% { opacity: 0; }
+  50%, 70% { opacity: 0; }
+  75%, 95% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes em-text-flow {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }

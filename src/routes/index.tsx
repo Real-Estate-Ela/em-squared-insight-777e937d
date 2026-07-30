@@ -12,6 +12,8 @@ import { IstanbulSkyline } from "@/components/IstanbulSkyline";
 import { MouseCard, CountUp } from "@/components/MouseCard";
 import { PriceCalculator } from "@/components/PriceCalculator";
 import { EmptyState } from "@/components/EmptyState";
+import { TextFlow } from "@/components/TextFlow";
+import { SilhouetteCarousel } from "@/components/SilhouetteCarousel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,8 +46,8 @@ const metrics = [
 
 const highlights = [
   { icon: TrendingUp, label: "ROI Analizi", desc: "5 yıllık getiri tahmini", color: "var(--positive)" },
-  { icon: MapPin, label: "Çevre Analizi", desc: "Mahalle bazlı veri", color: "var(--cyan)" },
-  { icon: Shield, label: "Risk Skoru", desc: "Arz ve talep dengesi", color: "var(--amber)" },
+  { icon: MapPin, label: "Çevre Analizi", desc: "Mahalle bazlı veri", color: "var(--primary)" },
+  { icon: Shield, label: "Risk Skoru", desc: "Arz ve talep dengesi", color: "var(--risk)" },
   { icon: BarChart3, label: "Karşılaştırma", desc: "3 platformdan fiyat", color: "var(--primary)" },
 ];
 
@@ -74,8 +76,8 @@ const riskTrend = [62, 58, 60, 51, 47, 49, 42, 38, 35, 33, 30, 26];
 
 const bars = [
   { k: "Kira getirisi", v: 64, tone: "positive" as const },
-  { k: "Bölge fiyat artışı", v: 38, tone: "cyan" as const },
-  { k: "Likidite (satış hızı)", v: 55, tone: "amber" as const },
+  { k: "Bölge fiyat artışı", v: 38, tone: "primary" as const },
+  { k: "Likidite (satış hızı)", v: 55, tone: "risk" as const },
   { k: "Arz yoğunluğu", v: 22, tone: "risk" as const },
 ];
 
@@ -140,7 +142,9 @@ function Home() {
             backgroundSize: "80px 80px",
           }}
         />
+        <TextFlow className="absolute inset-0 overflow-hidden" />
         <IstanbulSkyline className="absolute bottom-0 left-0 right-0 hidden h-auto w-full md:block" />
+        <SilhouetteCarousel className="absolute bottom-0 left-0 right-0 hidden h-[280px] w-full md:block" />
         <div className="relative mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-32">
           <Reveal variant="blur">
             <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-4 py-2 text-sm font-semibold text-positive">
@@ -151,7 +155,7 @@ function Home() {
           <Reveal delay={80}>
             <h1 className="mt-7 max-w-4xl text-5xl leading-[1.04] tracking-tight md:text-7xl">
               İlan linkini yapıştır,{" "}
-              <span className="bg-gradient-to-r from-primary via-cyan to-positive bg-clip-text text-transparent">
+              <span className="text-risk font-bold">
                 yatırım kararını
               </span>{" "}
               20 saniyede al.
@@ -286,9 +290,9 @@ function Home() {
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             {[
               { label: "Analiz edilen mülk", value: 12450, suffix: "+", color: "var(--primary)" },
-              { label: "İlçe kapsama", value: 39, suffix: "", color: "var(--cyan)" },
+              { label: "İlçe kapsama", value: 39, suffix: "", color: "var(--primary)" },
               { label: "Ortalama doğruluk", value: 94, suffix: "%", color: "var(--positive)" },
-              { label: "Aktif kullanıcı", value: 3200, suffix: "+", color: "var(--amber)" },
+              { label: "Aktif kullanıcı", value: 3200, suffix: "+", color: "var(--risk)" },
             ].map((s, i) => (
               <Reveal key={s.label} delay={i * 80} variant="scale">
                 <MouseCard className="rounded-xl border border-border bg-card p-5 text-center" glowColor={s.color} tiltMax={8} glowOpacity={0.06}>
@@ -438,7 +442,7 @@ function Home() {
             <h2 className="mt-3 text-2xl md:text-3xl">Aynı mülk, farklı platformlar</h2>
           </Reveal>
           <Reveal delay={100} variant="scale">
-            <MouseCard className="mt-8 overflow-hidden rounded-xl border border-border bg-card shadow-sm" glowColor="var(--amber)" tiltMax={2}>
+            <MouseCard className="mt-8 overflow-hidden rounded-xl border border-border bg-card shadow-sm" glowColor="var(--primary)" tiltMax={2}>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px] border-collapse text-sm">
                   <thead>
@@ -533,7 +537,7 @@ function Home() {
             <h2 className="mt-3 text-2xl md:text-3xl">Ataşehir — metrik dağılımı</h2>
           </Reveal>
           <Reveal delay={80} variant="scale">
-            <MouseCard className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--cyan)" tiltMax={3}>
+            <MouseCard className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--primary)" tiltMax={3}>
               <Bars data={bars} />
             </MouseCard>
           </Reveal>
@@ -550,7 +554,7 @@ function Home() {
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             {[
               { icon: Link2, title: "İlan linkini yapıştır", desc: "Sahibinden, Hepsiemlak veya Emlakjet'ten herhangi bir ilan linkini yapıştır.", color: "var(--primary)", step: "1" },
-              { icon: Cpu, title: "AI analiz etsin", desc: "Fiyat, kira getirisi, amortisman, çevre analizi ve risk skoru saniyeler içinde hesaplanır.", color: "var(--cyan)", step: "2" },
+              { icon: Cpu, title: "AI analiz etsin", desc: "Fiyat, kira getirisi, amortisman, çevre analizi ve risk skoru saniyeler içinde hesaplanır.", color: "var(--positive)", step: "2" },
               { icon: FileCheck, title: "Karar raporunu al", desc: "Al/satma/bekle kararı, karşılaştırma tablosu ve detaylı rapor oluşturulur.", color: "var(--positive)", step: "3" },
             ].map((s, i) => (
               <Reveal key={s.step} delay={i * 120} variant="slide-right">
@@ -618,6 +622,66 @@ function Home() {
                 }}
               />
             </MouseCard>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Dark CTA Section — Vobiz-inspired */}
+      <section
+        style={{
+          background: "linear-gradient(180deg, var(--foreground) 0%, oklch(0.15 0.02 264) 100%)",
+        }}
+      >
+        <div className="mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-28">
+          <Reveal variant="blur">
+            <div className="relative mx-auto max-w-2xl">
+              <div
+                className="absolute -inset-4 rounded-3xl opacity-30 blur-3xl"
+                style={{ background: "linear-gradient(135deg, var(--risk), var(--primary))" }}
+              />
+              <div
+                className="relative overflow-hidden rounded-2xl border p-8 md:p-12"
+                style={{
+                  borderColor: "oklch(1 0 0 / 0.08)",
+                  background: "oklch(1 0 0 / 0.04)",
+                  backdropFilter: "blur(24px)",
+                }}
+              >
+                <div className="text-center">
+                  <p
+                    className="text-xs font-semibold uppercase tracking-[0.2em]"
+                    style={{ color: "var(--risk)" }}
+                  >
+                    Ücretsiz Başla
+                  </p>
+                  <h2 className="mt-4 text-3xl font-bold text-white md:text-4xl">
+                    Yatırım kararınızı{" "}
+                    <span style={{ color: "var(--risk)" }}>veriye</span>{" "}
+                    dayandırın.
+                  </h2>
+                  <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed" style={{ color: "oklch(1 0 0 / 0.55)" }}>
+                    İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve çevre analizini görün. Kayıt gerektirmez.
+                  </p>
+                  <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" })}
+                      className="flex items-center gap-2 rounded-xl px-8 py-4 text-sm font-bold text-white transition-all hover:scale-105"
+                      style={{
+                        backgroundColor: "var(--risk)",
+                        boxShadow: "0 8px 32px color-mix(in oklab, var(--risk) 40%, transparent)",
+                      }}
+                    >
+                      Hemen Analiz Et
+                      <ArrowUpRight className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs" style={{ color: "oklch(1 0 0 / 0.35)" }}>
+                      Kredi kartı gerekmez
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </Reveal>
         </div>
       </section>

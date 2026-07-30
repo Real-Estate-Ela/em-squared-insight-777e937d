@@ -31,8 +31,8 @@ export function EmptyState({
         <rect x="122" y="42" width="8" height="10" rx="1.5" fill="var(--primary)" opacity="0.15" />
         <rect x="108" y="60" width="8" height="10" rx="1.5" fill="var(--primary)" opacity="0.15" />
         <rect x="122" y="60" width="8" height="10" rx="1.5" fill="var(--primary)" opacity="0.2" />
-        <rect x="108" y="78" width="8" height="10" rx="1.5" fill="var(--cyan)" opacity="0.15" />
-        <rect x="122" y="78" width="8" height="10" rx="1.5" fill="var(--cyan)" opacity="0.15" />
+        <rect x="108" y="78" width="8" height="10" rx="1.5" fill="var(--primary)" opacity="0.15" />
+        <rect x="122" y="78" width="8" height="10" rx="1.5" fill="var(--primary)" opacity="0.15" />
         <rect x="108" y="96" width="8" height="10" rx="1.5" fill="var(--primary)" opacity="0.1" />
         <rect x="122" y="96" width="8" height="10" rx="1.5" fill="var(--primary)" opacity="0.1" />
         {/* Ground line */}
