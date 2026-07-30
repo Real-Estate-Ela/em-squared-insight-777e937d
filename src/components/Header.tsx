@@ -37,10 +37,6 @@ export function Header() {
         <Link to="/" className="flex min-w-0 items-center gap-3">
           <EmSquareMark className="h-8 w-8 text-[1.1rem]" />
           <Wordmark className="truncate text-xl md:text-2xl" />
-          <span className="ml-1 flex items-center gap-1.5 rounded-full bg-positive/10 px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-wide text-positive">
-            <span className="live-dot" style={{ width: 5, height: 5 }} />
-            beta
-          </span>
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">

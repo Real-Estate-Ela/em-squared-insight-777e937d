@@ -1,10 +1,10 @@
 export function EmSquareMark({ className = "h-8 w-8" }: { className?: string }) {
   return (
     <span
-      className={`relative inline-grid shrink-0 place-items-center rounded-lg bg-foreground ${className}`}
+      className={`relative inline-grid shrink-0 place-items-center rounded-lg border-2 border-foreground ${className}`}
       aria-hidden="true"
     >
-      <span className="font-display text-[0.85em] font-bold leading-none tracking-tighter text-background">
+      <span className="font-display text-[0.85em] font-bold leading-none tracking-tighter text-foreground">
         em
       </span>
       <span className="absolute right-[6%] top-[4%] font-display text-[0.42em] font-bold leading-none text-primary">

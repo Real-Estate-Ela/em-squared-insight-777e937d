@@ -291,49 +291,127 @@
 /* ---- Motion & interaction ---- */
 
 @keyframes em-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes em-reveal-slide-l {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes em-reveal-slide-r {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes em-reveal-scale {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes em-reveal-blur {
+  from { opacity: 0; filter: blur(8px); transform: translateY(8px); }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+
+@keyframes em-reveal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes em-draw {
-  from {
-    stroke-dashoffset: var(--dash, 1000);
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+  from { stroke-dashoffset: var(--dash, 1000); }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes em-skyline-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes em-scan {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 @keyframes em-marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
-@utility reveal {
-  opacity: 0;
+@keyframes em-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
-@utility reveal-in {
-  animation: em-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+@keyframes em-pulse-ring {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes em-slide-value {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@utility reveal { opacity: 0; }
+@utility reveal-in { animation: em-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@utility reveal-slide-l { opacity: 0; }
+@utility reveal-slide-l-in { animation: em-reveal-slide-l 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@utility reveal-slide-r { opacity: 0; }
+@utility reveal-slide-r-in { animation: em-reveal-slide-r 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@utility reveal-scale { opacity: 0; }
+@utility reveal-scale-in { animation: em-reveal-scale 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@utility reveal-blur { opacity: 0; }
+@utility reveal-blur-in { animation: em-reveal-blur 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@utility reveal-fade { opacity: 0; }
+@utility reveal-fade-in { animation: em-reveal-fade 0.6s ease forwards; }
+
+@utility float-anim { animation: em-float 4s ease-in-out infinite; }
+
+/* Calculator range slider */
+.calc-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--grid);
+  outline: none;
+  cursor: pointer;
+}
+
+.calc-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--background);
+  box-shadow: 0 2px 8px oklch(0 0 0 / 15%);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.calc-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 12px oklch(0 0 0 / 25%);
+}
+
+.calc-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--background);
+  box-shadow: 0 2px 8px oklch(0 0 0 / 15%);
+  cursor: pointer;
 }
 
 @utility marquee-track {
@@ -489,15 +567,21 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .reveal-in {
+  .reveal, .reveal-in,
+  .reveal-slide-l, .reveal-slide-l-in,
+  .reveal-slide-r, .reveal-slide-r-in,
+  .reveal-scale, .reveal-scale-in,
+  .reveal-blur, .reveal-blur-in,
+  .reveal-fade, .reveal-fade-in {
     opacity: 1 !important;
     animation: none !important;
+    filter: none !important;
   }
   .marquee-track,
   .scanline::after,
   .live-dot,
-  .number-in {
+  .number-in,
+  .float-anim {
     animation: none !important;
   }
 }
