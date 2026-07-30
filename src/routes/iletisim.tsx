@@ -66,7 +66,7 @@ function Contact() {
             <p className="label-mono">İletişim</p>
             <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] md:text-5xl">
               Bize{" "}
-              <span className="text-risk font-bold">
+              <span className="text-primary font-bold">
                 ulaşın
               </span>
             </h1>

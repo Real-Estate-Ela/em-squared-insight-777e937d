@@ -73,8 +73,8 @@
 
 :root {
   --radius: 0.5rem;
-  /* warm off-white instead of pure white */
-  --background: oklch(0.985 0.003 264.5);
+  /* #FFFFFF saf beyaz */
+  --background: oklch(1 0 0);
   /* #0E1116 */
   --foreground: oklch(0.184 0.011 264.5);
   --card: oklch(1 0 0);

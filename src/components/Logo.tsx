@@ -1,7 +1,7 @@
 export function EmSquareMark({ className = "h-8 w-8" }: { className?: string }) {
   return (
     <span
-      className={`relative inline-grid shrink-0 place-items-center rounded-lg border-2 border-foreground ${className}`}
+      className={`relative inline-grid shrink-0 place-items-center rounded-lg ${className}`}
       aria-hidden="true"
     >
       <span className="font-display text-[0.85em] font-bold leading-none tracking-tighter text-foreground">
@@ -39,7 +39,8 @@ export function LogoWatermark({ className = "" }: { className?: string }) {
         rx="16"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="1.5"
+        strokeOpacity="0.15"
       />
       <text
         x="24"

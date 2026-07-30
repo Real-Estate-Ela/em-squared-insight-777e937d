@@ -30,8 +30,7 @@ export function Header() {
           : "var(--background)",
         backdropFilter: scrolled ? "blur(16px) saturate(1.5)" : "none",
         WebkitBackdropFilter: scrolled ? "blur(16px) saturate(1.5)" : "none",
-        boxShadow: scrolled ? "0 1px 0 var(--border), 0 4px 20px oklch(0 0 0 / 4%)" : "none",
-        borderBottom: scrolled ? "none" : "2px solid var(--risk)",
+        boxShadow: scrolled ? "0 1px 0 var(--border), 0 4px 20px oklch(0 0 0 / 4%)" : "0 1px 0 var(--border)",
       }}
     >
       <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3 md:px-8">
@@ -55,8 +54,7 @@ export function Header() {
           <Link
             to="/"
             hash="analiz"
-            className="group flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
-            style={{ backgroundColor: "var(--risk)", boxShadow: "0 4px 14px color-mix(in oklab, var(--risk) 30%, transparent)" }}
+            className="group flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
           >
             Analiz Et
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -89,8 +87,7 @@ export function Header() {
             to="/"
             hash="analiz"
             onClick={() => setOpen(false)}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-white"
-            style={{ backgroundColor: "var(--risk)" }}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
           >
             Analiz Et
             <ArrowRight className="h-4 w-4" />

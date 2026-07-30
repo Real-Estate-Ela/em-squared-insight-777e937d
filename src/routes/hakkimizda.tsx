@@ -67,7 +67,7 @@ function About() {
             </p>
             <h1 className="mt-5 max-w-3xl text-4xl leading-[1.05] md:text-5xl">
               Gayrimenkul kararı sezgiyle değil,{" "}
-              <span className="text-risk font-bold">
+              <span className="text-positive font-bold">
                 veriyle
               </span>{" "}
               verilir.
