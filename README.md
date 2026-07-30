@@ -1,128 +1,125 @@
-# EmlakMetric Terminal
+# emlakmetric
 
-Lütfen aşağıdaki marka kimliği, logo/favicon kuralları, renk paleti ve sayfa yapılarına %100 sadık kalarak modern, minimalist ve veri odaklı bir Web Sitesi Arayüz Tasarımı (UI/UX) oluştur.
+Gayrimenkul yatırım analiz terminali. İlan linkini yapıştır — getiri, çevre analizi ve yatırım kararı saniyeler içinde.
 
-### 1. MARKA KİMLİĞİ, LOGO VE FAVICON
+**Canlı:** [em-squared-insight.lovable.app](https://em-squared-insight.lovable.app)
 
-- Marka Adı: emlakmetric
+---
 
-- Ana Logo: İlk görseldeki gibi tamamen tipografik "emlakmetric" yazısı kullanılacak (küçük harflerle, Space Grotesk / kalın ve minimalist yapıda). Kesinlikle "ev" veya klasik emlak ikonu KULLANILMAYACAK.
+## Özellikler
 
-- Favicon / Uygulama İkonu: İkinci görseldeki "em²" ("em" + metrekare üssü 2) sembolü kullanılacak. Kare zemin üzerinde (siyah, beyaz veya elektrik mavi zeminli "em²" varyasyonları) kompakt ikon olarak yer alacak.
+- **İlan Analizi** — Sahibinden, Hepsiemlak, Emlakjet gibi platformlardan ilan linki ile otomatik analiz
+- **Yatırım Kararı** — Kira getirisi, amortisman süresi, 5 yıllık ROI hesaplama
+- **Çevre Analizi** — Yakın çevredeki mülklerin karşılaştırmalı fiyat analizi
+- **Mülk Tipi Desteği** — Konut, arsa, dükkan/ticari mülk analizi
+- **Animasyonlu Şehir Siluetleri** — 8 Türk şehrinin Catmull-Rom spline tabanlı sürekli çizgi animasyonu
+- **Canlı Veri Şeridi** — Gerçek zamanlı piyasa verileri
+- **Responsive Tasarım** — Mobil, tablet ve masaüstü uyumlu
 
-- Konsept: Sadece konut değil; arsa, dükkan, ticari mülk gibi tüm gayrimenkul türlerinin değerini, ROI (amortisman / getiri oranı) hesaplamasını ve çevre analizini yapan finansal/teknik bir gayrimenkul analiz terminali.
+## Teknoloji Yığını
 
-### 2. RENK PALETİ VE KULLANIM KURALLARI
+### Çekirdek
 
-Renk Paleti Hiyerarşisi (Sadece görseldeki renkler kullanılacak):
+| Teknoloji | Sürüm | Açıklama |
+|-----------|--------|----------|
+| [React](https://react.dev) | 19 | UI kütüphanesi |
+| [TypeScript](https://www.typescriptlang.org) | 5.8 | Tip güvenliği |
+| [Vite](https://vite.dev) | 8 | Build aracı ve geliştirme sunucusu |
+| [Bun](https://bun.sh) | — | Paket yöneticisi ve çalışma zamanı |
 
-- İLK 3 RENK (ANA RENKLER):
+### Framework & Yönlendirme
 
-  1. Zemin / Background: #FFFFFF (Saf Beyaz)
+| Teknoloji | Açıklama |
+|-----------|----------|
+| [TanStack Start](https://tanstack.com/start) | SSR (Server-Side Rendering) framework |
+| [TanStack Router](https://tanstack.com/router) | Dosya tabanlı tip-güvenli yönlendirme |
+| [TanStack Query](https://tanstack.com/query) | Asenkron veri yönetimi ve önbellekleme |
+| [Nitro](https://nitro.build) | Sunucu motoru (Cloudflare hedefi) |
 
-  2. Grafit / Metin & Başlıklar: #0E1116 (Koyu Grafit)
+### Stil & UI
 
-  3. Vurgu / Accent (Tek Keskin Renk): #1B4DFF (Elektrik Mavi - Arama butonları, aktif sekmeler, CTA)
+| Teknoloji | Açıklama |
+|-----------|----------|
+| [Tailwind CSS](https://tailwindcss.com) v4 | CSS-first yapılandırma (@theme, @utility, @custom-variant) |
+| [Radix UI](https://www.radix-ui.com) | 25+ erişilebilir headless bileşen |
+| [Recharts](https://recharts.org) | Veri görselleştirme grafikleri |
+| [Lucide React](https://lucide.dev) | İkon kütüphanesi |
+| [class-variance-authority](https://cva.style) | Bileşen varyant yönetimi |
+| [tailwind-merge](https://github.com/dcastil/tailwind-merge) | Tailwind sınıf çakışma çözümü |
+| [tw-animate-css](https://github.com/Wombosvideo/tw-animate-css) | Tailwind animasyon yardımcıları |
+| [Embla Carousel](https://www.embla-carousel.com) | Carousel/slider bileşeni |
+| [Vaul](https://vaul.emilkowal.ski) | Drawer bileşeni |
+| [Sonner](https://sonner.emilkowal.ski) | Toast bildirimleri |
+| [cmdk](https://cmdk.paco.me) | Komut paleti bileşeni |
 
-- YAN / YARDIMCI RENKLER (Yalnızca durum/durum analiz göstergelerinde kullanılacak):
+### Form & Doğrulama
 
-  4. Olumlu / Getiri: #00875A (Yeşil)
+| Teknoloji | Açıklama |
+|-----------|----------|
+| [React Hook Form](https://react-hook-form.com) | Performanslı form yönetimi |
+| [Zod](https://zod.dev) | Şema tabanlı veri doğrulama |
+| [@hookform/resolvers](https://github.com/react-hook-form/resolvers) | Zod-RHF entegrasyonu |
 
-  5. Riskli / Düşük Getiri: #E23D28 (Kırmızı)
+### Geliştirici Araçları
 
-### 3. TIPOGRAFİ VE TASARIM STİLİ
+| Teknoloji | Açıklama |
+|-----------|----------|
+| [ESLint](https://eslint.org) 9 | Kod kalitesi ve linting |
+| [Prettier](https://prettier.io) | Kod biçimlendirme |
+| [vite-tsconfig-paths](https://github.com/aleclarson/vite-tsconfig-paths) | TypeScript path alias desteği |
 
-- Başlıklar (Headings): Space Grotesk (Modern, keskin, teknolojik)
+## Tasarım Sistemi
 
-- Gövde Metinleri ve Veri Tabloları: Space Mono (Terminal / Analiz aracı hissi veren monospaced font)
+- **Fontlar:** Space Grotesk (başlıklar), Space Mono (veri tabloları / terminal estetiği)
+- **Renk Paleti:**
+  - `#FFFFFF` — Zemin (Saf Beyaz)
+  - `#0E1116` — Metin & Başlıklar (Koyu Grafit)
+  - `#1B4DFF` — Vurgu / CTA (Elektrik Mavi)
+  - `#00875A` — Olumlu / Getiri (Yeşil)
+  - `#E23D28` — Riskli / Düşük Getiri (Kırmızı)
+- **Renk Formatı:** oklch (CSS custom properties)
+- **Stil:** Flat terminal estetiği, ince çizgi tablolar, gölgesiz minimalist yapı
 
-- Tasarım Üslubu: Sıkı harf aralığı, tek keskin mavi vurgu, ince çizgi tablolar, gölgesiz düz (flat) terminal estetiği.
+## Kurulum
 
-### 4. GEZİNTİ (NAVIGATION) VE MENÜ YAPISI
-
-Header/Menü Alanı:
-
-- Sol Taraf: "emlakmetric" ana logosu ve yanında "em²" ikonik rozeti.
-
-- Menü Bağlantıları:
-
-  * Ana Sayfa
-
-  * Hakkımızda
-
-  * İletişim
-
-  * Görseller
-
-- Sağ Taraf CTA: #1B4DFF Mavi renkli "İlan Analiz Et" butonu.
-
-### 5. SAYFA YAPILARI VE İÇERİKLERİ
-
-#### A) ANA SAYFA (HOME PAGE)
-
-1. Hero Bölümü (Terminal / Input Alanı):
-
-   - Başlık / Slogan: "İlan linkini yapıştır. Getiri, çevre analizi ve yatırım kararı 20 saniyede."
-
-   - Arama / Terminal Kutusu: sahibinden.com, hepsiemlak, emlakjet gibi sitelerden yapıştırılan ilan linkleri için giriş alanı. Örnek: `> emlakjet.com/ilan/9931-daire` ve yanında Mavi `#1B4DFF` renkli "ANALİZ ET" butonu.
-
-   - Mülk Tipi Seçicileri (Tab'ler): Konut, Arsa, Dükkan/Ticari.
-
-2. Örnek Live Terminal/Karar Kartı:
-
-   - Karar Vurgusu: #00875A Yeşil font ile "AL — 5 yıl tut"
-
-   - Alt Metin: "Bölge fiyat artışı son 24 ayda %38. İlan, mahalle medyanının %9 altında listelenmiş."
-
-   - İnce Çizgili Veri Tablosu (Space Mono font ile):
-
-     * kira getirisi: %6,4
-
-     * amortisman: 15,6 yıl
-
-     * 5 yıl roi: %41
-
-3. Karşılaştırma & Yakın Yerler Özelliği:
-
-   - Sahibinden, Hepsiemlak, Emlakjet gibi farklı platformlardaki benzer mülklerin linklerini ve fiyatlarını karşılaştıran liste görünümü.
-
-   - Yakın çevredeki arsa, ev ve dükkan mülklerinin konumlarını ve analizlerini gösteren kartlar.
-
-#### B) HAKKIMIZDA (ABOUT US)
-
-- Gayrimenkul yatırımlarında şeffaf, veri odaklı ve yapay zeka destekli analizlerin önemini vurgulayan minimalist ve finansal odaklı sayfa düzeni.
-
-#### C) İLETİŞİM (CONTACT)
-
-- Temiz, minimalist iletişim formu (Ad Soyad, E-posta, Mesaj) ve veri entegrasyon duyuruları.
-
-#### D) GÖRSELLER / MÜLK GALERİSİ (VISUALS)
-
-- Analiz edilen mülklerin görselleri, harita görünümü ve çevre analizi grafiklerini sunan modern grid galeri yapısı.
-
-### 6. TEKNİK TASARIM BEKLENTİSİ
-
-Tasarımın responsive (Mobil, Tablet ve Masaüstü uyumlu), SaaS / FinTech terminal havasında son derece sade, şık ve göz yormayan bir yapıda olmasını sağla.
-
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://em-squared-insight.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/59e38256-b99a-4bae-b7a6-e7b8712b241e).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+```bash
+git clone https://github.com/Real-Estate-Ela/em-squared-insight-777e937d.git
+cd em-squared-insight-777e937d
+bun install
+bun run dev
 ```
+
+## Komutlar
+
+| Komut | Açıklama |
+|-------|----------|
+| `bun run dev` | Geliştirme sunucusu |
+| `bun run build` | Üretim derlemesi |
+| `bun run preview` | Üretim önizlemesi |
+| `bun run lint` | ESLint kontrolü |
+| `bun run format` | Prettier biçimlendirme |
+
+## Proje Yapısı
+
+```
+src/
+├── components/          # UI bileşenleri
+│   ├── ui/              # Radix UI tabanlı temel bileşenler
+│   ├── CityMorphBackground.tsx  # Animasyonlu şehir silueti (SVG)
+│   ├── Header.tsx       # Navigasyon başlığı
+│   ├── Footer.tsx       # Alt bilgi
+│   ├── LiveDataStrip.tsx # Canlı veri şeridi
+│   ├── Charts.tsx       # Veri grafikleri
+│   └── ...
+├── routes/              # Sayfa yönlendirmeleri (dosya tabanlı)
+│   ├── index.tsx        # Ana sayfa
+│   ├── hakkimizda.tsx   # Hakkımızda
+│   ├── iletisim.tsx     # İletişim
+│   └── gorseller.tsx    # Görseller
+├── styles.css           # Tasarım sistemi ve tema
+└── lib/                 # Yardımcı fonksiyonlar
+```
+
+## Lisans
+
+Tüm hakları saklıdır.
