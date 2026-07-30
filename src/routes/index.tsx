@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -21,6 +21,7 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
+import { CityMorphBackground } from "@/components/CityMorphBackground";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -104,7 +105,6 @@ function Home() {
   const [step, setStep] = useState(-1);
   const [done, setDone] = useState(true);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const heroGradientRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -132,17 +132,6 @@ function Home() {
     });
   };
 
-  const onHeroMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
-      if (!heroGradientRef.current) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      heroGradientRef.current.style.background = `radial-gradient(800px circle at ${x}% ${y}%, color-mix(in oklab, var(--primary) 5%, transparent), transparent 60%)`;
-    },
-    [],
-  );
-
   return (
     <div>
       {/* ===== HERO ===== */}
@@ -152,24 +141,10 @@ function Home() {
           background:
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
         }}
-        onMouseMove={onHeroMouseMove}
       >
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage: `
-              linear-gradient(var(--primary) 1px, transparent 1px),
-              linear-gradient(90deg, var(--primary) 1px, transparent 1px)
-            `,
-            backgroundSize: "80px 80px",
-          }}
-        />
-        <div
-          ref={heroGradientRef}
-          className="pointer-events-none absolute inset-0"
-        />
+        <CityMorphBackground />
 
-        <div className="relative mx-auto max-w-6xl px-5 py-24 md:px-8 md:py-36">
+        <div className="relative mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
           <div className="text-center">
             <Reveal variant="blur">
               <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-4 py-2 text-sm font-semibold text-positive">
@@ -209,79 +184,6 @@ function Home() {
               </button>
             </Reveal>
           </div>
-
-          {/* Dashboard Preview */}
-          <Reveal delay={500} variant="scale">
-            <div className="mx-auto mt-20 max-w-5xl">
-              <MouseCard
-                className="glass overflow-hidden rounded-2xl"
-                glowColor="var(--primary)"
-                tiltMax={3}
-                glowOpacity={0.04}
-              >
-                <div className="flex items-center gap-3 border-b px-5 py-3" style={{ borderColor: "color-mix(in oklab, var(--border) 40%, transparent)" }}>
-                  <span className="flex gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-risk/50" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/25" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-positive/50" />
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    emlakmetric — Ataşehir 3+1 Analizi
-                  </span>
-                </div>
-
-                <div className="p-4 md:p-6">
-                  <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
-                    <div className="rounded-xl border border-border/50 bg-card/80 p-5">
-                      <TrendChart
-                        points={trend}
-                        tone="positive"
-                        label="m² fiyat trendi — 24 ay"
-                        value="+%38"
-                      />
-                    </div>
-                    <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/80 p-5">
-                      <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-                    {metrics.map((m) => (
-                      <div
-                        key={m.label}
-                        className="glass-hover rounded-xl border border-border/50 bg-card/80 p-4 text-center"
-                      >
-                        <p className={`text-xl font-bold ${m.tone}`}>
-                          {m.value}
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {m.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div
-                    className="mt-4 flex items-center justify-between rounded-xl bg-positive/5 px-5 py-3"
-                    style={{
-                      border:
-                        "1px solid color-mix(in oklab, var(--positive) 20%, transparent)",
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-positive" />
-                      <span className="text-sm font-semibold text-positive">
-                        Olumlu Karar — Al, 5 yıl tut
-                      </span>
-                    </div>
-                    <span className="hidden text-xs text-muted-foreground sm:block">
-                      Risk: Düşük
-                    </span>
-                  </div>
-                </div>
-              </MouseCard>
-            </div>
-          </Reveal>
         </div>
       </section>
 
@@ -314,6 +216,81 @@ function Home() {
           ))}
         </div>
       </div>
+
+      {/* ===== PRODUCT PREVIEW ===== */}
+      <section>
+        <div className="mx-auto max-w-5xl px-5 py-16 md:px-8">
+          <Reveal variant="scale">
+            <MouseCard
+              className="glass overflow-hidden rounded-2xl"
+              glowColor="var(--primary)"
+              tiltMax={3}
+              glowOpacity={0.04}
+            >
+              <div className="flex items-center gap-3 border-b px-5 py-3" style={{ borderColor: "color-mix(in oklab, var(--border) 40%, transparent)" }}>
+                <span className="flex gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-risk/50" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/25" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-positive/50" />
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  emlakmetric — Ataşehir 3+1 Analizi
+                </span>
+              </div>
+
+              <div className="p-4 md:p-6">
+                <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+                  <div className="rounded-xl border border-border/50 bg-card/80 p-5">
+                    <TrendChart
+                      points={trend}
+                      tone="positive"
+                      label="m² fiyat trendi — 24 ay"
+                      value="+%38"
+                    />
+                  </div>
+                  <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/80 p-5">
+                    <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+                  {metrics.map((m) => (
+                    <div
+                      key={m.label}
+                      className="glass-hover rounded-xl border border-border/50 bg-card/80 p-4 text-center"
+                    >
+                      <p className={`text-xl font-bold ${m.tone}`}>
+                        {m.value}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {m.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  className="mt-4 flex items-center justify-between rounded-xl bg-positive/5 px-5 py-3"
+                  style={{
+                    border:
+                      "1px solid color-mix(in oklab, var(--positive) 20%, transparent)",
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-positive" />
+                    <span className="text-sm font-semibold text-positive">
+                      Olumlu Karar — Al, 5 yıl tut
+                    </span>
+                  </div>
+                  <span className="hidden text-xs text-muted-foreground sm:block">
+                    Risk: Düşük
+                  </span>
+                </div>
+              </div>
+            </MouseCard>
+          </Reveal>
+        </div>
+      </section>
 
       {/* ===== STATS ===== */}
       <section>
