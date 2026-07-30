@@ -46,7 +46,7 @@ const highlights = [
   { icon: TrendingUp, label: "ROI Analizi", desc: "5 yıllık getiri tahmini", color: "var(--positive)" },
   { icon: MapPin, label: "Çevre Analizi", desc: "Mahalle bazlı veri", color: "var(--cyan)" },
   { icon: Shield, label: "Risk Skoru", desc: "Arz ve talep dengesi", color: "var(--amber)" },
-  { icon: BarChart3, label: "Karşılaştırma", desc: "3 platformdan fiyat", color: "var(--purple)" },
+  { icon: BarChart3, label: "Karşılaştırma", desc: "3 platformdan fiyat", color: "var(--primary)" },
 ];
 
 const listings = [
@@ -129,25 +129,36 @@ function Home() {
           background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
         }}
       >
-        <IstanbulSkyline className="absolute bottom-0 left-0 right-0 hidden h-auto w-full text-foreground md:block" />
-        <div className="relative mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
+        {/* Technical grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(var(--primary) 1px, transparent 1px),
+              linear-gradient(90deg, var(--primary) 1px, transparent 1px)
+            `,
+            backgroundSize: "80px 80px",
+          }}
+        />
+        <IstanbulSkyline className="absolute bottom-0 left-0 right-0 hidden h-auto w-full md:block" />
+        <div className="relative mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-32">
           <Reveal variant="blur">
-            <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-3 py-1.5 text-sm font-medium text-positive">
-              <span className="live-dot" style={{ width: 6, height: 6 }} />
+            <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-4 py-2 text-sm font-semibold text-positive">
+              <span className="live-dot" style={{ width: 7, height: 7 }} />
               Analiz platformu aktif
             </div>
           </Reveal>
           <Reveal delay={80}>
-            <h1 className="mt-6 max-w-3xl text-4xl leading-[1.08] md:text-6xl">
+            <h1 className="mt-7 max-w-4xl text-5xl leading-[1.04] tracking-tight md:text-7xl">
               İlan linkini yapıştır,{" "}
-              <span className="bg-gradient-to-r from-primary to-cyan bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-cyan to-positive bg-clip-text text-transparent">
                 yatırım kararını
               </span>{" "}
               20 saniyede al.
             </h1>
           </Reveal>
           <Reveal delay={160} variant="fade">
-            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
+            <p className="mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">
               Konut, arsa ve ticari mülk için getiri analizi, çevre değerlendirmesi ve risk skoru.
             </p>
           </Reveal>
@@ -277,7 +288,7 @@ function Home() {
               { label: "Analiz edilen mülk", value: 12450, suffix: "+", color: "var(--primary)" },
               { label: "İlçe kapsama", value: 39, suffix: "", color: "var(--cyan)" },
               { label: "Ortalama doğruluk", value: 94, suffix: "%", color: "var(--positive)" },
-              { label: "Aktif kullanıcı", value: 3200, suffix: "+", color: "var(--purple)" },
+              { label: "Aktif kullanıcı", value: 3200, suffix: "+", color: "var(--amber)" },
             ].map((s, i) => (
               <Reveal key={s.label} delay={i * 80} variant="scale">
                 <MouseCard className="rounded-xl border border-border bg-card p-5 text-center" glowColor={s.color} tiltMax={8} glowOpacity={0.06}>

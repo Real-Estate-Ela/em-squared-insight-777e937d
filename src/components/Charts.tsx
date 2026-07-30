@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useInView } from "./Reveal";
 
-type Tone = "positive" | "risk" | "primary" | "amber" | "cyan" | "purple";
+type Tone = "positive" | "risk" | "primary" | "amber" | "cyan";
 
 const stroke: Record<Tone, string> = {
   positive: "var(--positive)",
@@ -9,7 +9,6 @@ const stroke: Record<Tone, string> = {
   primary: "var(--primary)",
   amber: "var(--amber)",
   cyan: "var(--cyan)",
-  purple: "var(--purple)",
 };
 
 function path(points: number[], w: number, h: number) {

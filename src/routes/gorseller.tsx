@@ -87,7 +87,7 @@ function Visuals() {
   const list = items.filter((i) => filter === "Tümü" || i.type === filter);
 
   return (
-    <div>
+    <div style={{ background: "linear-gradient(180deg, var(--page-gallery) 0%, var(--background) 40%)" }}>
       {/* Lightbox overlay */}
       {lightbox !== null && (
         <div
@@ -116,7 +116,7 @@ function Visuals() {
       <section
         style={{
           background:
-            "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+            "linear-gradient(180deg, var(--surface-cool) 0%, transparent 100%)",
         }}
       >
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
@@ -126,7 +126,10 @@ function Visuals() {
               Görseller
             </p>
             <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] md:text-5xl">
-              Analiz edilen mülkler
+              Analiz edilen{" "}
+              <span className="bg-gradient-to-r from-primary to-cyan bg-clip-text text-transparent">
+                mülkler
+              </span>
             </h1>
             <p className="mt-4 max-w-lg text-muted-foreground">
               Konut, arsa ve ticari mülk görünümleri ile çevre analizi

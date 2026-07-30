@@ -54,18 +54,21 @@ function Contact() {
   }
 
   return (
-    <div>
+    <div style={{ background: "linear-gradient(180deg, var(--page-contact) 0%, var(--background) 40%)" }}>
       <section
         style={{
           background:
-            "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+            "linear-gradient(180deg, var(--surface-cool) 0%, transparent 100%)",
         }}
       >
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
           <Reveal>
             <p className="label-mono">İletişim</p>
             <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] md:text-5xl">
-              Bize ulaşın
+              Bize{" "}
+              <span className="bg-gradient-to-r from-cyan to-primary bg-clip-text text-transparent">
+                ulaşın
+              </span>
             </h1>
             <p className="mt-4 max-w-lg text-muted-foreground">
               Sorularınız, önerileriniz veya iş birliği talepleriniz için
