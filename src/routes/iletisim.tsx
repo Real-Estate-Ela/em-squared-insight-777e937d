@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Send, Mail, User, MessageCircle, CheckCircle2 } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/iletisim")({
   head: () => ({
@@ -20,100 +22,203 @@ export const Route = createFileRoute("/iletisim")({
   component: Contact,
 });
 
-const notices = [
-  { no: "01", t: "sahibinden.com entegrasyonu", d: "İlan linki desteği", s: "Aktif", tone: "text-positive", soft: "bg-positive-soft" },
-  { no: "02", t: "hepsiemlak entegrasyonu", d: "Fiyat serisi eşleşmesi", s: "Aktif", tone: "text-positive", soft: "bg-positive-soft" },
-  { no: "03", t: "emlakjet entegrasyonu", d: "Mahalle medyanı", s: "Aktif", tone: "text-positive", soft: "bg-positive-soft" },
-  { no: "04", t: "TKGM parsel verisi", d: "Arsa analizi genişletmesi", s: "Kesintili", tone: "text-risk", soft: "bg-risk-soft" },
-];
+const subjects = [
+  "Genel bilgi",
+  "Veri entegrasyonu",
+  "Kurumsal erişim",
+  "API talebi",
+  "Hata bildirimi",
+] as const;
 
 function Contact() {
   const [sent, setSent] = useState(false);
+  const [subject, setSubject] = useState(subjects[0]);
+
+  if (sent) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-5">
+        <Reveal>
+          <div className="text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-positive/10">
+              <CheckCircle2 className="h-8 w-8 text-positive" />
+            </div>
+            <h2 className="mt-6 text-2xl font-semibold">Mesajınız alındı</h2>
+            <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+              En kısa sürede size dönüş yapacağız. Genellikle 1 iş günü
+              içinde yanıtlıyoruz.
+            </p>
+          </div>
+        </Reveal>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <section className="border-b border-border">
+    <div style={{ background: "linear-gradient(180deg, var(--page-contact) 0%, var(--background) 40%)" }}>
+      <section
+        style={{
+          background:
+            "linear-gradient(180deg, var(--surface-cool) 0%, transparent 100%)",
+        }}
+      >
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-          <p className="label-mono">İletişim</p>
-          <h1 className="mt-5 max-w-2xl text-4xl leading-[1.05] md:text-5xl">
-            Bize yazın.
-          </h1>
+          <Reveal>
+            <p className="label-mono">İletişim</p>
+            <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] md:text-5xl">
+              Bize{" "}
+              <span className="text-primary font-bold">
+                ulaşın
+              </span>
+            </h1>
+            <p className="mt-4 max-w-lg text-muted-foreground">
+              Sorularınız, önerileriniz veya iş birliği talepleriniz için
+              formu doldurun.
+            </p>
+          </Reveal>
         </div>
       </section>
 
       <section>
-        <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 md:grid-cols-2 md:px-8 md:py-20">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSent(true);
-            }}
-            className="space-y-6"
-          >
-            {[
-              { id: "ad", label: "ad soyad", type: "text" },
-              { id: "eposta", label: "e-posta", type: "email" },
-            ].map((f) => (
-              <div key={f.id}>
-                <label htmlFor={f.id} className="label-mono block">
-                  {f.label}
-                </label>
-                <input
-                  id={f.id}
-                  type={f.type}
-                  required
-                  className="mt-2 w-full border-b border-border bg-transparent py-2 text-sm outline-none transition-colors focus:border-primary"
-                />
-              </div>
-            ))}
-            <div>
-              <label htmlFor="mesaj" className="label-mono block">
-                mesaj
-              </label>
-              <textarea
-                id="mesaj"
-                rows={5}
-                required
-                className="mt-2 w-full resize-none border-b border-border bg-transparent py-2 text-sm outline-none transition-colors focus:border-primary"
-              />
-            </div>
-            <button
-              type="submit"
-              className="btn-tactile btn-tactile-primary"
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[1fr_320px] md:px-8 md:py-20">
+          <Reveal>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setSent(true);
+              }}
+              className="rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
             >
-              Gönder
-            </button>
-            {sent && (
-              <p className="status-pill bg-positive-soft text-positive">
-                <span className="status-dot" />
-                Mesajınız alındı. 1 iş günü içinde dönüş yapılır.
-              </p>
-            )}
-          </form>
-
-          <div>
-            <p className="label-mono">Veri Entegrasyon Duyuruları</p>
-            <div className="mt-6">
-              {notices.map((n) => (
-                <div
-                  key={n.no}
-                  className="flex items-center justify-between gap-6 border-t border-border py-4 last:border-b"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm">{n.t}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{n.d}</p>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="ad"
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    Ad Soyad
+                  </label>
+                  <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+                    <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <input
+                      id="ad"
+                      type="text"
+                      required
+                      placeholder="Adınız Soyadınız"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                    />
                   </div>
-                  <span className={`status-pill shrink-0 ${n.soft} ${n.tone}`}>
-                    <span className="status-dot" />
-                    {n.s}
-                  </span>
                 </div>
-              ))}
+                <div>
+                  <label
+                    htmlFor="eposta"
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    E-posta
+                  </label>
+                  <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+                    <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <input
+                      id="eposta"
+                      type="email"
+                      required
+                      placeholder="ornek@email.com"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <label className="mb-2 block text-sm font-medium">Konu</label>
+                <div className="flex flex-wrap gap-2">
+                  {subjects.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setSubject(s)}
+                      className={`rounded-lg px-3.5 py-2 text-sm transition-all duration-200 ${
+                        subject === s
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <label
+                  htmlFor="mesaj"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Mesaj
+                </label>
+                <div className="rounded-lg border border-border bg-background px-4 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+                  <div className="flex gap-3">
+                    <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <textarea
+                      id="mesaj"
+                      rows={5}
+                      required
+                      placeholder="Mesajınızı buraya yazın..."
+                      className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 sm:w-auto"
+              >
+                <Send className="h-4 w-4" />
+                Gönder
+              </button>
+            </form>
+          </Reveal>
+
+          <Reveal delay={100}>
+            <div className="space-y-6">
+              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <h3 className="text-sm font-semibold">E-posta</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  destek@emlakmetric.com
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <h3 className="text-sm font-semibold">Entegrasyon Durumu</h3>
+                <div className="mt-4 space-y-3">
+                  {[
+                    { name: "sahibinden.com", active: true },
+                    { name: "hepsiemlak.com", active: true },
+                    { name: "emlakjet.com", active: true },
+                    { name: "TKGM parsel verisi", active: false },
+                  ].map((s) => (
+                    <div
+                      key={s.name}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-sm text-muted-foreground">
+                        {s.name}
+                      </span>
+                      <span
+                        className={`status-pill text-xs ${
+                          s.active
+                            ? "bg-positive/10 text-positive"
+                            : "bg-risk/10 text-risk"
+                        }`}
+                      >
+                        <span className="status-dot" />
+                        {s.active ? "Aktif" : "Kesintili"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <p className="mt-8 text-sm text-muted-foreground">
-              destek@emlakmetric.com
-            </p>
-          </div>
+          </Reveal>
         </div>
       </section>
     </div>
