@@ -1,6 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, Loader2, TrendingUp, MapPin, BarChart3, Shield, Link2, Cpu, FileCheck, Calculator, Search } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  Loader2,
+  TrendingUp,
+  MapPin,
+  BarChart3,
+  Shield,
+  Link2,
+  Cpu,
+  FileCheck,
+} from "lucide-react";
 import prop1 from "@/assets/property-1.jpg";
 import prop2 from "@/assets/property-2.jpg";
 import prop3 from "@/assets/property-3.jpg";
@@ -8,12 +20,7 @@ import mapView from "@/assets/map-view.jpg";
 import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
-import { IstanbulSkyline } from "@/components/IstanbulSkyline";
 import { MouseCard, CountUp } from "@/components/MouseCard";
-import { PriceCalculator } from "@/components/PriceCalculator";
-import { EmptyState } from "@/components/EmptyState";
-import { TextFlow } from "@/components/TextFlow";
-import { SilhouetteCarousel } from "@/components/SilhouetteCarousel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,7 +31,10 @@ export const Route = createFileRoute("/")({
         content:
           "İlan linkini yapıştır; kira getirisi, amortisman, 5 yıl ROI ve çevre analizini saniyeler içinde gör. Konut, arsa ve ticari mülk için veri odaklı analiz.",
       },
-      { property: "og:title", content: "emlakmetric — Gayrimenkul analiz platformu" },
+      {
+        property: "og:title",
+        content: "emlakmetric — Gayrimenkul analiz platformu",
+      },
       {
         property: "og:description",
         content:
@@ -41,7 +51,7 @@ const metrics = [
   { label: "Kira getirisi", value: "%6,4", tone: "text-positive" },
   { label: "Amortisman", value: "15,6 yıl", tone: "" },
   { label: "5 yıl ROI", value: "%41", tone: "text-positive" },
-  { label: "Arz yoğunluğu riski", value: "Yüksek", tone: "text-risk" },
+  { label: "Arz riski", value: "Yüksek", tone: "text-risk" },
 ];
 
 const highlights = [
@@ -94,6 +104,7 @@ function Home() {
   const [step, setStep] = useState(-1);
   const [done, setDone] = useState(true);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const heroGradientRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -121,19 +132,30 @@ function Home() {
     });
   };
 
+  const onHeroMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (!heroGradientRef.current) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      heroGradientRef.current.style.background = `radial-gradient(800px circle at ${x}% ${y}%, color-mix(in oklab, var(--primary) 5%, transparent), transparent 60%)`;
+    },
+    [],
+  );
+
   return (
     <div>
-      {/* Hero */}
+      {/* ===== HERO ===== */}
       <section
-        id="analiz"
         className="relative overflow-hidden"
         style={{
-          background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+          background:
+            "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
         }}
+        onMouseMove={onHeroMouseMove}
       >
-        {/* Technical grid overlay */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.025]"
           style={{
             backgroundImage: `
               linear-gradient(var(--primary) 1px, transparent 1px),
@@ -142,33 +164,214 @@ function Home() {
             backgroundSize: "80px 80px",
           }}
         />
-        <TextFlow className="absolute inset-0 overflow-hidden" />
-        <IstanbulSkyline className="absolute bottom-0 left-0 right-0 hidden h-auto w-full md:block" />
-        <SilhouetteCarousel className="absolute bottom-0 left-0 right-0 hidden h-[280px] w-full md:block" />
-        <div className="relative mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-32">
-          <Reveal variant="blur">
-            <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-4 py-2 text-sm font-semibold text-positive">
-              <span className="live-dot" style={{ width: 7, height: 7 }} />
-              Analiz platformu aktif
+        <div
+          ref={heroGradientRef}
+          className="pointer-events-none absolute inset-0"
+        />
+
+        <div className="relative mx-auto max-w-6xl px-5 py-24 md:px-8 md:py-36">
+          <div className="text-center">
+            <Reveal variant="blur">
+              <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-4 py-2 text-sm font-semibold text-positive">
+                <span className="live-dot" style={{ width: 7, height: 7 }} />
+                Analiz platformu aktif
+              </div>
+            </Reveal>
+
+            <Reveal delay={100}>
+              <h1 className="mx-auto mt-8 max-w-4xl text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
+                İlan linkini yapıştır,
+                <br />
+                <span className="text-primary">yatırım kararını</span> saniyede
+                al.
+              </h1>
+            </Reveal>
+
+            <Reveal delay={200} variant="fade">
+              <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground">
+                Konut, arsa ve ticari mülk için getiri analizi, çevre
+                değerlendirmesi ve risk skoru.
+              </p>
+            </Reveal>
+
+            <Reveal delay={300}>
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("analiz")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="btn-glow mt-10 inline-flex items-center gap-2.5 rounded-xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground transition-transform duration-200 hover:scale-[1.03]"
+              >
+                Hemen Başla
+                <ArrowRight className="h-5 w-5" />
+              </button>
+            </Reveal>
+          </div>
+
+          {/* Dashboard Preview */}
+          <Reveal delay={500} variant="scale">
+            <div className="mx-auto mt-20 max-w-5xl">
+              <MouseCard
+                className="glass overflow-hidden rounded-2xl"
+                glowColor="var(--primary)"
+                tiltMax={3}
+                glowOpacity={0.04}
+              >
+                <div className="flex items-center gap-3 border-b px-5 py-3" style={{ borderColor: "color-mix(in oklab, var(--border) 40%, transparent)" }}>
+                  <span className="flex gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-risk/50" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/25" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-positive/50" />
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    emlakmetric — Ataşehir 3+1 Analizi
+                  </span>
+                </div>
+
+                <div className="p-4 md:p-6">
+                  <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+                    <div className="rounded-xl border border-border/50 bg-card/80 p-5">
+                      <TrendChart
+                        points={trend}
+                        tone="positive"
+                        label="m² fiyat trendi — 24 ay"
+                        value="+%38"
+                      />
+                    </div>
+                    <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/80 p-5">
+                      <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+                    {metrics.map((m) => (
+                      <div
+                        key={m.label}
+                        className="glass-hover rounded-xl border border-border/50 bg-card/80 p-4 text-center"
+                      >
+                        <p className={`text-xl font-bold ${m.tone}`}>
+                          {m.value}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {m.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div
+                    className="mt-4 flex items-center justify-between rounded-xl bg-positive/5 px-5 py-3"
+                    style={{
+                      border:
+                        "1px solid color-mix(in oklab, var(--positive) 20%, transparent)",
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-positive" />
+                      <span className="text-sm font-semibold text-positive">
+                        Olumlu Karar — Al, 5 yıl tut
+                      </span>
+                    </div>
+                    <span className="hidden text-xs text-muted-foreground sm:block">
+                      Risk: Düşük
+                    </span>
+                  </div>
+                </div>
+              </MouseCard>
             </div>
           </Reveal>
-          <Reveal delay={80}>
-            <h1 className="mt-7 max-w-4xl text-5xl leading-[1.04] tracking-tight md:text-7xl">
-              İlan linkini yapıştır,{" "}
-              <span className="text-primary font-bold">
-                yatırım kararını
-              </span>{" "}
-              20 saniyede al.
-            </h1>
-          </Reveal>
-          <Reveal delay={160} variant="fade">
-            <p className="mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">
-              Konut, arsa ve ticari mülk için getiri analizi, çevre değerlendirmesi ve risk skoru.
-            </p>
+        </div>
+      </section>
+
+      {/* ===== FEATURE HIGHLIGHTS ===== */}
+      <div className="glass border-y-0 rounded-none">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4">
+          {highlights.map((h, i) => (
+            <Reveal key={h.label} delay={i * 60} variant="scale">
+              <div
+                className={`flex items-center gap-3 px-5 py-4 ${
+                  i < highlights.length - 1
+                    ? "border-r border-border/40"
+                    : ""
+                }`}
+              >
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                  style={{
+                    backgroundColor: `color-mix(in oklab, ${h.color} 12%, transparent)`,
+                  }}
+                >
+                  <h.icon className="h-4 w-4" style={{ color: h.color }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{h.label}</p>
+                  <p className="text-xs text-muted-foreground">{h.desc}</p>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+
+      {/* ===== STATS ===== */}
+      <section>
+        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[
+              { label: "Analiz edilen mülk", value: 12450, suffix: "+", color: "var(--primary)" },
+              { label: "İlçe kapsama", value: 39, suffix: "", color: "var(--primary)" },
+              { label: "Ortalama doğruluk", value: 94, suffix: "%", color: "var(--positive)" },
+              { label: "Aktif kullanıcı", value: 3200, suffix: "+", color: "var(--risk)" },
+            ].map((s, i) => (
+              <Reveal key={s.label} delay={i * 80} variant="scale">
+                <MouseCard
+                  className="glass rounded-xl p-6 text-center"
+                  glowColor={s.color}
+                  tiltMax={8}
+                  glowOpacity={0.06}
+                >
+                  <p
+                    className="text-3xl font-bold"
+                    style={{ color: s.color }}
+                  >
+                    <CountUp value={s.value} suffix={s.suffix} />
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {s.label}
+                  </p>
+                </MouseCard>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== ANALYSIS INPUT ===== */}
+      <section
+        id="analiz"
+        style={{
+          background:
+            "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+        }}
+      >
+        <div className="mx-auto max-w-3xl px-5 py-20 md:px-8 md:py-28">
+          <Reveal variant="blur">
+            <div className="text-center">
+              <p className="label-mono">Analiz</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                İlan linkini yapıştır
+              </h2>
+              <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
+                Sahibinden, Hepsiemlak veya Emlakjet'ten herhangi bir ilan
+                linki.
+              </p>
+            </div>
           </Reveal>
 
-          <Reveal delay={200}>
-            <div className="mt-9 flex flex-wrap gap-2">
+          <Reveal delay={100}>
+            <div className="mt-8 flex flex-wrap justify-center gap-2">
               {tabs.map((t) => (
                 <button
                   key={t}
@@ -177,20 +380,22 @@ function Home() {
                   className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
                     tab === t
                       ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                      : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+                      : "glass text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {t}
                 </button>
               ))}
             </div>
+          </Reveal>
 
+          <Reveal delay={200}>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 runAnalysis();
               }}
-              className="mt-5 grid grid-cols-1 overflow-hidden rounded-xl border border-border bg-card shadow-lg shadow-black/5 transition-shadow duration-200 focus-within:shadow-xl focus-within:shadow-primary/10 sm:grid-cols-[minmax(0,1fr)_auto]"
+              className="glass mt-5 overflow-hidden rounded-xl transition-shadow duration-200 focus-within:shadow-xl focus-within:shadow-primary/10"
             >
               <div className="flex min-w-0 items-center gap-3 px-5 py-4">
                 <MapPin className="h-4 w-4 shrink-0 text-primary" />
@@ -202,24 +407,31 @@ function Home() {
                   className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>
-              <button
-                type="submit"
-                className="m-1.5 flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
-              >
-                {done ? "Analiz Et" : <Loader2 className="h-4 w-4 animate-spin" />}
-                {done ? null : "Analiz ediliyor"}
-              </button>
+              <div className="border-t border-border/40 p-1.5">
+                <button
+                  type="submit"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
+                >
+                  {done ? (
+                    "Analiz Et"
+                  ) : (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  {done ? null : "Analiz ediliyor"}
+                </button>
+              </div>
             </form>
+          </Reveal>
 
-            {/* Analysis progress */}
-            <div className="mt-5 overflow-hidden rounded-xl border border-border bg-card">
+          <Reveal delay={300}>
+            <div className="glass mt-5 overflow-hidden rounded-xl">
               {steps.map((s, i) => {
                 const active = !done && step === i;
                 const complete = done || step > i;
                 return (
                   <div
                     key={s}
-                    className={`flex items-center justify-between gap-4 border-b border-border px-5 py-3.5 text-sm last:border-b-0 transition-colors ${
+                    className={`flex items-center justify-between gap-4 border-b border-border/40 px-5 py-3.5 text-sm last:border-b-0 transition-colors ${
                       active ? "bg-positive/5" : ""
                     }`}
                   >
@@ -235,7 +447,13 @@ function Home() {
                       >
                         {complete ? <Check className="h-3 w-3" /> : null}
                       </span>
-                      <span className={complete ? "text-foreground" : "text-muted-foreground"}>
+                      <span
+                        className={
+                          complete
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                        }
+                      >
                         {s}
                       </span>
                     </span>
@@ -256,71 +474,33 @@ function Home() {
             </div>
           </Reveal>
         </div>
-
-        {/* Feature highlights */}
-        <div className="border-y border-border bg-card/60 backdrop-blur-sm">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4">
-            {highlights.map((h, i) => (
-              <Reveal key={h.label} delay={i * 60} variant="scale">
-                <div
-                  className={`flex items-center gap-3 px-5 py-4 ${
-                    i < highlights.length - 1 ? "border-r border-border" : ""
-                  }`}
-                >
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                    style={{ backgroundColor: `color-mix(in oklab, ${h.color} 12%, transparent)` }}
-                  >
-                    <h.icon className="h-4 w-4" style={{ color: h.color }} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold">{h.label}</p>
-                    <p className="text-xs text-muted-foreground">{h.desc}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
       </section>
 
-      {/* Stats strip */}
-      <section>
-        <div className="mx-auto max-w-6xl px-5 py-12 md:px-8">
-          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-            {[
-              { label: "Analiz edilen mülk", value: 12450, suffix: "+", color: "var(--primary)" },
-              { label: "İlçe kapsama", value: 39, suffix: "", color: "var(--primary)" },
-              { label: "Ortalama doğruluk", value: 94, suffix: "%", color: "var(--positive)" },
-              { label: "Aktif kullanıcı", value: 3200, suffix: "+", color: "var(--risk)" },
-            ].map((s, i) => (
-              <Reveal key={s.label} delay={i * 80} variant="scale">
-                <MouseCard className="rounded-xl border border-border bg-card p-5 text-center" glowColor={s.color} tiltMax={8} glowOpacity={0.06}>
-                  <p className="text-3xl font-bold" style={{ color: s.color }}>
-                    <CountUp value={s.value} suffix={s.suffix} />
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
-                </MouseCard>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Decision card */}
+      {/* ===== DECISION ===== */}
       <section id="karar">
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="slide-left">
-            <p className="label-mono">Karar Raporu</p>
+          <Reveal variant="blur">
+            <div className="text-center">
+              <p className="label-mono">Karar Raporu</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                Yatırım analiz sonucu
+              </h2>
+            </div>
           </Reveal>
+
           <Reveal delay={80} variant="scale">
             <MouseCard
-              className="mt-6 grid gap-10 overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm md:grid-cols-2 md:p-10"
+              className="glass mt-10 grid gap-10 overflow-hidden rounded-2xl p-6 md:grid-cols-2 md:p-10"
               glowColor="var(--positive)"
               glowOpacity={0.06}
               tiltMax={4}
             >
-              <div style={{ borderLeft: "4px solid var(--positive)", paddingLeft: "1.5rem" }}>
+              <div
+                style={{
+                  borderLeft: "4px solid var(--positive)",
+                  paddingLeft: "1.5rem",
+                }}
+              >
                 <span className="status-pill bg-positive/10 text-positive">
                   <span className="status-dot" />
                   Olumlu Karar
@@ -329,8 +509,9 @@ function Home() {
                   Al — <span className="text-positive">5 yıl tut</span>
                 </h2>
                 <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-                  Bölge fiyat artışı son 24 ayda %38. İlan, mahalle medyanının %9 altında
-                  listelenmiş. Tek risk kalemi: yüksek arz yoğunluğu.
+                  Bölge fiyat artışı son 24 ayda %38. İlan, mahalle medyanının
+                  %9 altında listelenmiş. Tek risk kalemi: yüksek arz
+                  yoğunluğu.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <button type="button" className="btn-tactile btn-tactile-positive">
@@ -345,19 +526,27 @@ function Home() {
                 {metrics.map((m) => (
                   <div
                     key={m.label}
-                    className="flex items-baseline justify-between border-t border-border py-4 last:border-b"
+                    className="flex items-baseline justify-between border-t border-border/40 py-4 last:border-b last:border-border/40"
                   >
-                    <dt className="text-sm text-muted-foreground">{m.label}</dt>
-                    <dd className={`text-sm font-semibold ${m.tone}`}>{m.value}</dd>
+                    <dt className="text-sm text-muted-foreground">
+                      {m.label}
+                    </dt>
+                    <dd className={`text-sm font-semibold ${m.tone}`}>
+                      {m.value}
+                    </dd>
                   </div>
                 ))}
               </dl>
             </MouseCard>
           </Reveal>
 
-          <div className="mt-12 grid gap-10 md:grid-cols-3">
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
             <Reveal variant="slide-left" className="md:col-span-2">
-              <MouseCard className="rounded-xl border border-border bg-card p-6" glowColor="var(--positive)" tiltMax={3}>
+              <MouseCard
+                className="glass rounded-xl p-6"
+                glowColor="var(--positive)"
+                tiltMax={3}
+              >
                 <TrendChart
                   points={trend}
                   tone="positive"
@@ -365,7 +554,11 @@ function Home() {
                   value="+%38"
                 />
               </MouseCard>
-              <MouseCard className="mt-4 rounded-xl border border-border bg-card p-6" glowColor="var(--risk)" tiltMax={3}>
+              <MouseCard
+                className="glass mt-4 rounded-xl p-6"
+                glowColor="var(--risk)"
+                tiltMax={3}
+              >
                 <TrendChart
                   points={riskTrend}
                   tone="risk"
@@ -375,11 +568,23 @@ function Home() {
                 />
               </MouseCard>
             </Reveal>
-            <Reveal delay={120} variant="slide-right" className="grid grid-cols-2 gap-6 self-center md:grid-cols-1">
-              <MouseCard className="flex items-center justify-center rounded-xl border border-border bg-card p-6" glowColor="var(--positive)" tiltMax={8}>
+            <Reveal
+              delay={120}
+              variant="slide-right"
+              className="grid grid-cols-2 gap-6 self-center md:grid-cols-1"
+            >
+              <MouseCard
+                className="glass flex items-center justify-center rounded-xl p-6"
+                glowColor="var(--positive)"
+                tiltMax={8}
+              >
                 <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
               </MouseCard>
-              <MouseCard className="flex items-center justify-center rounded-xl border border-border bg-card p-6" glowColor="var(--risk)" tiltMax={8}>
+              <MouseCard
+                className="glass flex items-center justify-center rounded-xl p-6"
+                glowColor="var(--risk)"
+                tiltMax={8}
+              >
                 <Gauge value={22} tone="risk" caption="Risk Skoru" />
               </MouseCard>
             </Reveal>
@@ -387,23 +592,30 @@ function Home() {
         </div>
       </section>
 
-      {/* Before/After Comparison */}
+      {/* ===== BEFORE / AFTER ===== */}
       <section
         style={{
-          background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+          background:
+            "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
         }}
       >
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="slide-left">
-            <p className="label-mono">Öncesi / Sonrası</p>
-            <h2 className="mt-3 text-2xl md:text-3xl">Ataşehir — 24 aylık değişim</h2>
+          <Reveal variant="blur">
+            <div className="text-center">
+              <p className="label-mono">Öncesi / Sonrası</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                Ataşehir — 24 aylık değişim
+              </h2>
+            </div>
           </Reveal>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {beforeAfter.map((item, i) => (
               <Reveal key={item.label} delay={i * 100} variant="scale">
                 <MouseCard
-                  className="rounded-xl border border-border bg-card p-5 shadow-sm"
-                  glowColor={item.positive ? "var(--positive)" : "var(--risk)"}
+                  className="glass rounded-xl p-5"
+                  glowColor={
+                    item.positive ? "var(--positive)" : "var(--risk)"
+                  }
                   tiltMax={10}
                   glowOpacity={0.08}
                 >
@@ -411,15 +623,26 @@ function Home() {
                   <div className="mt-4 flex items-end justify-between gap-3">
                     <div>
                       <p className="text-xs text-muted-foreground">Önce</p>
-                      <p className="mt-1 text-sm font-medium text-muted-foreground line-through decoration-muted-foreground/30">{item.before}</p>
+                      <p className="mt-1 text-sm font-medium text-muted-foreground line-through decoration-muted-foreground/30">
+                        {item.before}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground">Şimdi</p>
                       <p className="mt-1 text-sm font-bold">{item.after}</p>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-center rounded-lg py-2" style={{ backgroundColor: item.positive ? "color-mix(in oklab, var(--positive) 8%, transparent)" : "color-mix(in oklab, var(--risk) 8%, transparent)" }}>
-                    <span className={`text-lg font-bold ${item.positive ? "text-positive" : "text-risk"}`}>
+                  <div
+                    className="mt-3 flex items-center justify-center rounded-lg py-2"
+                    style={{
+                      backgroundColor: item.positive
+                        ? "color-mix(in oklab, var(--positive) 8%, transparent)"
+                        : "color-mix(in oklab, var(--risk) 8%, transparent)",
+                    }}
+                  >
+                    <span
+                      className={`text-lg font-bold ${item.positive ? "text-positive" : "text-risk"}`}
+                    >
                       {item.change}
                     </span>
                   </div>
@@ -430,46 +653,66 @@ function Home() {
         </div>
       </section>
 
-      {/* Comparison table */}
+      {/* ===== COMPARISON TABLE ===== */}
       <section
         style={{
-          background: "linear-gradient(180deg, var(--surface-warm) 0%, var(--background) 100%)",
+          background:
+            "linear-gradient(180deg, var(--surface-warm) 0%, var(--background) 100%)",
         }}
       >
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="slide-right">
-            <p className="label-mono">Platform Karşılaştırması</p>
-            <h2 className="mt-3 text-2xl md:text-3xl">Aynı mülk, farklı platformlar</h2>
+          <Reveal variant="blur">
+            <div className="text-center">
+              <p className="label-mono">Platform Karşılaştırması</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                Aynı mülk, farklı platformlar
+              </h2>
+            </div>
           </Reveal>
           <Reveal delay={100} variant="scale">
-            <MouseCard className="mt-8 overflow-hidden rounded-xl border border-border bg-card shadow-sm" glowColor="var(--primary)" tiltMax={2}>
+            <MouseCard
+              className="glass mt-10 overflow-hidden rounded-xl"
+              glowColor="var(--primary)"
+              tiltMax={2}
+            >
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px] border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      {["Platform", "İlan", "m²", "Fiyat", "Sapma"].map((h) => (
-                        <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {h}
-                        </th>
-                      ))}
+                    <tr className="border-b border-border/40 bg-muted/20">
+                      {["Platform", "İlan", "m²", "Fiyat", "Sapma"].map(
+                        (h) => (
+                          <th
+                            key={h}
+                            className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            {h}
+                          </th>
+                        ),
+                      )}
                     </tr>
                   </thead>
                   <tbody>
                     {listings.map((l) => (
                       <tr
                         key={l.platform}
-                        className="group border-b border-border transition-colors duration-200 last:border-b-0 hover:bg-muted/30"
+                        className="group border-b border-border/40 transition-colors duration-200 last:border-b-0 hover:bg-muted/20"
                       >
-                        <td className="px-5 py-4 font-medium">{l.platform}</td>
+                        <td className="px-5 py-4 font-medium">
+                          {l.platform}
+                        </td>
                         <td className="px-5 py-4 text-muted-foreground">
                           <span className="inline-flex items-center gap-1.5">
                             {l.url}
                             <ArrowUpRight className="h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-muted-foreground">{l.m2}</td>
+                        <td className="px-5 py-4 text-muted-foreground">
+                          {l.m2}
+                        </td>
                         <td className="px-5 py-4 font-medium">{l.price}</td>
-                        <td className={`px-5 py-4 font-medium ${l.positive ? "text-positive" : "text-risk"}`}>
+                        <td
+                          className={`px-5 py-4 font-medium ${l.positive ? "text-positive" : "text-risk"}`}
+                        >
                           <span className="inline-flex items-center gap-2">
                             <span className="status-dot" />
                             {l.delta}
@@ -485,81 +728,91 @@ function Home() {
         </div>
       </section>
 
-      {/* Slider */}
+      {/* ===== SLIDER ===== */}
       <section>
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="slide-left">
-            <p className="label-mono">Yakın Çevre Analizi</p>
-            <h2 className="mt-3 text-2xl md:text-3xl">Çevredeki arsa, konut ve dükkanlar</h2>
+          <Reveal variant="blur">
+            <div className="text-center">
+              <p className="label-mono">Yakın Çevre Analizi</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                Çevredeki arsa, konut ve dükkanlar
+              </h2>
+            </div>
           </Reveal>
           <Reveal delay={80}>
-            <div className="mt-8">
+            <div className="mt-10">
               <AnalysisSlider slides={slides} />
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* Price Calculator */}
+      {/* ===== BARS ===== */}
       <section
         style={{
-          background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+          background:
+            "linear-gradient(180deg, var(--surface-mint) 0%, var(--background) 100%)",
         }}
       >
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="slide-right">
-            <p className="label-mono flex items-center gap-2">
-              <Calculator className="h-3.5 w-3.5" />
-              Yatırım Hesaplayıcı
-            </p>
-            <h2 className="mt-3 text-2xl md:text-3xl">Kredi ve getiri hesabı</h2>
-            <p className="mt-3 max-w-lg text-sm text-muted-foreground">
-              Mülk fiyatı, peşinat, faiz oranı ve kira geliri ile yatırım getirisini hesaplayın.
-            </p>
-          </Reveal>
-          <Reveal delay={100} variant="scale">
-            <div className="mt-8">
-              <PriceCalculator />
+          <Reveal variant="blur">
+            <div className="text-center">
+              <p className="label-mono">Mahalle Kesiti</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                Ataşehir — metrik dağılımı
+              </h2>
             </div>
           </Reveal>
-        </div>
-      </section>
-
-      {/* Bars */}
-      <section
-        style={{
-          background: "linear-gradient(180deg, var(--surface-mint) 0%, var(--background) 100%)",
-        }}
-      >
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="slide-left">
-            <p className="label-mono">Mahalle Kesiti</p>
-            <h2 className="mt-3 text-2xl md:text-3xl">Ataşehir — metrik dağılımı</h2>
-          </Reveal>
           <Reveal delay={80} variant="scale">
-            <MouseCard className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm" glowColor="var(--primary)" tiltMax={3}>
+            <MouseCard
+              className="glass mx-auto mt-10 max-w-3xl rounded-xl p-6"
+              glowColor="var(--primary)"
+              tiltMax={3}
+            >
               <Bars data={bars} />
             </MouseCard>
           </Reveal>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* ===== HOW IT WORKS ===== */}
       <section>
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal variant="blur">
-            <p className="label-mono text-center">Nasıl Çalışır?</p>
-            <h2 className="mt-3 text-center text-2xl md:text-3xl">3 adımda yatırım kararı</h2>
+            <div className="text-center">
+              <p className="label-mono">Nasıl Çalışır?</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                3 adımda yatırım kararı
+              </h2>
+            </div>
           </Reveal>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             {[
-              { icon: Link2, title: "İlan linkini yapıştır", desc: "Sahibinden, Hepsiemlak veya Emlakjet'ten herhangi bir ilan linkini yapıştır.", color: "var(--primary)", step: "1" },
-              { icon: Cpu, title: "AI analiz etsin", desc: "Fiyat, kira getirisi, amortisman, çevre analizi ve risk skoru saniyeler içinde hesaplanır.", color: "var(--positive)", step: "2" },
-              { icon: FileCheck, title: "Karar raporunu al", desc: "Al/satma/bekle kararı, karşılaştırma tablosu ve detaylı rapor oluşturulur.", color: "var(--positive)", step: "3" },
+              {
+                icon: Link2,
+                title: "İlan linkini yapıştır",
+                desc: "Sahibinden, Hepsiemlak veya Emlakjet'ten herhangi bir ilan linki.",
+                color: "var(--primary)",
+                step: "1",
+              },
+              {
+                icon: Cpu,
+                title: "AI analiz etsin",
+                desc: "Fiyat, kira getirisi, amortisman ve risk skoru saniyeler içinde.",
+                color: "var(--positive)",
+                step: "2",
+              },
+              {
+                icon: FileCheck,
+                title: "Karar raporunu al",
+                desc: "Al/satma/bekle kararı ve detaylı rapor oluşturulur.",
+                color: "var(--positive)",
+                step: "3",
+              },
             ].map((s, i) => (
               <Reveal key={s.step} delay={i * 120} variant="slide-right">
                 <MouseCard
-                  className="relative flex flex-col items-center rounded-xl border border-border bg-card p-8 text-center shadow-sm"
+                  className="glass relative flex flex-col items-center rounded-xl p-8 text-center"
                   glowColor={s.color}
                   tiltMax={10}
                   glowOpacity={0.1}
@@ -572,17 +825,23 @@ function Home() {
                   </span>
                   <div
                     className="mt-2 flex h-14 w-14 items-center justify-center rounded-2xl"
-                    style={{ backgroundColor: `color-mix(in oklab, ${s.color} 12%, transparent)` }}
+                    style={{
+                      backgroundColor: `color-mix(in oklab, ${s.color} 12%, transparent)`,
+                    }}
                   >
-                    <s.icon className="h-6 w-6" style={{ color: s.color }} />
+                    <s.icon
+                      className="h-6 w-6"
+                      style={{ color: s.color }}
+                    />
                   </div>
                   <h3 className="mt-5 text-base font-semibold">{s.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {s.desc}
+                  </p>
                 </MouseCard>
               </Reveal>
             ))}
           </div>
-          {/* Connecting arrows (desktop only) */}
           <Reveal delay={400} variant="fade">
             <div className="mt-4 hidden items-center justify-center gap-2 text-muted-foreground md:flex">
               <span className="h-px w-20 bg-border" />
@@ -601,35 +860,11 @@ function Home() {
         </div>
       </section>
 
-      {/* Empty State Demo */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="slide-left">
-            <p className="label-mono flex items-center gap-2">
-              <Search className="h-3.5 w-3.5" />
-              Aramanızı Başlatın
-            </p>
-            <h2 className="mt-3 text-2xl md:text-3xl">Henüz analiz yapmadınız mı?</h2>
-          </Reveal>
-          <Reveal delay={100} variant="blur">
-            <MouseCard className="mt-8 rounded-xl border border-border bg-card shadow-sm" glowColor="var(--primary)" tiltMax={2} glowOpacity={0.04}>
-              <EmptyState
-                title="İlk analizinizi başlatın"
-                description="Sahibinden, Hepsiemlak veya Emlakjet'ten herhangi bir ilan linkini yapıştırarak mülk analizi başlatın. Getiri, risk ve çevre verilerini saniyeler içinde alın."
-                cta="Analiz Et"
-                onAction={() => {
-                  document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" });
-                }}
-              />
-            </MouseCard>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Dark CTA Section — Vobiz-inspired */}
+      {/* ===== DARK CTA ===== */}
       <section
         style={{
-          background: "linear-gradient(180deg, var(--foreground) 0%, oklch(0.15 0.02 264) 100%)",
+          background:
+            "linear-gradient(180deg, var(--foreground) 0%, oklch(0.15 0.02 264) 100%)",
         }}
       >
         <div className="mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-28">
@@ -637,55 +872,67 @@ function Home() {
             <div className="relative mx-auto max-w-2xl">
               <div
                 className="absolute -inset-4 rounded-3xl opacity-30 blur-3xl"
-                style={{ background: "linear-gradient(135deg, var(--risk), var(--primary))" }}
+                style={{
+                  background:
+                    "linear-gradient(135deg, var(--primary), var(--positive))",
+                }}
               />
               <div
-                className="relative overflow-hidden rounded-2xl border p-8 md:p-12"
+                className="relative overflow-hidden rounded-2xl border p-8 text-center md:p-12"
                 style={{
                   borderColor: "oklch(1 0 0 / 0.08)",
                   background: "oklch(1 0 0 / 0.04)",
                   backdropFilter: "blur(24px)",
                 }}
               >
-                <div className="text-center">
-                  <p
-                    className="text-xs font-semibold uppercase tracking-[0.2em]"
-                    style={{ color: "var(--primary)" }}
+                <p
+                  className="text-xs font-semibold uppercase tracking-[0.2em]"
+                  style={{ color: "var(--primary)" }}
+                >
+                  Ücretsiz Başla
+                </p>
+                <h2 className="mt-4 text-3xl font-bold text-white md:text-4xl">
+                  Yatırım kararınızı{" "}
+                  <span style={{ color: "var(--primary)" }}>veriye</span>{" "}
+                  dayandırın.
+                </h2>
+                <p
+                  className="mx-auto mt-4 max-w-md text-sm leading-relaxed"
+                  style={{ color: "oklch(1 0 0 / 0.55)" }}
+                >
+                  İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve
+                  çevre analizini görün.
+                </p>
+                <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document
+                        .getElementById("analiz")
+                        ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                    className="flex items-center gap-2 rounded-xl px-8 py-4 text-sm font-bold text-white transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: "var(--primary)",
+                      boxShadow:
+                        "0 8px 32px color-mix(in oklab, var(--primary) 40%, transparent)",
+                    }}
                   >
-                    Ücretsiz Başla
-                  </p>
-                  <h2 className="mt-4 text-3xl font-bold text-white md:text-4xl">
-                    Yatırım kararınızı{" "}
-                    <span style={{ color: "var(--primary)" }}>veriye</span>{" "}
-                    dayandırın.
-                  </h2>
-                  <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed" style={{ color: "oklch(1 0 0 / 0.55)" }}>
-                    İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve çevre analizini görün. Kayıt gerektirmez.
-                  </p>
-                  <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" })}
-                      className="flex items-center gap-2 rounded-xl px-8 py-4 text-sm font-bold text-white transition-all hover:scale-105"
-                      style={{
-                        backgroundColor: "var(--primary)",
-                        boxShadow: "0 8px 32px color-mix(in oklab, var(--primary) 40%, transparent)",
-                      }}
-                    >
-                      Hemen Analiz Et
-                      <ArrowUpRight className="h-4 w-4" />
-                    </button>
-                    <span className="text-xs" style={{ color: "oklch(1 0 0 / 0.35)" }}>
-                      Kredi kartı gerekmez
-                    </span>
-                  </div>
+                    Hemen Analiz Et
+                    <ArrowUpRight className="h-4 w-4" />
+                  </button>
+                  <span
+                    className="text-xs"
+                    style={{ color: "oklch(1 0 0 / 0.35)" }}
+                  >
+                    Kredi kartı gerekmez
+                  </span>
                 </div>
               </div>
             </div>
           </Reveal>
         </div>
       </section>
-
     </div>
   );
 }
