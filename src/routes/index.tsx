@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -21,6 +21,8 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
+import { CityScene, type CityPhase } from "@/components/CityScene";
+import type { City } from "@/components/model";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -104,6 +106,20 @@ function Home() {
   const [step, setStep] = useState(-1);
   const [done, setDone] = useState(true);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [cityName, setCityName] = useState("");
+  const [cityRegion, setCityRegion] = useState("");
+  const [cityKey, setCityKey] = useState(0);
+
+  const onCity = useCallback((city: City, phase: CityPhase, _progress: number, index: number) => {
+    if (phase === "model") {
+      setCityName((prev) => (prev === city.name ? prev : city.name));
+      setCityRegion((prev) => (prev === city.region ? prev : city.region));
+      setCityKey((prev) => {
+        const next = index;
+        return prev === next ? prev : next;
+      });
+    }
+  }, []);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -139,8 +155,26 @@ function Home() {
         style={{
           background:
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
+          minHeight: "min(100vh, 900px)",
         }}
       >
+        <CityScene
+          className="opacity-[0.15]"
+          style={{ position: "absolute", inset: 0 }}
+          anchorX={0.5}
+          horizon={0.55}
+          hold={3}
+          sweep={1.5}
+          animate
+          colors={{
+            primary: "#4D7CFF",
+            positive: "#00875A",
+            risk: "#E23D28",
+            ink: "#0E1116",
+          }}
+          onCity={onCity}
+        />
+
         <div className="relative mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
           <div className="text-center">
             <Reveal delay={100}>
@@ -175,6 +209,25 @@ function Home() {
             </Reveal>
           </div>
         </div>
+
+        {/* City name overlay */}
+        {cityName && (
+          <div className="absolute bottom-20 left-0 right-0 z-10 flex justify-center pointer-events-none">
+            <div
+              key={cityKey}
+              className="city-name-slide flex items-center gap-3 rounded-full px-6 py-2.5 shadow-lg"
+              style={{
+                background: "color-mix(in oklab, var(--background) 85%, transparent)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid color-mix(in oklab, var(--border) 50%, transparent)",
+              }}
+            >
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">{cityName}</span>
+              <span className="text-xs text-muted-foreground">{cityRegion}</span>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ===== FEATURE HIGHLIGHTS ===== */}

@@ -602,6 +602,29 @@
   animation: em-number-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+@keyframes em-city-name-slide {
+  0% {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+.city-name-slide {
+  animation: em-city-name-slide 4.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 /* Chart tooltip */
 @utility chart-tooltip {
   position: absolute;
