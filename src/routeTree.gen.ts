@@ -10,14 +10,40 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SifreYenileRouteImport } from './routes/sifre-yenile'
+import { Route as SifreSifirlaRouteImport } from './routes/sifre-sifirla'
+import { Route as ProfilRouteImport } from './routes/profil'
+import { Route as KayitRouteImport } from './routes/kayit'
 import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
 import { Route as GorsellerRouteImport } from './routes/gorseller'
+import { Route as GirisRouteImport } from './routes/giris'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SifreYenileRoute = SifreYenileRouteImport.update({
+  id: '/sifre-yenile',
+  path: '/sifre-yenile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SifreSifirlaRoute = SifreSifirlaRouteImport.update({
+  id: '/sifre-sifirla',
+  path: '/sifre-sifirla',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfilRoute = ProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KayitRoute = KayitRouteImport.update({
+  id: '/kayit',
+  path: '/kayit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IletisimRoute = IletisimRouteImport.update({
@@ -35,54 +61,116 @@ const GorsellerRoute = GorsellerRouteImport.update({
   path: '/gorseller',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GirisRoute = GirisRouteImport.update({
+  id: '/giris',
+  path: '/giris',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/giris': typeof GirisRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
+  '/kayit': typeof KayitRoute
+  '/profil': typeof ProfilRoute
+  '/sifre-sifirla': typeof SifreSifirlaRoute
+  '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/giris': typeof GirisRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
+  '/kayit': typeof KayitRoute
+  '/profil': typeof ProfilRoute
+  '/sifre-sifirla': typeof SifreSifirlaRoute
+  '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/giris': typeof GirisRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
+  '/kayit': typeof KayitRoute
+  '/profil': typeof ProfilRoute
+  '/sifre-sifirla': typeof SifreSifirlaRoute
+  '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/gorseller' | '/hakkimizda' | '/iletisim' | '/sitemap.xml'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/gorseller' | '/hakkimizda' | '/iletisim' | '/sitemap.xml'
-  id:
-    | '__root__'
+  fullPaths:
     | '/'
+    | '/giris'
     | '/gorseller'
     | '/hakkimizda'
     | '/iletisim'
+    | '/kayit'
+    | '/profil'
+    | '/sifre-sifirla'
+    | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/auth/callback'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/giris'
+    | '/gorseller'
+    | '/hakkimizda'
+    | '/iletisim'
+    | '/kayit'
+    | '/profil'
+    | '/sifre-sifirla'
+    | '/sifre-yenile'
+    | '/sitemap.xml'
+    | '/auth/callback'
+  id:
+    | '__root__'
+    | '/'
+    | '/giris'
+    | '/gorseller'
+    | '/hakkimizda'
+    | '/iletisim'
+    | '/kayit'
+    | '/profil'
+    | '/sifre-sifirla'
+    | '/sifre-yenile'
+    | '/sitemap.xml'
+    | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GirisRoute: typeof GirisRoute
   GorsellerRoute: typeof GorsellerRoute
   HakkimizdaRoute: typeof HakkimizdaRoute
   IletisimRoute: typeof IletisimRoute
+  KayitRoute: typeof KayitRoute
+  ProfilRoute: typeof ProfilRoute
+  SifreSifirlaRoute: typeof SifreSifirlaRoute
+  SifreYenileRoute: typeof SifreYenileRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +180,34 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sifre-yenile': {
+      id: '/sifre-yenile'
+      path: '/sifre-yenile'
+      fullPath: '/sifre-yenile'
+      preLoaderRoute: typeof SifreYenileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sifre-sifirla': {
+      id: '/sifre-sifirla'
+      path: '/sifre-sifirla'
+      fullPath: '/sifre-sifirla'
+      preLoaderRoute: typeof SifreSifirlaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profil': {
+      id: '/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof ProfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kayit': {
+      id: '/kayit'
+      path: '/kayit'
+      fullPath: '/kayit'
+      preLoaderRoute: typeof KayitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/iletisim': {
@@ -115,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GorsellerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/giris': {
+      id: '/giris'
+      path: '/giris'
+      fullPath: '/giris'
+      preLoaderRoute: typeof GirisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -122,15 +245,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GirisRoute: GirisRoute,
   GorsellerRoute: GorsellerRoute,
   HakkimizdaRoute: HakkimizdaRoute,
   IletisimRoute: IletisimRoute,
+  KayitRoute: KayitRoute,
+  ProfilRoute: ProfilRoute,
+  SifreSifirlaRoute: SifreSifirlaRoute,
+  SifreYenileRoute: SifreYenileRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
