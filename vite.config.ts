@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
+import { nitro } from 'nitro/vite'
 
 export default defineConfig(({ command, mode }) => {
   const envDefine: Record<string, string> = {};
@@ -44,9 +45,11 @@ export default defineConfig(({ command, mode }) => {
           client: {
             files: ["**/server/**"],
             specifiers: ["server-only"],
+           
           },
         },
       }),
+      nitro(),
       react(),
     ],
     server: {
