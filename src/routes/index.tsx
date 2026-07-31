@@ -827,74 +827,39 @@ function Home() {
         </div>
       </section>
 
-      {/* ===== DARK CTA ===== */}
+      {/* ===== CTA ===== */}
       <section
         style={{
-          background:
-            "linear-gradient(180deg, var(--foreground) 0%, oklch(0.15 0.02 264) 100%)",
+          background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
         }}
       >
-        <div className="mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-28">
+        <div className="mx-auto max-w-3xl px-5 py-20 md:px-8 md:py-28">
           <Reveal variant="blur">
-            <div className="relative mx-auto max-w-2xl">
-              <div
-                className="absolute -inset-4 rounded-3xl opacity-30 blur-3xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--primary), var(--positive))",
-                }}
-              />
-              <div
-                className="relative overflow-hidden rounded-2xl border p-8 text-center md:p-12"
-                style={{
-                  borderColor: "oklch(1 0 0 / 0.08)",
-                  background: "oklch(1 0 0 / 0.04)",
-                  backdropFilter: "blur(24px)",
-                }}
-              >
-                <p
-                  className="text-xs font-semibold uppercase tracking-[0.2em]"
-                  style={{ color: "var(--primary)" }}
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                Yatırım kararınızı{" "}
+                <span className="text-primary">veriye</span> dayandırın.
+              </h2>
+              <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+                İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve
+                çevre analizini görün.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById("analiz")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="btn-glow flex items-center gap-2 rounded-xl bg-primary px-8 py-4 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.03]"
                 >
-                  Ücretsiz Başla
-                </p>
-                <h2 className="mt-4 text-3xl font-bold text-white md:text-4xl">
-                  Yatırım kararınızı{" "}
-                  <span style={{ color: "var(--primary)" }}>veriye</span>{" "}
-                  dayandırın.
-                </h2>
-                <p
-                  className="mx-auto mt-4 max-w-md text-sm leading-relaxed"
-                  style={{ color: "oklch(1 0 0 / 0.55)" }}
-                >
-                  İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve
-                  çevre analizini görün.
-                </p>
-                <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      document
-                        .getElementById("analiz")
-                        ?.scrollIntoView({ behavior: "smooth" })
-                    }
-                    className="flex items-center gap-2 rounded-xl px-8 py-4 text-sm font-bold text-white transition-all hover:scale-105"
-                    style={{
-                      backgroundColor: "var(--primary)",
-                      boxShadow:
-                        "0 8px 32px color-mix(in oklab, var(--primary) 40%, transparent)",
-                    }}
-                  >
-                    Hemen Analiz Et
-                    <ArrowUpRight className="h-4 w-4" />
-                  </button>
-                  <span
-                    className="text-xs"
-                    style={{ color: "oklch(1 0 0 / 0.35)" }}
-                  >
-                    Kredi kartı gerekmez
-                  </span>
-                </div>
+                  Hemen Analiz Et
+                  <ArrowUpRight className="h-4 w-4" />
+                </button>
+                <span className="text-xs text-muted-foreground">
+                  Kredi kartı gerekmez
+                </span>
               </div>
             </div>
           </Reveal>

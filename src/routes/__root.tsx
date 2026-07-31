@@ -12,7 +12,6 @@ import { type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
-import { LiveDataStrip } from "../components/LiveDataStrip";
 import { AuthProvider } from "../components/auth/AuthProvider";
 
 function NotFoundComponent() {
@@ -134,7 +133,6 @@ function RootComponent() {
       <AuthProvider>
         <div className="flex min-h-screen flex-col">
           <Header />
-          <LiveDataStrip />
           <main className="flex-1">
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
