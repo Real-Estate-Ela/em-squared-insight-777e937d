@@ -2,12 +2,12 @@ import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { EmSquareMark, Wordmark } from "./Logo";
+import { UserMenu } from "./auth/UserMenu";
 
 const links = [
   { to: "/", label: "Ana Sayfa" },
   { to: "/hakkimizda", label: "Hakkımızda" },
   { to: "/iletisim", label: "İletişim" },
-  { to: "/gorseller", label: "Görseller" },
 ] as const;
 
 export function Header() {
@@ -59,6 +59,7 @@ export function Header() {
             Analiz Et
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
+          <UserMenu />
         </nav>
 
         <button
@@ -92,6 +93,9 @@ export function Header() {
             Analiz Et
             <ArrowRight className="h-4 w-4" />
           </Link>
+          <div className="mt-2 flex justify-center">
+            <UserMenu />
+          </div>
         </nav>
       )}
     </header>
