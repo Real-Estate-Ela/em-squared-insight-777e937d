@@ -50,7 +50,7 @@ export default defineConfig(({ command, mode }) => {
       react(),
     ],
     server: {
-      host: "::",
+      host: "0.0.0.0",
       port: 8080,
     },
   };
