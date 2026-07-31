@@ -869,7 +869,7 @@ export const CityScene = forwardRef<CitySceneHandle, CitySceneProps>(
       <div
         ref={hostRef}
         className={props.className}
-        style={{ position: "relative", ...props.style }}
+        style={props.style}
         aria-hidden="true"
       >
         <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100%" }} />

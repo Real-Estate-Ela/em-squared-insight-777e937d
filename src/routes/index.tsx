@@ -143,8 +143,7 @@ function Home() {
         }}
       >
         <CityScene
-          className="hidden md:block"
-          style={{ position: "absolute", inset: 0 }}
+          className="absolute inset-0"
           anchorX={0.58}
           horizon={0.76}
           colors={{
@@ -157,7 +156,7 @@ function Home() {
 
         {/* Left veil for text readability */}
         <div
-          className="pointer-events-none absolute inset-0 hidden md:block"
+          className="pointer-events-none absolute inset-0"
           style={{
             background:
               "linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.6) 45%, transparent 70%)",
@@ -197,21 +196,6 @@ function Home() {
               </button>
             </Reveal>
           </div>
-        </div>
-
-        {/* Mobile: city model below text */}
-        <div className="relative h-64 md:hidden">
-          <CityScene
-            style={{ position: "absolute", inset: 0 }}
-            anchorX={0.5}
-            horizon={0.7}
-            colors={{
-              primary: "#1B4DFF",
-              positive: "#00875A",
-              risk: "#E23D28",
-              ink: "#0E1116",
-            }}
-          />
         </div>
       </section>
 
