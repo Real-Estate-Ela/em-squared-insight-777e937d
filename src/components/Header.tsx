@@ -8,7 +8,6 @@ const links = [
   { to: "/", label: "Ana Sayfa" },
   { to: "/hakkimizda", label: "Hakkımızda" },
   { to: "/iletisim", label: "İletişim" },
-  { to: "/gorseller", label: "Görseller" },
 ] as const;
 
 export function Header() {

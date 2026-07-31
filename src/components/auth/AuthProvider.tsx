@@ -16,7 +16,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   profile: null,
   session: null,
-  loading: true,
+  loading: false,
   refreshProfile: async () => {},
 });
 
@@ -35,36 +35,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       return;
     }
-    const p = await getUserProfile(user.id);
-    setProfile(p);
+    try {
+      const p = await getUserProfile(user.id);
+      setProfile(p);
+    } catch {
+      setProfile(null);
+    }
   };
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
+    let cancelled = false;
 
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        getUserProfile(s.user.id).then(setProfile);
+    const init = async () => {
+      try {
+        const supabase = getSupabaseBrowserClient();
+
+        const { data: { session: s } } = await supabase.auth.getSession();
+        if (cancelled) return;
+        setSession(s);
+        setUser(s?.user ?? null);
+        if (s?.user) {
+          getUserProfile(s.user.id).then((p) => !cancelled && setProfile(p)).catch(() => {});
+        }
+        setLoading(false);
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+          if (cancelled) return;
+          setSession(s);
+          setUser(s?.user ?? null);
+          if (s?.user) {
+            getUserProfile(s.user.id).then((p) => !cancelled && setProfile(p)).catch(() => {});
+          } else {
+            setProfile(null);
+          }
+          setLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
+      } catch {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
-    });
+    };
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        getUserProfile(s.user.id).then(setProfile);
-      } else {
-        setProfile(null);
-      }
-      setLoading(false);
-    });
+    const cleanup = init();
+    const timeout = setTimeout(() => { if (!cancelled) setLoading(false); }, 3000);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      cleanup?.then((unsub) => unsub?.());
+    };
   }, []);
 
   return (

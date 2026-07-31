@@ -4,6 +4,25 @@ import { LogOut, User, Crown, Shield } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { signOut } from "@/lib/supabase/auth";
 
+function AuthButtons() {
+  return (
+    <div className="flex items-center gap-2">
+      <Link
+        to="/giris"
+        className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        Giriş Yap
+      </Link>
+      <Link
+        to="/kayit"
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
+      >
+        Kayıt Ol
+      </Link>
+    </div>
+  );
+}
+
 export function UserMenu() {
   const { user, profile, loading } = useAuth();
   const [open, setOpen] = useState(false);
@@ -20,26 +39,11 @@ export function UserMenu() {
   }, []);
 
   if (loading) {
-    return <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />;
+    return <AuthButtons />;
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center gap-2">
-        <Link
-          to="/giris"
-          className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Giriş Yap
-        </Link>
-        <Link
-          to="/kayit"
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
-        >
-          Kayıt Ol
-        </Link>
-      </div>
-    );
+    return <AuthButtons />;
   }
 
   const initials = profile?.full_name

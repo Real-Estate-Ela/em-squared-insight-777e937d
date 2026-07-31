@@ -21,7 +21,6 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
-import { CityMorphBackground } from "@/components/CityMorphBackground";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -142,19 +141,10 @@ function Home() {
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
         }}
       >
-        <CityMorphBackground />
-
         <div className="relative mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
           <div className="text-center">
-            <Reveal variant="blur">
-              <div className="inline-flex items-center gap-2 rounded-full bg-positive/10 px-4 py-2 text-sm font-semibold text-positive">
-                <span className="live-dot" style={{ width: 7, height: 7 }} />
-                Analiz platformu aktif
-              </div>
-            </Reveal>
-
             <Reveal delay={100}>
-              <h1 className="mx-auto mt-8 max-w-4xl text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
+              <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
                 İlan linkini yapıştır,
                 <br />
                 <span className="text-primary">yatırım kararını</span> saniyede
