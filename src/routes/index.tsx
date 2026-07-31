@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -21,8 +21,7 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
-import { CityScene, type CityPhase } from "@/components/CityScene";
-import type { City } from "@/components/model";
+import { CityScene } from "@/components/skyline/CityScene";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -106,20 +105,6 @@ function Home() {
   const [step, setStep] = useState(-1);
   const [done, setDone] = useState(true);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const [cityName, setCityName] = useState("");
-  const [cityRegion, setCityRegion] = useState("");
-  const [cityKey, setCityKey] = useState(0);
-
-  const onCity = useCallback((city: City, phase: CityPhase, _progress: number, index: number) => {
-    if (phase === "model") {
-      setCityName((prev) => (prev === city.name ? prev : city.name));
-      setCityRegion((prev) => (prev === city.region ? prev : city.region));
-      setCityKey((prev) => {
-        const next = index;
-        return prev === next ? prev : next;
-      });
-    }
-  }, []);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -151,34 +136,38 @@ function Home() {
     <div>
       {/* ===== HERO ===== */}
       <section
-        className="relative overflow-hidden"
+        className="relative overflow-hidden md:min-h-[560px]"
         style={{
           background:
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
-          minHeight: "min(100vh, 900px)",
         }}
       >
         <CityScene
-          className="opacity-[0.15]"
+          className="hidden md:block"
           style={{ position: "absolute", inset: 0 }}
-          anchorX={0.5}
-          horizon={0.55}
-          hold={3}
-          sweep={1.5}
-          animate
+          anchorX={0.58}
+          horizon={0.76}
           colors={{
-            primary: "#4D7CFF",
+            primary: "#1B4DFF",
             positive: "#00875A",
             risk: "#E23D28",
             ink: "#0E1116",
           }}
-          onCity={onCity}
         />
 
-        <div className="relative mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
-          <div className="text-center">
+        {/* Left veil for text readability */}
+        <div
+          className="pointer-events-none absolute inset-0 hidden md:block"
+          style={{
+            background:
+              "linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.6) 45%, transparent 70%)",
+          }}
+        />
+
+        <div className="relative z-10 mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
+          <div className="text-center md:text-left md:max-w-xl">
             <Reveal delay={100}>
-              <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
+              <h1 className="text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
                 İlan linkini yapıştır,
                 <br />
                 <span className="text-primary">yatırım kararını</span> saniyede
@@ -187,7 +176,7 @@ function Home() {
             </Reveal>
 
             <Reveal delay={200} variant="fade">
-              <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground">
+              <p className="mt-6 max-w-lg text-lg text-muted-foreground">
                 Konut, arsa ve ticari mülk için getiri analizi, çevre
                 değerlendirmesi ve risk skoru.
               </p>
@@ -210,24 +199,20 @@ function Home() {
           </div>
         </div>
 
-        {/* City name overlay */}
-        {cityName && (
-          <div className="absolute bottom-20 left-0 right-0 z-10 flex justify-center pointer-events-none">
-            <div
-              key={cityKey}
-              className="city-name-slide flex items-center gap-3 rounded-full px-6 py-2.5 shadow-lg"
-              style={{
-                background: "color-mix(in oklab, var(--background) 85%, transparent)",
-                backdropFilter: "blur(16px)",
-                border: "1px solid color-mix(in oklab, var(--border) 50%, transparent)",
-              }}
-            >
-              <MapPin className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">{cityName}</span>
-              <span className="text-xs text-muted-foreground">{cityRegion}</span>
-            </div>
-          </div>
-        )}
+        {/* Mobile: city model below text */}
+        <div className="relative h-64 md:hidden">
+          <CityScene
+            style={{ position: "absolute", inset: 0 }}
+            anchorX={0.5}
+            horizon={0.7}
+            colors={{
+              primary: "#1B4DFF",
+              positive: "#00875A",
+              risk: "#E23D28",
+              ink: "#0E1116",
+            }}
+          />
+        </div>
       </section>
 
       {/* ===== FEATURE HIGHLIGHTS ===== */}
