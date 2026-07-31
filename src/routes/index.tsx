@@ -21,6 +21,7 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
+import { CityScene } from "@/components/skyline/CityScene";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -135,16 +136,37 @@ function Home() {
     <div>
       {/* ===== HERO ===== */}
       <section
-        className="relative overflow-hidden"
+        className="relative overflow-hidden md:min-h-[560px]"
         style={{
           background:
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
         }}
       >
-        <div className="relative mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
-          <div className="text-center">
+        <CityScene
+          className="absolute inset-0"
+          anchorX={0.58}
+          horizon={0.76}
+          colors={{
+            primary: "#1B4DFF",
+            positive: "#00875A",
+            risk: "#E23D28",
+            ink: "#0E1116",
+          }}
+        />
+
+        {/* Left veil for text readability */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.6) 45%, transparent 70%)",
+          }}
+        />
+
+        <div className="relative z-10 mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
+          <div className="text-center md:text-left md:max-w-xl">
             <Reveal delay={100}>
-              <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
+              <h1 className="text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
                 İlan linkini yapıştır,
                 <br />
                 <span className="text-primary">yatırım kararını</span> saniyede
@@ -153,7 +175,7 @@ function Home() {
             </Reveal>
 
             <Reveal delay={200} variant="fade">
-              <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground">
+              <p className="mt-6 max-w-lg text-lg text-muted-foreground">
                 Konut, arsa ve ticari mülk için getiri analizi, çevre
                 değerlendirmesi ve risk skoru.
               </p>
