@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { AuthProvider } from "../components/auth/AuthProvider";
+import { I18nProvider } from "../lib/i18n";
 
 function NotFoundComponent() {
   return (
@@ -76,33 +77,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "emlakmetric — Gayrimenkul analiz terminali" },
+      { title: "emlakmetric — Gayrimenkul analiz platformu" },
       {
         name: "description",
         content:
-          "İlan linkini yapıştır; getiri, çevre analizi ve yatırım kararı 20 saniyede.",
+          "İlan linkini yapıştır; piyasa analizi, çevre değerlendirmesi ve risk skorunu saniyeler içinde gör.",
       },
       { name: "author", content: "emlakmetric" },
-      { property: "og:title", content: "emlakmetric" },
+      { property: "og:title", content: "emlakmetric — Gayrimenkul analiz platformu" },
       {
         property: "og:description",
-        content: "Konut, arsa ve ticari mülk için veri odaklı ROI analizi.",
+        content: "Konut, arsa ve ticari mülk için veri odaklı gayrimenkul analizi.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "index, follow" },
+      { name: "theme-color", content: "#2563EB" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap",
       },
       {
         rel: "stylesheet",
         href: appCss,
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "canonical", href: "https://emlakmetric.com" },
     ],
   }),
   shellComponent: RootShell,
@@ -131,14 +135,15 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1">
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </main>
-          <Footer />
-        </div>
+        <I18nProvider>
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1">
+              <Outlet />
+            </main>
+            <Footer />
+          </div>
+        </I18nProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
