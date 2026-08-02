@@ -12,9 +12,15 @@ function AuthCallbackPage() {
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
 
-    supabase.auth.onAuthStateChange((event) => {
+    supabase.auth.onAuthStateChange((event: string) => {
       if (event === "SIGNED_IN") {
-        navigate({ to: "/" });
+        const redirect = sessionStorage.getItem("auth_redirect");
+        sessionStorage.removeItem("auth_redirect");
+        if (redirect) {
+          window.location.href = redirect;
+        } else {
+          navigate({ to: "/" });
+        }
       }
     });
   }, [navigate]);

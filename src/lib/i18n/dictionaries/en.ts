@@ -44,4 +44,8 @@ export const en: Dictionary = {
     reportExhausted: "You've used all your report downloads for this period.",
     viewPlans: "View plans",
   },
+  auth: {
+    loginRequired: "Sign in to start an analysis",
+    loginToAnalyze: "Sign In",
+  },
 };

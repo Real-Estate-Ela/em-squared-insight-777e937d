@@ -9,6 +9,7 @@ function AuthButtons() {
     <div className="flex items-center gap-2">
       <Link
         to="/giris"
+        search={{ redirect: undefined }}
         className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         Giriş Yap

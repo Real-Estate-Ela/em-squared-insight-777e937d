@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -26,9 +26,10 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
-import { BillingRepository, BillingService, Plan, QuotaExhaustedError, type Entitlements } from "@/lib/billing/billing";
+import { BillingRepository, BillingService, Plan, QuotaExhaustedError, NotAuthenticatedError, type Entitlements } from "@/lib/billing/billing";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -114,10 +115,13 @@ const beforeAfter = [
 
 function Home() {
   const { t, locale } = useI18n();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<string>(tabs[0]);
   const [url, setUrl] = useState("emlakjet.com/ilan/9931-daire");
   const [step, setStep] = useState(-1);
   const [done, setDone] = useState(true);
+  const [authPrompt, setAuthPrompt] = useState(false);
   const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
   const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
   const [ent, setEnt] = useState<Entitlements | null>(null);
@@ -140,6 +144,12 @@ function Home() {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setQuotaError(null);
+    setAuthPrompt(false);
+
+    if (!user) {
+      setAuthPrompt(true);
+      return;
+    }
 
     try {
       const db = getSupabaseBrowserClient();
@@ -149,6 +159,10 @@ function Home() {
     } catch (err) {
       if (err instanceof QuotaExhaustedError) {
         setQuotaError(err.resource);
+        return;
+      }
+      if (err instanceof NotAuthenticatedError) {
+        setAuthPrompt(true);
         return;
       }
     }
@@ -410,6 +424,30 @@ function Home() {
           </Reveal>
 
           <Reveal delay={200}>
+            {authPrompt && (
+              <div
+                className="mb-4 flex flex-col items-start gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                style={{
+                  borderColor: "color-mix(in oklab, var(--primary) 30%, transparent)",
+                  backgroundColor: "color-mix(in oklab, var(--primary) 6%, transparent)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <Shield className="h-5 w-5 shrink-0 text-primary" />
+                  <p className="text-sm font-medium text-foreground">
+                    {t.auth.loginRequired}
+                  </p>
+                </div>
+                <Link
+                  to="/giris"
+                  search={{ redirect: "/#analiz" }}
+                  className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all hover:-translate-y-0.5"
+                >
+                  {t.auth.loginToAnalyze}
+                </Link>
+              </div>
+            )}
+
             {quotaError && (
               <div
                 className="mb-4 flex flex-col items-start gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"

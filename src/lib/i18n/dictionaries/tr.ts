@@ -42,6 +42,10 @@ export const tr = {
     reportExhausted: "Bu dönemki rapor indirme hakkınız doldu.",
     viewPlans: "Paketleri incele",
   },
+  auth: {
+    loginRequired: "Analiz başlatmak için giriş yapın",
+    loginToAnalyze: "Giriş Yap",
+  },
 } as const satisfies Dictionary;
 
 export interface Dictionary {
@@ -78,5 +82,9 @@ export interface Dictionary {
     analysisExhausted: string;
     reportExhausted: string;
     viewPlans: string;
+  };
+  auth: {
+    loginRequired: string;
+    loginToAnalyze: string;
   };
 }

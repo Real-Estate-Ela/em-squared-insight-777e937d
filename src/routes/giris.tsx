@@ -5,6 +5,9 @@ import { signInWithEmail, signInWithGoogle } from "@/lib/supabase/auth";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export const Route = createFileRoute("/giris")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   component: LoginPage,
 });
 
@@ -33,6 +36,7 @@ function GoogleIcon({ className }: { className?: string }) {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,8 +44,16 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const navigateAfterLogin = () => {
+    if (redirect) {
+      window.location.href = redirect;
+    } else {
+      navigate({ to: "/" });
+    }
+  };
+
   if (user) {
-    navigate({ to: "/" });
+    navigateAfterLogin();
     return null;
   }
 
@@ -63,11 +75,14 @@ function LoginPage() {
       return;
     }
 
-    navigate({ to: "/" });
+    navigateAfterLogin();
   };
 
   const handleGoogleLogin = async () => {
     setError("");
+    if (redirect) {
+      sessionStorage.setItem("auth_redirect", redirect);
+    }
     const { error: err } = await signInWithGoogle();
     if (err) {
       setError(err.message);
