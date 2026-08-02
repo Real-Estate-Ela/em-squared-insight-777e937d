@@ -6,7 +6,6 @@ import { UserMenu } from "./auth/UserMenu";
 
 const links: { to: string; label: string; hash?: string }[] = [
   { to: "/", label: "Ana Sayfa" },
-  { to: "/", label: "Paketler", hash: "paketler" },
   { to: "/hakkimizda", label: "Hakkımızda" },
   { to: "/iletisim", label: "İletişim" },
 ];
