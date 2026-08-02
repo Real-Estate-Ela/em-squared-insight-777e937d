@@ -21,6 +21,7 @@ import { Route as GorsellerRouteImport } from './routes/gorseller'
 import { Route as GirisRouteImport } from './routes/giris'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as ApiAnalyseRouteImport } from './routes/api/analyse'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -82,6 +83,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAnalyseRoute = ApiAnalyseRouteImport.update({
+  id: '/api/analyse',
+  path: '/api/analyse',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/analyse': typeof ApiAnalyseRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/analyse': typeof ApiAnalyseRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/analyse': typeof ApiAnalyseRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/api/analyse'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/api/analyse'
     | '/auth/callback'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/api/analyse'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   SifreSifirlaRoute: typeof SifreSifirlaRoute
   SifreYenileRoute: typeof SifreYenileRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiAnalyseRoute: typeof ApiAnalyseRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/analyse': {
+      id: '/api/analyse'
+      path: '/api/analyse'
+      fullPath: '/api/analyse'
+      preLoaderRoute: typeof ApiAnalyseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   SifreSifirlaRoute: SifreSifirlaRoute,
   SifreYenileRoute: SifreYenileRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiAnalyseRoute: ApiAnalyseRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport

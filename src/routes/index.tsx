@@ -26,6 +26,8 @@ import { BillingRepository, BillingService, QuotaExhaustedError } from "@/lib/bi
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useI18n } from "@/lib/i18n";
 
+type AnalyseErrorResponse = { error: string; resource?: "analysis" | "report" };
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -118,16 +120,28 @@ function Home() {
     timers.current = [];
     setQuotaError(null);
 
+    const kind = tab === "Arsa" ? "arsa" : tab === "Dükkan/Ticari" ? "ticari" : "konut";
+
     try {
-      const db = getSupabaseBrowserClient();
-      const service = new BillingService(new BillingRepository(db));
-      const kind = tab === "Arsa" ? "arsa" as const : tab === "Dükkan/Ticari" ? "ticari" as const : "konut" as const;
-      await service.analyse(url, kind);
-    } catch (err) {
-      if (err instanceof QuotaExhaustedError) {
-        setQuotaError(err.resource);
-        return;
+      const res = await fetch("/api/analyse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, kind }),
+      });
+
+      if (!res.ok) {
+        const body: AnalyseErrorResponse = await res.json();
+        if (res.status === 429 && body.resource) {
+          setQuotaError(body.resource);
+          return;
+        }
+        if (res.status === 401) {
+          window.location.href = "/giris";
+          return;
+        }
       }
+    } catch {
+      return;
     }
 
     setDone(false);
