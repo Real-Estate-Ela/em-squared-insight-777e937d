@@ -14,6 +14,18 @@ export const tr = {
     contactSales: "İletişime geç",
     free: "Ücretsiz",
     perMonth: "/ ay",
+    monthlyAnalysisCount: "adet aylık analiz",
+    monthlyReportCount: "adet aylık rapor indirme",
+    planDescriptions: {
+      free: "Platformu keşfedin. Gayrimenkul yatırım kararlarınızı veriye dayandırmaya bugün başlayın.",
+      pro: "Aktif yatırımcılar için tasarlandı. Geniş analiz kapasitesi ve detaylı raporlarla hiçbir fırsatı kaçırmayın.",
+      enterprise: "Gayrimenkul ofisleri ve portföy yöneticileri için. Ekip genelinde sınırsız analiz kapasitesi ve özel destek.",
+    },
+    planFeatures: {
+      free: ["Temel yatırım analizi", "Kira getirisi hesaplama", "Çevre analizi raporu", "3 platformdan fiyat karşılaştırma"],
+      pro: ["Tüm ücretsiz özellikler", "Detaylı PDF ve Excel raporları", "Bölge bazlı karşılaştırma", "Öncelikli e-posta desteği", "Gelişmiş risk analizi"],
+      enterprise: ["Tüm Pro özellikler", "API erişimi", "Ekip hesapları ve yönetim paneli", "Dedike hesap yöneticisi", "Özel entegrasyonlar"],
+    },
   },
   usage: {
     heading: "Kullanım",
@@ -30,6 +42,41 @@ export const tr = {
     reportExhausted: "Bu dönemki rapor indirme hakkınız doldu.",
     viewPlans: "Paketleri incele",
   },
-} as const;
+} as const satisfies Dictionary;
 
-export type Dictionary = typeof tr;
+export interface Dictionary {
+  pricing: {
+    title: string;
+    subtitle: string;
+    metaTitle: string;
+    metaDescription: string;
+    badge: string;
+    analysisQuota: string;
+    reportQuota: string;
+    currentPlan: string;
+    upgrade: string;
+    getStarted: string;
+    contactSales: string;
+    free: string;
+    perMonth: string;
+    monthlyAnalysisCount: string;
+    monthlyReportCount: string;
+    planDescriptions: Record<"free" | "pro" | "enterprise", string>;
+    planFeatures: Record<"free" | "pro" | "enterprise", readonly string[]>;
+  };
+  usage: {
+    heading: string;
+    analysis: string;
+    report: string;
+    used: string;
+    of: string;
+    unlimited: string;
+    periodEnds: string;
+    viewPlans: string;
+  };
+  quota: {
+    analysisExhausted: string;
+    reportExhausted: string;
+    viewPlans: string;
+  };
+}

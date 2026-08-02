@@ -4,12 +4,12 @@ import { Menu, X, ArrowRight } from "lucide-react";
 import { EmSquareMark, Wordmark } from "./Logo";
 import { UserMenu } from "./auth/UserMenu";
 
-const links = [
+const links: { to: string; label: string; hash?: string }[] = [
   { to: "/", label: "Ana Sayfa" },
-  { to: "/paketler", label: "Paketler" },
+  { to: "/", label: "Paketler", hash: "paketler" },
   { to: "/hakkimizda", label: "Hakkımızda" },
   { to: "/iletisim", label: "İletişim" },
-] as const;
+];
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -43,8 +43,9 @@ export function Header() {
         <nav className="hidden items-center gap-7 md:flex">
           {links.map((l) => (
             <Link
-              key={l.to}
+              key={l.label}
               to={l.to}
+              hash={l.hash}
               activeOptions={{ exact: l.to === "/" }}
               activeProps={{ className: "text-foreground" }}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -77,8 +78,9 @@ export function Header() {
         <nav className="border-t border-border px-2 pb-3 pt-1 md:hidden">
           {links.map((l) => (
             <Link
-              key={l.to}
+              key={l.label}
               to={l.to}
+              hash={l.hash}
               onClick={() => setOpen(false)}
               className="block rounded-lg px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >

@@ -13,6 +13,10 @@ import {
   Cpu,
   FileCheck,
   AlertTriangle,
+  Sparkles,
+  Crown,
+  Zap,
+  Building2,
 } from "lucide-react";
 import prop1 from "@/assets/property-1.jpg";
 import prop2 from "@/assets/property-2.jpg";
@@ -22,7 +26,7 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
-import { BillingRepository, BillingService, QuotaExhaustedError } from "@/lib/billing/billing";
+import { BillingRepository, BillingService, Plan, QuotaExhaustedError, type Entitlements } from "@/lib/billing/billing";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useI18n } from "@/lib/i18n";
 
@@ -95,6 +99,12 @@ const bars = [
   { k: "Arz yoğunluğu", v: 22, tone: "risk" as const },
 ];
 
+const FALLBACK_PLANS = [
+  new Plan("free", "Free", 0, "TRY", 3, 3, false, 1),
+  new Plan("pro", "Pro", 0, "TRY", 100, 100, true, 2),
+  new Plan("enterprise", "Enterprise", 0, "TRY", 1000, 1000, false, 3),
+];
+
 const beforeAfter = [
   { label: "m² fiyat", before: "28.500 ₺", after: "41.200 ₺", change: "+%44", positive: true },
   { label: "Ortalama kira", before: "14.000 ₺", after: "22.500 ₺", change: "+%60", positive: true },
@@ -103,15 +113,24 @@ const beforeAfter = [
 ];
 
 function Home() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [tab, setTab] = useState<string>(tabs[0]);
   const [url, setUrl] = useState("emlakjet.com/ilan/9931-daire");
   const [step, setStep] = useState(-1);
   const [done, setDone] = useState(true);
   const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
+  const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
+  const [ent, setEnt] = useState<Entitlements | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  useEffect(() => {
+    const db = getSupabaseBrowserClient();
+    const service = new BillingService(new BillingRepository(db));
+    service.listPlans().then(p => setPlans(p.length ? p : FALLBACK_PLANS)).catch(() => setPlans(FALLBACK_PLANS));
+    service.entitlements().then(setEnt).catch(() => {});
+  }, []);
 
   const runAnalysis = async () => {
     timers.current.forEach(clearTimeout);
@@ -403,12 +422,13 @@ function Home() {
                       : t.quota.reportExhausted}
                   </p>
                 </div>
-                <Link
-                  to="/paketler"
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("paketler")?.scrollIntoView({ behavior: "smooth" })}
                   className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all hover:-translate-y-0.5"
                 >
                   {t.quota.viewPlans}
-                </Link>
+                </button>
               </div>
             )}
 
@@ -497,6 +517,130 @@ function Home() {
           </Reveal>
         </div>
       </section>
+
+      {/* ===== PRICING ===== */}
+      {plans.length > 0 && (
+        <section id="paketler">
+          <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
+            <Reveal variant="blur">
+              <div className="text-center">
+                <p className="label-mono">{t.pricing.title}</p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                  {t.pricing.subtitle}
+                </h2>
+              </div>
+            </Reveal>
+
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {plans.map((plan, i) => {
+                const isCurrent = ent?.planCode === plan.code;
+                const Icon = plan.code === "enterprise" ? Building2 : plan.code === "pro" ? Crown : Sparkles;
+                const color = plan.code === "enterprise" ? "var(--positive)" : plan.code === "pro" ? "var(--primary)" : "var(--muted-foreground)";
+                const desc = t.pricing.planDescriptions[plan.code];
+                const features = t.pricing.planFeatures[plan.code];
+
+                return (
+                  <Reveal key={plan.code} delay={i * 100} variant="scale">
+                    <MouseCard
+                      className={`glass relative flex h-full flex-col rounded-2xl p-6 ${plan.isFeatured ? "ring-2 ring-primary/30" : ""}`}
+                      glowColor={color}
+                      tiltMax={6}
+                      glowOpacity={0.08}
+                    >
+                      {plan.isFeatured && (
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold text-primary-foreground shadow-md shadow-primary/20">
+                          {t.pricing.badge}
+                        </span>
+                      )}
+
+                      {isCurrent && (
+                        <span className="absolute -top-3 right-4 rounded-full bg-positive px-3 py-1 text-xs font-bold text-white shadow-md">
+                          {t.pricing.currentPlan}
+                        </span>
+                      )}
+
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-xl"
+                          style={{ backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)` }}
+                        >
+                          <Icon className="h-5 w-5" style={{ color }} />
+                        </div>
+                        <h3 className="text-lg font-bold">{plan.name}</h3>
+                      </div>
+
+                      <div className="mt-4">
+                        <span className="text-3xl font-extrabold">
+                          {plan.formatPrice(locale === "en" ? "en-US" : "tr-TR")}
+                        </span>
+                        {!plan.isFree && (
+                          <span className="ml-1 text-sm text-muted-foreground">{t.pricing.perMonth}</span>
+                        )}
+                      </div>
+
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+
+                      <div className="mt-5 space-y-2.5 rounded-xl bg-muted/30 p-4">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4 shrink-0" style={{ color }} />
+                          <span className="text-sm font-semibold">
+                            {plan.analysisQuota} {t.pricing.monthlyAnalysisCount}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 shrink-0" style={{ color }} />
+                          <span className="text-sm font-semibold">
+                            {plan.reportQuota} {t.pricing.monthlyReportCount}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 space-y-2.5">
+                        {features.map((f) => (
+                          <div key={f} className="flex items-start gap-2">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-positive" />
+                            <span className="text-sm text-muted-foreground">{f}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-auto pt-6">
+                        {plan.code === "enterprise" ? (
+                          <Link
+                            to="/iletisim"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-current px-6 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5"
+                            style={{ color }}
+                          >
+                            {t.pricing.contactSales}
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        ) : isCurrent ? (
+                          <button
+                            type="button"
+                            disabled
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-positive/10 px-6 py-3 text-sm font-semibold text-positive"
+                          >
+                            <Check className="h-4 w-4" />
+                            {t.pricing.currentPlan}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
+                          >
+                            {plan.isFree ? t.pricing.getStarted : t.pricing.upgrade}
+                            <ArrowRight className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </MouseCard>
+                  </Reveal>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== DECISION ===== */}
       <section id="karar">
