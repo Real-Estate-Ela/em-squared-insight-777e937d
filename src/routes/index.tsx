@@ -5,7 +5,6 @@ import {
   ArrowUpRight,
   Check,
   Loader2,
-  TrendingUp,
   MapPin,
   BarChart3,
   Shield,
@@ -25,7 +24,7 @@ import mapView from "@/assets/map-view.jpg";
 import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
-import { MouseCard, CountUp } from "@/components/MouseCard";
+import { MouseCard } from "@/components/MouseCard";
 import { BillingRepository, BillingService, Plan, QuotaExhaustedError, NotAuthenticatedError, type Entitlements } from "@/lib/billing/billing";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -34,20 +33,20 @@ import { useAuth } from "@/components/auth/AuthProvider";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "emlakmetric — İlan linkiyle 20 saniyede yatırım analizi" },
+      { title: "emlakmetric — Fiyat tek başına bir şey söylemez" },
       {
         name: "description",
         content:
-          "İlan linkini yapıştır; kira getirisi, amortisman, 5 yıl ROI ve çevre analizini saniyeler içinde gör. Konut, arsa ve ticari mülk için veri odaklı analiz.",
+          "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Konut, arsa ve ticari mülk için mahalle bazlı karşılaştırmalı analiz.",
       },
       {
         property: "og:title",
-        content: "emlakmetric — Gayrimenkul analiz platformu",
+        content: "emlakmetric — Fiyat tek başına bir şey söylemez",
       },
       {
         property: "og:description",
         content:
-          "Getiri, çevre analizi ve yatırım kararı 20 saniyede. Konut, arsa ve dükkan için ROI hesabı.",
+          "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Mahalle bazlı karşılaştırmalı analiz.",
       },
     ],
   }),
@@ -61,13 +60,6 @@ const metrics = [
   { label: "Amortisman", value: "15,6 yıl", tone: "" },
   { label: "5 yıl ROI", value: "%41", tone: "text-positive" },
   { label: "Arz riski", value: "Yüksek", tone: "text-risk" },
-];
-
-const highlights = [
-  { icon: TrendingUp, label: "ROI Analizi", desc: "5 yıllık getiri tahmini", color: "var(--positive)" },
-  { icon: MapPin, label: "Çevre Analizi", desc: "Mahalle bazlı veri", color: "var(--primary)" },
-  { icon: Shield, label: "Risk Skoru", desc: "Arz ve talep dengesi", color: "var(--risk)" },
-  { icon: BarChart3, label: "Karşılaştırma", desc: "3 platformdan fiyat", color: "var(--primary)" },
 ];
 
 const listings = [
@@ -192,37 +184,24 @@ function Home() {
     <div>
       {/* ===== HERO ===== */}
       <section
-        className="relative overflow-hidden md:min-h-[560px]"
+        className="relative overflow-hidden"
         style={{
           background:
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
         }}
       >
-        
-        {/* Left veil for text readability */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.6) 45%, transparent 70%)",
-          }}
-        />
-
-        <div className="relative z-10 mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
-          <div className="text-center md:text-left md:max-w-xl">
+        <div className="relative z-10 mx-auto max-w-6xl px-5 py-24 md:px-8 md:py-36 lg:py-44">
+          <div className="mx-auto max-w-2xl text-center">
             <Reveal delay={100}>
-              <h1 className="text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
-                İlan linkini yapıştır,
-                <br />
-                <span className="text-primary">yatırım kararını</span> saniyede
-                al.
+              <h1 className="text-[clamp(2rem,6vw,4.75rem)] font-extrabold leading-[1.08] tracking-tight">
+                {t.hero.titleBefore}{" "}
+                <span className="text-primary">{t.hero.titleHighlight}</span>
               </h1>
             </Reveal>
 
             <Reveal delay={200} variant="fade">
-              <p className="mt-6 max-w-lg text-lg text-muted-foreground">
-                Konut, arsa ve ticari mülk için getiri analizi, çevre
-                değerlendirmesi ve risk skoru.
+              <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
+                {t.hero.subtitle}
               </p>
             </Reveal>
 
@@ -236,43 +215,13 @@ function Home() {
                 }
                 className="btn-glow mt-10 inline-flex items-center gap-2.5 rounded-xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground transition-transform duration-200 hover:scale-[1.03]"
               >
-                Hemen Başla
+                {t.hero.cta}
                 <ArrowRight className="h-5 w-5" />
               </button>
             </Reveal>
           </div>
         </div>
       </section>
-
-      {/* ===== FEATURE HIGHLIGHTS ===== */}
-      <div className="glass border-y-0 rounded-none">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4">
-          {highlights.map((h, i) => (
-            <Reveal key={h.label} delay={i * 60} variant="scale">
-              <div
-                className={`flex items-center gap-3 px-5 py-4 ${
-                  i < highlights.length - 1
-                    ? "border-r border-border/40"
-                    : ""
-                }`}
-              >
-                <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                  style={{
-                    backgroundColor: `color-mix(in oklab, ${h.color} 12%, transparent)`,
-                  }}
-                >
-                  <h.icon className="h-4 w-4" style={{ color: h.color }} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">{h.label}</p>
-                  <p className="text-xs text-muted-foreground">{h.desc}</p>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
 
       {/* ===== PRODUCT PREVIEW ===== */}
       <section>
@@ -346,39 +295,6 @@ function Home() {
               </div>
             </MouseCard>
           </Reveal>
-        </div>
-      </section>
-
-      {/* ===== STATS ===== */}
-      <section>
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              { label: "Analiz edilen mülk", value: 12450, suffix: "+", color: "var(--primary)" },
-              { label: "İlçe kapsama", value: 39, suffix: "", color: "var(--primary)" },
-              { label: "Ortalama doğruluk", value: 94, suffix: "%", color: "var(--positive)" },
-              { label: "Aktif kullanıcı", value: 3200, suffix: "+", color: "var(--risk)" },
-            ].map((s, i) => (
-              <Reveal key={s.label} delay={i * 80} variant="scale">
-                <MouseCard
-                  className="glass rounded-xl p-6 text-center"
-                  glowColor={s.color}
-                  tiltMax={8}
-                  glowOpacity={0.06}
-                >
-                  <p
-                    className="text-3xl font-bold"
-                    style={{ color: s.color }}
-                  >
-                    <CountUp value={s.value} suffix={s.suffix} />
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {s.label}
-                  </p>
-                </MouseCard>
-              </Reveal>
-            ))}
-          </div>
         </div>
       </section>
 

@@ -46,6 +46,12 @@ export const tr = {
     loginRequired: "Analiz başlatmak için giriş yapın",
     loginToAnalyze: "Giriş Yap",
   },
+  hero: {
+    titleBefore: "Fiyat tek başına",
+    titleHighlight: "bir şey söylemez.",
+    subtitle: "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır.",
+    cta: "Hemen Başla",
+  },
 } as const satisfies Dictionary;
 
 export interface Dictionary {
@@ -86,5 +92,11 @@ export interface Dictionary {
   auth: {
     loginRequired: string;
     loginToAnalyze: string;
+  };
+  hero: {
+    titleBefore: string;
+    titleHighlight: string;
+    subtitle: string;
+    cta: string;
   };
 }

@@ -48,4 +48,10 @@ export const en: Dictionary = {
     loginRequired: "Sign in to start an analysis",
     loginToAnalyze: "Sign In",
   },
+  hero: {
+    titleBefore: "Price alone",
+    titleHighlight: "means nothing.",
+    subtitle: "A listing's numbers only make sense when placed side by side with its neighborhood's numbers.",
+    cta: "Get Started",
+  },
 };
