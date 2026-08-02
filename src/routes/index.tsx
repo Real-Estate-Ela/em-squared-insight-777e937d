@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -12,6 +12,7 @@ import {
   Link2,
   Cpu,
   FileCheck,
+  AlertTriangle,
 } from "lucide-react";
 import prop1 from "@/assets/property-1.jpg";
 import prop2 from "@/assets/property-2.jpg";
@@ -21,6 +22,9 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
+import { BillingRepository, BillingService, QuotaExhaustedError } from "@/lib/billing/billing";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -99,17 +103,33 @@ const beforeAfter = [
 ];
 
 function Home() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<string>(tabs[0]);
   const [url, setUrl] = useState("emlakjet.com/ilan/9931-daire");
   const [step, setStep] = useState(-1);
   const [done, setDone] = useState(true);
+  const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
-  const runAnalysis = () => {
+  const runAnalysis = async () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
+    setQuotaError(null);
+
+    try {
+      const db = getSupabaseBrowserClient();
+      const service = new BillingService(new BillingRepository(db));
+      const kind = tab === "Arsa" ? "arsa" as const : tab === "Dükkan/Ticari" ? "ticari" as const : "konut" as const;
+      await service.analyse(url, kind);
+    } catch (err) {
+      if (err instanceof QuotaExhaustedError) {
+        setQuotaError(err.resource);
+        return;
+      }
+    }
+
     setDone(false);
     setStep(0);
     steps.forEach((_, i) => {
@@ -367,6 +387,31 @@ function Home() {
           </Reveal>
 
           <Reveal delay={200}>
+            {quotaError && (
+              <div
+                className="mb-4 flex flex-col items-start gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                style={{
+                  borderColor: "color-mix(in oklab, var(--risk) 30%, transparent)",
+                  backgroundColor: "color-mix(in oklab, var(--risk) 6%, transparent)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-risk" />
+                  <p className="text-sm font-medium text-foreground">
+                    {quotaError === "analysis"
+                      ? t.quota.analysisExhausted
+                      : t.quota.reportExhausted}
+                  </p>
+                </div>
+                <Link
+                  to="/paketler"
+                  className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all hover:-translate-y-0.5"
+                >
+                  {t.quota.viewPlans}
+                </Link>
+              </div>
+            )}
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -491,7 +536,22 @@ function Home() {
                   yoğunluğu.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <button type="button" className="btn-tactile btn-tactile-positive">
+                  <button
+                    type="button"
+                    className="btn-tactile btn-tactile-positive"
+                    onClick={async () => {
+                      try {
+                        const db = getSupabaseBrowserClient();
+                        const svc = new BillingService(new BillingRepository(db));
+                        await svc.downloadReport("placeholder", "pdf");
+                      } catch (err) {
+                        if (err instanceof QuotaExhaustedError) {
+                          setQuotaError(err.resource);
+                          document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" });
+                        }
+                      }
+                    }}
+                  >
                     Raporu indir
                   </button>
                   <button type="button" className="btn-tactile">

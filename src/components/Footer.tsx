@@ -10,6 +10,7 @@ export function Footer() {
           <Wordmark className="text-lg" />
         </div>
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          <Link to="/paketler" className="transition-colors hover:text-foreground">Paketler</Link>
           <Link to="/hakkimizda" className="transition-colors hover:text-foreground">Hakkımızda</Link>
           <Link to="/iletisim" className="transition-colors hover:text-foreground">İletişim</Link>
           <Link to="/gorseller" className="transition-colors hover:text-foreground">Görseller</Link>

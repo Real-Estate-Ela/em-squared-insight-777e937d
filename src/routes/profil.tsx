@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { User, Mail, Shield, Crown, Star, AlertCircle, CheckCircle } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { User, Mail, Shield, Crown, Star, AlertCircle, CheckCircle, BarChart3, FileDown } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { BillingRepository, BillingService, type Entitlements } from "@/lib/billing/billing";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/profil")({
   component: ProfilePage,
@@ -14,6 +16,96 @@ function ProfilePage() {
     <AuthGuard>
       <ProfileContent />
     </AuthGuard>
+  );
+}
+
+function UsageCard() {
+  const { t, locale } = useI18n();
+  const u = t.usage;
+  const [ent, setEnt] = useState<Entitlements | null>(null);
+
+  useEffect(() => {
+    const db = getSupabaseBrowserClient();
+    const service = new BillingService(new BillingRepository(db));
+    service.entitlements().then(setEnt).catch(() => {});
+  }, []);
+
+  if (!ent) return null;
+
+  const analysisPct = Math.min(100, Math.round(ent.analysisRatio * 100));
+  const reportPct = Math.min(100, Math.round(ent.reportRatio * 100));
+
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString(locale === "en" ? "en-US" : "tr-TR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+  return (
+    <div className="glass rounded-2xl p-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-foreground">{u.heading}</h3>
+        <Link
+          to="/paketler"
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          {u.viewPlans}
+        </Link>
+      </div>
+
+      <div className="mt-5 space-y-4">
+        <div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <BarChart3 className="h-4 w-4" />
+              {u.analysis}
+            </span>
+            <span className="font-medium">
+              {ent.analysesUsed} {u.of} {ent.analysisQuota}{" "}
+              <span className="text-muted-foreground">{u.used}</span>
+            </span>
+          </div>
+          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${analysisPct}%`,
+                backgroundColor:
+                  analysisPct >= 90 ? "var(--risk)" : "var(--primary)",
+              }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <FileDown className="h-4 w-4" />
+              {u.report}
+            </span>
+            <span className="font-medium">
+              {ent.reportsUsed} {u.of} {ent.reportQuota}{" "}
+              <span className="text-muted-foreground">{u.used}</span>
+            </span>
+          </div>
+          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${reportPct}%`,
+                backgroundColor:
+                  reportPct >= 90 ? "var(--risk)" : "var(--positive)",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-4 text-xs text-muted-foreground">
+        {u.periodEnds}: {formatDate(ent.periodEnd)}
+      </p>
+    </div>
   );
 }
 
@@ -66,6 +158,8 @@ function ProfileContent() {
       </p>
 
       <div className="mt-8 space-y-6">
+        <UsageCard />
+
         <div className="glass rounded-2xl p-6">
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
