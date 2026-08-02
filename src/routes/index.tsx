@@ -126,10 +126,14 @@ function Home() {
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   useEffect(() => {
-    const db = getSupabaseBrowserClient();
-    const service = new BillingService(new BillingRepository(db));
-    service.listPlans().then(p => setPlans(p.length ? p : FALLBACK_PLANS)).catch(() => setPlans(FALLBACK_PLANS));
-    service.entitlements().then(setEnt).catch(() => {});
+    try {
+      const db = getSupabaseBrowserClient();
+      const service = new BillingService(new BillingRepository(db));
+      service.listPlans().then(p => setPlans(p.length ? p : FALLBACK_PLANS)).catch(() => {});
+      service.entitlements().then(setEnt).catch(() => {});
+    } catch {
+      // Supabase env vars not set — keep fallback plans
+    }
   }, []);
 
   const runAnalysis = async () => {
