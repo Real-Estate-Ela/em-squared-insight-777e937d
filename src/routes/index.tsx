@@ -21,7 +21,6 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
-import { CityScene } from "@/components/skyline/CityScene";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -142,18 +141,7 @@ function Home() {
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
         }}
       >
-        <CityScene
-          className="absolute inset-0"
-          anchorX={0.58}
-          horizon={0.76}
-          colors={{
-            primary: "#1B4DFF",
-            positive: "#00875A",
-            risk: "#E23D28",
-            ink: "#0E1116",
-          }}
-        />
-
+        
         {/* Left veil for text readability */}
         <div
           className="pointer-events-none absolute inset-0"
