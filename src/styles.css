@@ -720,6 +720,17 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
+/* ---- Neighborhood swarm ---- */
+
+.swarm-wrap {
+  height: clamp(220px, 48vw, 280px);
+}
+@media (min-width: 640px) {
+  .swarm-wrap {
+    height: clamp(260px, 26vw, 340px);
+  }
+}
+
 /* ---- Progress spine ---- */
 
 @keyframes spine-pulse {

@@ -34,6 +34,7 @@ import heroCity1280Jpg from "@/assets/hero/hero-city-1280.jpg";
 import heroCity768Jpg from "@/assets/hero/hero-city-768.jpg";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { NeighborhoodSwarm } from "@/components/analysis/NeighborhoodSwarm";
 
 type AnalyseErrorResponse = { error: string; resource?: "analysis" | "report" };
 
@@ -111,6 +112,32 @@ const beforeAfter = [
   { label: "Satış süresi", before: "62 gün", after: "28 gün", change: "−%55", positive: true },
   { label: "Arz (aktif ilan)", before: "340", after: "520", change: "+%52", positive: false },
 ];
+
+function mulberry32(seed: number) {
+  let s = seed;
+  return () => {
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const _r = mulberry32(42);
+const _base = 36800;
+const demoComps: number[] = [];
+for (let i = 0; i < 90; i++) {
+  const g = (_r() + _r() + _r() + _r() - 2) / 2;
+  demoComps.push(
+    Math.max(_base * 0.4, Math.round(_base * (1 + g * 0.28))),
+  );
+}
+demoComps.sort((a, b) => a - b);
+const demoMedian = demoComps[Math.floor(demoComps.length * 0.5)];
+const demoQ1 = demoComps[Math.floor(demoComps.length * 0.25)];
+const demoQ3 = demoComps[Math.floor(demoComps.length * 0.75)];
+const demoListingPrice = Math.round(demoMedian * 0.91);
 
 const SPINE_LABELS = ["VERİ", "MEDYAN", "GETİRİ", "KARAR"] as const;
 const SPINE_LABELS_SHORT = ["VERİ", "MDY", "GTR", "KRR"] as const;
@@ -758,9 +785,27 @@ function Home() {
             </div>
           </Reveal>
 
-          <Reveal delay={80} variant="scale">
+          <Reveal delay={60}>
+            <div className="glass mt-10 overflow-hidden rounded-2xl p-5 md:p-8">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                <span className="font-mono text-[10.5px] font-medium uppercase tracking-[.06em] text-muted-foreground">
+                  Mahalle m² Dağılımı — 90 emsal
+                </span>
+              </div>
+              <NeighborhoodSwarm
+                comps={demoComps}
+                median={demoMedian}
+                q1={demoQ1}
+                q3={demoQ3}
+                price={demoListingPrice}
+              />
+            </div>
+          </Reveal>
+
+          <Reveal delay={120} variant="scale">
             <MouseCard
-              className="glass mt-10 grid gap-10 overflow-hidden rounded-2xl p-6 md:grid-cols-2 md:p-10"
+              className="glass mt-6 grid gap-10 overflow-hidden rounded-2xl p-6 md:grid-cols-2 md:p-10"
               glowColor="var(--positive)"
               glowOpacity={0.06}
               tiltMax={4}
