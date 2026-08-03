@@ -772,6 +772,21 @@
   }
 }
 
+/* ---- Score breakdown bars ---- */
+
+.score-bar {
+  transition-property: width;
+}
+
+@keyframes coverage-pulse {
+  0%, 100% { box-shadow: 0 0 6px color-mix(in oklab, var(--positive) 50%, transparent); }
+  50% { box-shadow: 0 0 14px color-mix(in oklab, var(--positive) 70%, transparent); }
+}
+
+.coverage-glow {
+  animation: coverage-pulse 2s ease-in-out infinite;
+}
+
 /* ---- Neighborhood swarm ---- */
 
 .swarm-wrap {
@@ -856,6 +871,13 @@
   .spine-active::after {
     animation: none !important;
     display: none !important;
+  }
+  .score-bar {
+    transition: none !important;
+  }
+  .coverage-glow {
+    animation: none !important;
+    box-shadow: 0 0 6px color-mix(in oklab, var(--positive) 50%, transparent);
   }
   .glass-hover:hover,
   .magnetic-cta:hover {

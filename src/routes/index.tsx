@@ -221,6 +221,12 @@ function Home() {
   const imgWrapRef = useRef<HTMLDivElement>(null);
   const textWrapRef = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [downPct, setDownPct] = useState(30);
+  const [termYears, setTermYears] = useState(10);
+  const [monthlyRate, setMonthlyRate] = useState(2.5);
+  const [barsVisible, setBarsVisible] = useState(false);
+  const barsFirstRender = useRef(true);
+  const barsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -261,6 +267,23 @@ function Home() {
     } catch {
       // Supabase env vars not set — keep fallback plans
     }
+  }, []);
+
+  useEffect(() => {
+    const el = barsRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setBarsVisible(true);
+          io.disconnect();
+          setTimeout(() => { barsFirstRender.current = false; }, 1300);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   const runAnalysis = async () => {
@@ -331,6 +354,26 @@ function Home() {
     { label: "Medyan farkı", value: `%${derived.delta.toFixed(1).replace(".", ",")}`, tone: derived.delta <= 0 ? "text-positive" : "text-risk" },
     { label: "Skor", value: `${derived.score}/96`, tone: derived.score >= 60 ? "text-positive" : derived.score >= 40 ? "" : "text-risk" },
   ];
+
+  const scoreParts = [
+    { key: "base", label: t.analysis.partBase, value: derived.parts.base, pct: Math.min(Math.abs(derived.parts.base) / 34 * 100, 100), color: "var(--muted-foreground)", tone: "" },
+    { key: "price", label: t.analysis.partPrice, value: derived.parts.fiyat, pct: Math.min(Math.abs(derived.parts.fiyat) / 34 * 100, 100), color: derived.parts.fiyat >= 0 ? "var(--positive)" : "var(--risk)", tone: derived.parts.fiyat >= 0 ? "text-positive" : "text-risk" },
+    { key: "yield", label: t.analysis.partYield, value: derived.parts.getiri, pct: Math.min(Math.abs(derived.parts.getiri) / 34 * 100, 100), color: derived.parts.getiri >= 0 ? "var(--positive)" : "var(--risk)", tone: derived.parts.getiri >= 0 ? "text-positive" : "text-risk" },
+    { key: "market", label: t.analysis.partMarket, value: derived.parts.piyasa, pct: Math.min(Math.abs(derived.parts.piyasa) / 34 * 100, 100), color: derived.parts.piyasa >= 0 ? "var(--positive)" : "var(--risk)", tone: derived.parts.piyasa >= 0 ? "text-positive" : "text-risk" },
+  ];
+
+  const fmtLocale = locale === "en" ? "en-US" : "tr-TR";
+  const mortgageLoan = derived.total * (1 - downPct / 100);
+  const mortgageN = termYears * 12;
+  const mortgageI = monthlyRate / 100;
+  const mortgagePayment = mortgageI > 0
+    ? mortgageLoan * mortgageI * Math.pow(1 + mortgageI, mortgageN) / (Math.pow(1 + mortgageI, mortgageN) - 1)
+    : mortgageLoan / mortgageN;
+  const coveragePct = mortgagePayment > 0 ? (demoRent / mortgagePayment) * 100 : 0;
+  const mortgageTotalPayment = mortgagePayment * mortgageN;
+  const mortgageTotalRatio = derived.total > 0 ? mortgageTotalPayment / derived.total : 0;
+  const coverageColor = coveragePct >= 100 ? "var(--positive)" : coveragePct >= 60 ? "var(--primary)" : "var(--risk)";
+  const coverageTone = coveragePct >= 100 ? "text-positive" : coveragePct >= 60 ? "text-primary" : "text-risk";
 
   return (
     <div>
@@ -941,6 +984,169 @@ function Home() {
               </dl>
             </MouseCard>
           </Reveal>
+
+          {/* ===== SCORE BREAKDOWN & MORTGAGE ===== */}
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            <Reveal delay={180} variant="scale">
+              <div className="glass h-full rounded-2xl p-5 md:p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className="font-mono text-[10.5px] font-medium uppercase tracking-[.06em] text-muted-foreground">
+                    {t.analysis.scoreBreakdown}
+                  </span>
+                </div>
+                <div ref={barsRef} className="space-y-3">
+                  {scoreParts.map((part, i) => (
+                    <div key={part.key} className="flex items-center gap-3">
+                      <span className="w-28 shrink-0 text-xs text-muted-foreground">{part.label}</span>
+                      <div className="relative h-5 flex-1 overflow-hidden rounded-sm bg-muted/30">
+                        <div
+                          className="score-bar h-full rounded-sm"
+                          style={{
+                            width: barsVisible ? `${part.pct}%` : "0%",
+                            backgroundColor: part.color,
+                            transitionTimingFunction: barsFirstRender.current ? "cubic-bezier(.16,1,.3,1)" : "ease",
+                            transitionDuration: barsFirstRender.current ? "900ms" : "200ms",
+                            transitionDelay: barsFirstRender.current ? `${i * 90}ms` : "0ms",
+                          }}
+                        />
+                      </div>
+                      <span className={`w-12 shrink-0 text-right font-mono text-xs font-semibold tabular-nums ${part.tone}`}>
+                        {part.key === "base"
+                          ? part.value.toFixed(1).replace(".", locale === "en" ? "." : ",")
+                          : `${part.value > 0 ? "+" : ""}${part.value.toFixed(1).replace(".", locale === "en" ? "." : ",")}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
+                  <span className="text-sm font-medium text-muted-foreground">{t.analysis.totalScore}</span>
+                  <span className="text-lg font-bold text-primary">{derived.score}/96</span>
+                </div>
+                {discount > 0 && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    %{discount.toFixed(1).replace(".", ",")} indirim skoru{" "}
+                    <span className={scoreDiff > 0 ? "font-semibold text-positive" : "font-semibold text-risk"}>
+                      {scoreDiff > 0 ? "+" : ""}{scoreDiff} puan
+                    </span>{" "}
+                    değiştirdi.
+                  </p>
+                )}
+              </div>
+            </Reveal>
+
+            <Reveal delay={240} variant="scale">
+              <div className="glass h-full rounded-2xl p-5 md:p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className="font-mono text-[10.5px] font-medium uppercase tracking-[.06em] text-muted-foreground">
+                    {t.analysis.mortgageVsRent}
+                  </span>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="down-pct" className="text-xs text-muted-foreground">{t.analysis.downPayment}</label>
+                      <span className="font-mono text-sm font-semibold tabular-nums">%{downPct}</span>
+                    </div>
+                    <input
+                      id="down-pct"
+                      type="range"
+                      min={0}
+                      max={80}
+                      step={5}
+                      value={downPct}
+                      onChange={(e) => setDownPct(Number(e.target.value))}
+                      className="bargain-range mt-1.5 w-full"
+                      style={{ touchAction: "none" }}
+                      aria-label={`${t.analysis.downPayment}: %${downPct}`}
+                      aria-valuetext={`%${downPct}`}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="term-years" className="text-xs text-muted-foreground">{t.analysis.term}</label>
+                      <span className="font-mono text-sm font-semibold tabular-nums">{termYears} {t.analysis.years}</span>
+                    </div>
+                    <input
+                      id="term-years"
+                      type="range"
+                      min={1}
+                      max={20}
+                      step={1}
+                      value={termYears}
+                      onChange={(e) => setTermYears(Number(e.target.value))}
+                      className="bargain-range mt-1.5 w-full"
+                      style={{ touchAction: "none" }}
+                      aria-label={`${t.analysis.term}: ${termYears} ${t.analysis.years}`}
+                      aria-valuetext={`${termYears} ${t.analysis.years}`}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="monthly-rate" className="text-xs text-muted-foreground">{t.analysis.monthlyInterest}</label>
+                      <span className="font-mono text-sm font-semibold tabular-nums">%{monthlyRate.toFixed(1).replace(".", ",")}</span>
+                    </div>
+                    <input
+                      id="monthly-rate"
+                      type="range"
+                      min={0.5}
+                      max={5}
+                      step={0.1}
+                      value={monthlyRate}
+                      onChange={(e) => setMonthlyRate(Number(e.target.value))}
+                      className="bargain-range mt-1.5 w-full"
+                      style={{ touchAction: "none" }}
+                      aria-label={`${t.analysis.monthlyInterest}: %${monthlyRate.toFixed(1)}`}
+                      aria-valuetext={`%${monthlyRate.toFixed(1).replace(".", ",")}`}
+                    />
+                  </div>
+                </div>
+                <div className="mt-5 space-y-2.5 border-t border-border/40 pt-4">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-muted-foreground">{t.analysis.monthlyPayment}</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums">
+                      {Math.round(mortgagePayment).toLocaleString(fmtLocale)} ₺
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-muted-foreground">{t.analysis.monthlyRent}</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums">
+                      {Math.round(demoRent).toLocaleString(fmtLocale)} ₺
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-xs text-muted-foreground">{t.analysis.rentCoverage}</span>
+                      <span className={`font-mono text-sm font-semibold tabular-nums ${coverageTone}`}>
+                        %{Math.min(coveragePct, 999).toFixed(0)}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-muted/30">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${coveragePct >= 100 ? "coverage-glow" : ""}`}
+                        style={{
+                          width: `${Math.min(coveragePct, 100)}%`,
+                          backgroundColor: coverageColor,
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline justify-between border-t border-border/40 pt-2.5">
+                    <span className="text-xs text-muted-foreground">{t.analysis.totalPayment}</span>
+                    <div className="text-right">
+                      <span className="font-mono text-sm font-semibold tabular-nums">
+                        {Math.round(mortgageTotalPayment).toLocaleString(fmtLocale)} ₺
+                      </span>
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({t.analysis.timesPrice.replace("{x}", mortgageTotalRatio.toFixed(1).replace(".", locale === "en" ? "." : ","))})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
 
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             <Reveal variant="slide-left" className="md:col-span-2">

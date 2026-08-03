@@ -64,6 +64,24 @@ export const tr = {
     ctaPrimary: "Analize Başla",
     ctaSecondary: "Nasıl Çalışır",
   },
+  analysis: {
+    scoreBreakdown: "Skor Kırılımı",
+    partBase: "Taban",
+    partPrice: "Fiyat konumu",
+    partYield: "Kira getirisi",
+    partMarket: "Piyasa & likidite",
+    totalScore: "Toplam skor",
+    mortgageVsRent: "Kredi Kirayı Karşılıyor mu?",
+    downPayment: "Peşinat",
+    term: "Vade",
+    monthlyInterest: "Aylık faiz",
+    monthlyPayment: "Aylık taksit",
+    monthlyRent: "Aylık kira",
+    rentCoverage: "Kira karşılama",
+    totalPayment: "Toplam ödeme",
+    timesPrice: "bedelin {x} katı",
+    years: "yıl",
+  },
 } as const satisfies Dictionary;
 
 export interface Dictionary {
@@ -122,5 +140,23 @@ export interface Dictionary {
     subtitle: string;
     ctaPrimary: string;
     ctaSecondary: string;
+  };
+  analysis: {
+    scoreBreakdown: string;
+    partBase: string;
+    partPrice: string;
+    partYield: string;
+    partMarket: string;
+    totalScore: string;
+    mortgageVsRent: string;
+    downPayment: string;
+    term: string;
+    monthlyInterest: string;
+    monthlyPayment: string;
+    monthlyRent: string;
+    rentCoverage: string;
+    totalPayment: string;
+    timesPrice: string;
+    years: string;
   };
 }
