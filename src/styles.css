@@ -720,6 +720,46 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
+/* ---- Progress spine ---- */
+
+@keyframes spine-pulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.spine-active {
+  position: relative;
+}
+
+.spine-active::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  animation: spine-pulse 1.5s ease-out infinite;
+}
+
+/* ---- Card entrance ---- */
+
+@keyframes card-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+.card-entrance {
+  opacity: 0;
+  animation: card-entrance 600ms cubic-bezier(.16, 1, .3, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-in,
   .reveal-slide-l, .reveal-slide-l-in,
@@ -743,6 +783,16 @@
   .hero-entrance {
     opacity: 1 !important;
     animation: none !important;
+  }
+  .card-entrance {
+    opacity: 1 !important;
+    animation: none !important;
+    filter: none !important;
+    transform: none !important;
+  }
+  .spine-active::after {
+    animation: none !important;
+    display: none !important;
   }
   .glass-hover:hover,
   .magnetic-cta:hover {

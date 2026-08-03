@@ -65,6 +65,5 @@ export const en: Dictionary = {
     subtitle: "A listing's numbers only make sense when placed side by side with its neighborhood's numbers. We make that comparison.",
     ctaPrimary: "Start Analysis",
     ctaSecondary: "How It Works",
-    strip: ["20 cities", "District-level median", "Independent analysis"],
   },
 };

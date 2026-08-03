@@ -63,7 +63,6 @@ export const tr = {
     subtitle: "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Biz o karşılaştırmayı yapıyoruz.",
     ctaPrimary: "Analize Başla",
     ctaSecondary: "Nasıl Çalışır",
-    strip: ["20 şehir", "İlçe bazlı medyan", "Bağımsız analiz"],
   },
 } as const satisfies Dictionary;
 
@@ -123,6 +122,5 @@ export interface Dictionary {
     subtitle: string;
     ctaPrimary: string;
     ctaSecondary: string;
-    strip: readonly string[];
   };
 }

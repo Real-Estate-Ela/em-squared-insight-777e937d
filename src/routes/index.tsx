@@ -112,6 +112,68 @@ const beforeAfter = [
   { label: "Arz (aktif ilan)", before: "340", after: "520", change: "+%52", positive: false },
 ];
 
+const SPINE_LABELS = ["VERİ", "MEDYAN", "GETİRİ", "KARAR"] as const;
+const SPINE_LABELS_SHORT = ["VERİ", "MDY", "GTR", "KRR"] as const;
+
+function SlotNumber({ text, animate }: { text: string; animate: boolean }) {
+  const [display, setDisplay] = useState(text);
+  const settled = useRef(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!animate) {
+      setDisplay(text);
+      settled.current = 0;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
+    }
+
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mql.matches) {
+      setDisplay(text);
+      return;
+    }
+
+    settled.current = 0;
+    const chars = text.split("");
+    const duration = 1100;
+    const perChar = duration / chars.length;
+    const start = performance.now();
+
+    intervalRef.current = setInterval(() => {
+      const elapsed = performance.now() - start;
+      const settledCount = Math.min(
+        chars.length,
+        Math.floor(elapsed / perChar),
+      );
+      settled.current = settledCount;
+
+      if (settledCount >= chars.length) {
+        setDisplay(text);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        return;
+      }
+
+      const result = chars.map((ch, i) => {
+        if (i < settledCount) return ch;
+        if (/\d/.test(ch)) return String(Math.floor(Math.random() * 10));
+        return ch;
+      });
+      setDisplay(result.join(""));
+    }, 50);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [animate, text]);
+
+  return (
+    <span aria-label={text} className="slot-number">
+      {display}
+    </span>
+  );
+}
+
 function Home() {
   const { t, locale } = useI18n();
   const { user, loading: authLoading } = useAuth();
@@ -122,6 +184,7 @@ function Home() {
   const [done, setDone] = useState(true);
   const [authPrompt, setAuthPrompt] = useState(false);
   const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
+  const [animateResults, setAnimateResults] = useState(false);
   const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
   const [ent, setEnt] = useState<Entitlements | null>(null);
   const heroRef = useRef<HTMLElement>(null);
@@ -206,6 +269,7 @@ function Home() {
     }
 
     setDone(false);
+    setAnimateResults(false);
     setStep(0);
     steps.forEach((_, i) => {
       timers.current.push(
@@ -215,6 +279,7 @@ function Home() {
             timers.current.push(
               setTimeout(() => {
                 setDone(true);
+                setAnimateResults(true);
                 document
                   .getElementById("karar")
                   ?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -312,17 +377,6 @@ function Home() {
               </button>
             </div>
 
-            <div
-              className="hero-entrance mt-12 flex items-center gap-4 font-mono text-xs"
-              style={{ color: "rgba(255,255,255,0.62)", animationDelay: "320ms" }}
-            >
-              {t.hero.strip.map((item, i) => (
-                <span key={item} className="flex items-center gap-4">
-                  {i > 0 && <span className="h-3 w-px bg-white/25" />}
-                  <span>{item}</span>
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -529,53 +583,42 @@ function Home() {
           </Reveal>
 
           <Reveal delay={300}>
-            <div className="glass mt-5 overflow-hidden rounded-xl">
-              {steps.map((s, i) => {
-                const active = !done && step === i;
-                const complete = done || step > i;
-                return (
-                  <div
-                    key={s}
-                    className={`flex items-center justify-between gap-4 border-b border-border/40 px-5 py-3.5 text-sm last:border-b-0 transition-colors ${
-                      active ? "bg-positive/5" : ""
-                    }`}
-                  >
-                    <span className="flex items-center gap-3">
-                      <span
-                        className={`inline-grid h-5 w-5 place-items-center rounded-full transition-colors ${
+            <div className="mt-8 px-2" role="progressbar" aria-valuenow={done ? 4 : step + 1} aria-valuemin={0} aria-valuemax={4}>
+              <div className="relative flex items-center justify-between">
+                <div className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 bg-border/40" />
+                <div
+                  className="absolute left-0 top-1/2 h-0.5 -translate-y-1/2 bg-positive transition-all duration-500 ease-out"
+                  style={{ width: `${done ? 100 : step >= 0 ? (step / (steps.length - 1)) * 100 : 0}%` }}
+                />
+                {steps.map((_, i) => {
+                  const active = !done && step === i;
+                  const complete = done || step > i;
+                  return (
+                    <div key={i} className="relative z-10 flex flex-col items-center">
+                      <div
+                        className={`relative flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-300 ${
                           complete
-                            ? "bg-positive text-white"
+                            ? "bg-positive"
                             : active
-                              ? "border-2 border-primary text-primary"
-                              : "border border-border text-muted-foreground"
+                              ? "spine-active bg-primary"
+                              : "bg-border/40"
                         }`}
                       >
-                        {complete ? <Check className="h-3 w-3" /> : null}
-                      </span>
+                        {complete && <Check className="h-3 w-3 text-white" />}
+                      </div>
                       <span
-                        className={
-                          complete
-                            ? "text-foreground"
-                            : "text-muted-foreground"
-                        }
+                        className={`mt-2.5 font-mono text-[10.5px] font-medium uppercase transition-opacity duration-300 ${
+                          complete || active ? "opacity-100" : "opacity-50"
+                        }`}
+                        style={{ letterSpacing: ".06em" }}
                       >
-                        {s}
+                        <span className="hidden sm:inline">{SPINE_LABELS[i]}</span>
+                        <span className="sm:hidden">{SPINE_LABELS_SHORT[i]}</span>
                       </span>
-                    </span>
-                    <span
-                      className={`text-xs font-medium ${
-                        complete
-                          ? "text-positive"
-                          : active
-                            ? "text-primary"
-                            : "text-muted-foreground"
-                      }`}
-                    >
-                      {complete ? "Tamam" : active ? "Çalışıyor..." : "Bekliyor"}
-                    </span>
-                  </div>
-                );
-              })}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </Reveal>
         </div>
@@ -773,17 +816,18 @@ function Home() {
                   </button>
                 </div>
               </div>
-              <dl className="self-center">
-                {metrics.map((m) => (
+              <dl className="self-center" aria-live="polite">
+                {metrics.map((m, i) => (
                   <div
                     key={m.label}
-                    className="flex items-baseline justify-between border-t border-border/40 py-4 last:border-b last:border-border/40"
+                    className={`flex items-baseline justify-between border-t border-border/40 py-4 last:border-b last:border-border/40 ${animateResults ? "card-entrance" : ""}`}
+                    style={animateResults ? { animationDelay: `${i * 100}ms` } : undefined}
                   >
                     <dt className="text-sm text-muted-foreground">
                       {m.label}
                     </dt>
                     <dd className={`text-sm font-semibold ${m.tone}`}>
-                      {m.value}
+                      <SlotNumber text={m.value} animate={animateResults} />
                     </dd>
                   </div>
                 ))}
@@ -794,9 +838,10 @@ function Home() {
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             <Reveal variant="slide-left" className="md:col-span-2">
               <MouseCard
-                className="glass rounded-xl p-6"
+                className={`glass rounded-xl p-6 ${animateResults ? "card-entrance" : ""}`}
                 glowColor="var(--positive)"
                 tiltMax={3}
+                style={animateResults ? { animationDelay: "0ms" } : undefined}
               >
                 <TrendChart
                   points={trend}
@@ -806,9 +851,10 @@ function Home() {
                 />
               </MouseCard>
               <MouseCard
-                className="glass mt-4 rounded-xl p-6"
+                className={`glass mt-4 rounded-xl p-6 ${animateResults ? "card-entrance" : ""}`}
                 glowColor="var(--risk)"
                 tiltMax={3}
+                style={animateResults ? { animationDelay: "100ms" } : undefined}
               >
                 <TrendChart
                   points={riskTrend}
@@ -825,16 +871,18 @@ function Home() {
               className="grid grid-cols-2 gap-6 self-center md:grid-cols-1"
             >
               <MouseCard
-                className="glass flex items-center justify-center rounded-xl p-6"
+                className={`glass flex items-center justify-center rounded-xl p-6 ${animateResults ? "card-entrance" : ""}`}
                 glowColor="var(--positive)"
                 tiltMax={8}
+                style={animateResults ? { animationDelay: "200ms" } : undefined}
               >
                 <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
               </MouseCard>
               <MouseCard
-                className="glass flex items-center justify-center rounded-xl p-6"
+                className={`glass flex items-center justify-center rounded-xl p-6 ${animateResults ? "card-entrance" : ""}`}
                 glowColor="var(--risk)"
                 tiltMax={8}
+                style={animateResults ? { animationDelay: "300ms" } : undefined}
               >
                 <Gauge value={22} tone="risk" caption="Risk Skoru" />
               </MouseCard>

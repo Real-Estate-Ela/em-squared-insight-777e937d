@@ -6,12 +6,14 @@ export function MouseCard({
   tiltMax = 6,
   glowColor = "var(--primary)",
   glowOpacity = 0.08,
+  style: styleProp,
 }: {
   children: ReactNode;
   className?: string;
   tiltMax?: number;
   glowColor?: string;
   glowOpacity?: number;
+  style?: React.CSSProperties;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -51,6 +53,7 @@ export function MouseCard({
           "--glow-x": "50%",
           "--glow-y": "50%",
           "--glow-opacity": "0",
+          ...styleProp,
         } as React.CSSProperties
       }
     >
