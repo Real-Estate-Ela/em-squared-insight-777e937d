@@ -64,6 +64,13 @@ export const tr = {
     ctaPrimary: "Analize Başla",
     ctaSecondary: "Nasıl Çalışır",
   },
+  cta: {
+    titleBefore: "Yatırım kararınızı",
+    titleHighlight: "veriye",
+    titleAfter: "dayandırın.",
+    subtitle: "İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve çevre analizini görün.",
+    button: "Hemen Analiz Et",
+  },
   analysis: {
     scoreBreakdown: "Skor Kırılımı",
     partBase: "Taban",
@@ -140,6 +147,13 @@ export interface Dictionary {
     subtitle: string;
     ctaPrimary: string;
     ctaSecondary: string;
+  };
+  cta: {
+    titleBefore: string;
+    titleHighlight: string;
+    titleAfter: string;
+    subtitle: string;
+    button: string;
   };
   analysis: {
     scoreBreakdown: string;

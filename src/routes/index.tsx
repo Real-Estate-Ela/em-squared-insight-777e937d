@@ -1486,14 +1486,14 @@ function Home() {
           <Reveal variant="blur">
             <div className="text-center">
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                Yatırım kararınızı{" "}
-                <span className="text-primary">veriye</span> dayandırın.
+                {t.cta.titleBefore}{" "}
+                <span className="text-primary">{t.cta.titleHighlight}</span>{" "}
+                {t.cta.titleAfter}
               </h2>
               <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-                İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve
-                çevre analizini görün.
+                {t.cta.subtitle}
               </p>
-              <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <div className="mt-8 flex justify-center">
                 <button
                   type="button"
                   onClick={() =>
@@ -1503,12 +1503,9 @@ function Home() {
                   }
                   className="btn-glow flex items-center gap-2 rounded-xl bg-primary px-8 py-4 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.03]"
                 >
-                  Hemen Analiz Et
+                  {t.cta.button}
                   <ArrowUpRight className="h-4 w-4" />
                 </button>
-                <span className="text-xs text-muted-foreground">
-                  Kredi kartı gerekmez
-                </span>
               </div>
             </div>
           </Reveal>

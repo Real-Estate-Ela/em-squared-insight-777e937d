@@ -66,6 +66,13 @@ export const en: Dictionary = {
     ctaPrimary: "Start Analysis",
     ctaSecondary: "How It Works",
   },
+  cta: {
+    titleBefore: "Base your investment decisions on",
+    titleHighlight: "data",
+    titleAfter: ".",
+    subtitle: "Paste a listing link and see rental yield, ROI and neighborhood analysis in 20 seconds.",
+    button: "Analyse Now",
+  },
   analysis: {
     scoreBreakdown: "Score Breakdown",
     partBase: "Base",

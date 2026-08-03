@@ -125,7 +125,7 @@ export function Header() {
         ["--header-fg" as string]: isDark
           ? "rgba(255,255,255,.92)"
           : "var(--foreground)",
-        backgroundColor: "color-mix(in srgb, var(--background) 72%, transparent)",
+        backgroundColor: "transparent",
         backdropFilter: "blur(20px) saturate(1.6)",
         WebkitBackdropFilter: "blur(20px) saturate(1.6)",
         boxShadow: scrolled
@@ -167,8 +167,8 @@ export function Header() {
                 className="group relative text-sm transition-all duration-200 ease-out"
                 style={{
                   color: isActive
-                    ? "var(--header-fg)"
-                    : "color-mix(in srgb, var(--header-fg) 62%, transparent)",
+                    ? "var(--primary)"
+                    : "color-mix(in srgb, var(--primary) 70%, transparent)",
                   fontWeight: isActive ? 600 : 500,
                 }}
               >
@@ -186,7 +186,7 @@ export function Header() {
             hash="analiz"
             className="group relative text-sm transition-all duration-200 ease-out"
             style={{
-              color: "color-mix(in srgb, var(--header-fg) 62%, transparent)",
+              color: "color-mix(in srgb, var(--primary) 70%, transparent)",
               fontWeight: 500,
             }}
           >
@@ -238,22 +238,35 @@ export function Header() {
             aria-label="Mobil menü"
           >
             <div className="mx-auto max-w-6xl px-5 py-3">
-              {links.map((l) => (
-                <Link
-                  key={l.to}
-                  to={l.to}
-                  onClick={() => setOpen(false)}
-                  aria-current={activePath === l.to ? "page" : undefined}
-                  className="block rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                >
-                  {l.label}
-                </Link>
-              ))}
+              {links.map((l) => {
+                const isActive = activePath === l.to;
+                return (
+                  <Link
+                    key={l.to}
+                    to={l.to}
+                    onClick={() => setOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
+                    className="block rounded-lg px-4 py-3 text-sm transition-colors hover:bg-muted"
+                    style={{
+                      color: isActive
+                        ? "var(--primary)"
+                        : "color-mix(in srgb, var(--primary) 70%, transparent)",
+                      fontWeight: isActive ? 600 : 500,
+                    }}
+                  >
+                    {l.label}
+                  </Link>
+                );
+              })}
               <Link
                 to="/"
                 hash="analiz"
                 onClick={() => setOpen(false)}
-                className="block rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                className="block rounded-lg px-4 py-3 text-sm transition-colors hover:bg-muted"
+                style={{
+                  color: "color-mix(in srgb, var(--primary) 70%, transparent)",
+                  fontWeight: 500,
+                }}
               >
                 {t.nav.analyse}
               </Link>
