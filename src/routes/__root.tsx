@@ -10,6 +10,7 @@ import {
 import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import heroPreload from "../assets/hero/hero-city-1920.webp?url";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { AuthProvider } from "../components/auth/AuthProvider";
@@ -91,8 +92,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: "/og-hero.jpg" },
+      { property: "og:locale", content: "tr_TR" },
+      { property: "og:locale:alternate", content: "en_US" },
     ],
     links: [
+      { rel: "canonical", href: "https://emlakmetric.com" },
+      {
+        rel: "alternate",
+        hrefLang: "tr",
+        href: "https://emlakmetric.com",
+      },
+      {
+        rel: "alternate",
+        hrefLang: "en",
+        href: "https://emlakmetric.com?lang=en",
+      },
+      {
+        rel: "preload",
+        as: "image",
+        type: "image/webp",
+        href: heroPreload,
+      },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

@@ -26,7 +26,12 @@ import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard } from "@/components/MouseCard";
 import { BillingRepository, BillingService, Plan, type Entitlements } from "@/lib/billing/billing";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { HeroSectionCanvas } from "@/components/hero/HeroSectionCanvas";
+import heroCity1920WebP from "@/assets/hero/hero-city-1920.webp";
+import heroCity1280WebP from "@/assets/hero/hero-city-1280.webp";
+import heroCity768WebP from "@/assets/hero/hero-city-768.webp";
+import heroCity1920Jpg from "@/assets/hero/hero-city-1920.jpg";
+import heroCity1280Jpg from "@/assets/hero/hero-city-1280.jpg";
+import heroCity768Jpg from "@/assets/hero/hero-city-768.jpg";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -119,9 +124,40 @@ function Home() {
   const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
   const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
   const [ent, setEnt] = useState<Entitlements | null>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const imgWrapRef = useRef<HTMLDivElement>(null);
+  const textWrapRef = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    const imgWrap = imgWrapRef.current;
+    const textWrap = textWrapRef.current;
+    if (!hero || !imgWrap || !textWrap) return;
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mql.matches) return;
+
+    const onMove = (e: MouseEvent) => {
+      const { left, top, width, height } = hero.getBoundingClientRect();
+      const x = (e.clientX - left) / width - 0.5;
+      const y = (e.clientY - top) / height - 0.5;
+      imgWrap.style.transform = `translate(${x * -10}px, ${y * -10}px)`;
+      textWrap.style.transform = `translate(${x * 4}px, ${y * 4}px)`;
+    };
+    const onLeave = () => {
+      imgWrap.style.transform = "";
+      textWrap.style.transform = "";
+    };
+
+    hero.addEventListener("mousemove", onMove);
+    hero.addEventListener("mouseleave", onLeave);
+    return () => {
+      hero.removeEventListener("mousemove", onMove);
+      hero.removeEventListener("mouseleave", onLeave);
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -194,47 +230,99 @@ function Home() {
     <div>
       {/* ===== HERO ===== */}
       <section
-        data-header="light"
-        className="relative overflow-hidden"
-        style={{
-          background:
-            "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
-        }}
+        ref={heroRef}
+        data-header="dark"
+        className="relative -mt-14 overflow-hidden"
+        style={{ height: "min(100svh, 880px)" }}
       >
-        <div className="relative z-10 mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-28 lg:py-36">
-          <div className="grid grid-cols-1 items-center gap-8 min-[880px]:grid-cols-2 min-[880px]:gap-12">
-            <div>
-              <Reveal delay={100}>
-                <h1 className="text-[clamp(2rem,5vw,3.75rem)] font-extrabold leading-[1.08] tracking-tight">
-                  {t.hero.titleBefore}{" "}
-                  <span className="text-primary">{t.hero.titleHighlight}</span>
-                </h1>
-              </Reveal>
+        <div className="absolute -inset-3 overflow-hidden">
+          <div ref={imgWrapRef} className="h-[calc(100%+24px)] w-[calc(100%+24px)]">
+            <picture>
+              <source
+                type="image/webp"
+                srcSet={`${heroCity768WebP} 768w, ${heroCity1280WebP} 1280w, ${heroCity1920WebP} 1920w`}
+                sizes="100vw"
+              />
+              <img
+                src={heroCity1920Jpg}
+                srcSet={`${heroCity768Jpg} 768w, ${heroCity1280Jpg} 1280w, ${heroCity1920Jpg} 1920w`}
+                sizes="100vw"
+                alt=""
+                fetchPriority="high"
+                loading="eager"
+                decoding="async"
+                className="hero-img h-full w-full object-cover"
+                style={{ objectPosition: "center 78%" }}
+              />
+            </picture>
+          </div>
+        </div>
 
-              <Reveal delay={200} variant="fade">
-                <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
-                  {t.hero.subtitle}
-                </p>
-              </Reveal>
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.18) 40%, rgba(0,0,0,0.46) 100%)" }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.30) 0%, transparent 70%)" }}
+        />
 
-              <Reveal delay={300}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    document
-                      .getElementById("analiz")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="btn-glow mt-10 inline-flex items-center gap-2.5 rounded-xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground transition-transform duration-200 hover:scale-[1.03]"
-                >
-                  {t.hero.cta}
-                </button>
-              </Reveal>
+        <div className="relative z-10 mx-auto flex h-full max-w-6xl items-center px-5 pt-14 md:px-8">
+          <div ref={textWrapRef} className="max-w-[34rem]">
+            <p
+              className="hero-entrance flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em]"
+              style={{ color: "rgba(255,255,255,0.70)" }}
+            >
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-positive" />
+              {t.hero.badge}
+            </p>
+
+            <h1
+              className="hero-entrance mt-5 font-bold leading-[1.08] tracking-tight text-white"
+              style={{ fontSize: "clamp(2.6rem, 5.6vw, 4.4rem)", animationDelay: "80ms" }}
+            >
+              {t.hero.titleBefore}{" "}
+              <span style={{ color: "#7C9BFF" }}>{t.hero.titleHighlight}</span>
+            </h1>
+
+            <p
+              className="hero-entrance mt-6 leading-relaxed"
+              style={{ fontSize: "clamp(15px, 1.6vw, 18px)", color: "rgba(255,255,255,0.78)", animationDelay: "160ms" }}
+            >
+              {t.hero.subtitle}
+            </p>
+
+            <div
+              className="hero-entrance mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4"
+              style={{ animationDelay: "240ms" }}
+            >
+              <button
+                type="button"
+                onClick={() => document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" })}
+                className="hero-btn-filled"
+              >
+                {t.hero.ctaPrimary}
+              </button>
+              <button
+                type="button"
+                onClick={() => document.getElementById("nasil-calisir")?.scrollIntoView({ behavior: "smooth" })}
+                className="hero-btn-glass"
+              >
+                {t.hero.ctaSecondary}
+              </button>
             </div>
 
-            <Reveal delay={250} variant="scale">
-              <HeroSectionCanvas />
-            </Reveal>
+            <div
+              className="hero-entrance mt-12 flex items-center gap-4 font-mono text-xs"
+              style={{ color: "rgba(255,255,255,0.62)", animationDelay: "320ms" }}
+            >
+              {t.hero.strip.map((item, i) => (
+                <span key={item} className="flex items-center gap-4">
+                  {i > 0 && <span className="h-3 w-px bg-white/25" />}
+                  <span>{item}</span>
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -942,7 +1030,7 @@ function Home() {
       </section>
 
       {/* ===== HOW IT WORKS ===== */}
-      <section data-header="light">
+      <section data-header="light" id="nasil-calisir">
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal variant="blur">
             <div className="text-center">

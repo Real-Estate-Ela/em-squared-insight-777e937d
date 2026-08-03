@@ -57,15 +57,13 @@ export const tr = {
     loginToAnalyze: "Giriş Yap",
   },
   hero: {
+    badge: "VERİ ODAKLI GAYRİMENKUL ANALİZİ",
     titleBefore: "Fiyat tek başına",
     titleHighlight: "bir şey söylemez.",
-    subtitle: "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır.",
-    cta: "Hemen Başla",
-    unitLabel: "₺/m²",
-    medianLabel: "BİNA MEDYANI",
-    floorLabels: ["14. kat", "12. kat", "10. kat", "8. kat", "6. kat", "4. kat", "2. kat", "zemin"],
-    floorNoteTop: "teras",
-    floorNoteBottom: "dükkân",
+    subtitle: "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Biz o karşılaştırmayı yapıyoruz.",
+    ctaPrimary: "Analize Başla",
+    ctaSecondary: "Nasıl Çalışır",
+    strip: ["20 şehir", "İlçe bazlı medyan", "Bağımsız analiz"],
   },
 } as const satisfies Dictionary;
 
@@ -119,14 +117,12 @@ export interface Dictionary {
     loginToAnalyze: string;
   };
   hero: {
+    badge: string;
     titleBefore: string;
     titleHighlight: string;
     subtitle: string;
-    cta: string;
-    unitLabel: string;
-    medianLabel: string;
-    floorLabels: readonly string[];
-    floorNoteTop: string;
-    floorNoteBottom: string;
+    ctaPrimary: string;
+    ctaSecondary: string;
+    strip: readonly string[];
   };
 }
