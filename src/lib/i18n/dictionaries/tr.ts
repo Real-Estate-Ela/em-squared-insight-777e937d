@@ -52,6 +52,16 @@ export const tr = {
     subtitle: "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır.",
     cta: "Hemen Başla",
   },
+  nav: {
+    home: "Ana Sayfa",
+    packages: "Paketler",
+    about: "Hakkımızda",
+    contact: "İletişim",
+    analyse: "Analiz Et",
+    signIn: "Giriş Yap",
+    signUp: "Kayıt Ol",
+    menu: "Menü",
+  },
 } as const satisfies Dictionary;
 
 export interface Dictionary {
@@ -98,5 +108,15 @@ export interface Dictionary {
     titleHighlight: string;
     subtitle: string;
     cta: string;
+  };
+  nav: {
+    home: string;
+    packages: string;
+    about: string;
+    contact: string;
+    analyse: string;
+    signIn: string;
+    signUp: string;
+    menu: string;
   };
 }

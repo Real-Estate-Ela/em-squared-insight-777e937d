@@ -54,4 +54,14 @@ export const en: Dictionary = {
     subtitle: "A listing's numbers only make sense when placed side by side with its neighborhood's numbers.",
     cta: "Get Started",
   },
+  nav: {
+    home: "Home",
+    packages: "Pricing",
+    about: "About",
+    contact: "Contact",
+    analyse: "Analyse",
+    signIn: "Sign In",
+    signUp: "Sign Up",
+    menu: "Menu",
+  },
 };

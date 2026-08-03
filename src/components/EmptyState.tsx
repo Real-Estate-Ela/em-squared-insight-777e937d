@@ -1,5 +1,3 @@
-import { ArrowRight } from "lucide-react";
-
 export function EmptyState({
   title = "Henüz analiz yapılmadı",
   description = "İlan linkini yapıştırarak ilk yatırım analizinizi başlatın.",
@@ -60,7 +58,6 @@ export function EmptyState({
           className="group mt-6 flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
         >
           {cta}
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </button>
       )}
     </div>

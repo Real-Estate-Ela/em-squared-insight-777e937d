@@ -545,6 +545,43 @@
   animation: em-btn-glow 3s ease-in-out infinite;
 }
 
+/* ---- Magnetic CTA (Kayıt Ol) ---- */
+.magnetic-cta {
+  --mx: 50%;
+  --my: 50%;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+.magnetic-cta:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 28px color-mix(in oklab, var(--primary) 35%, transparent),
+    0 2px 6px color-mix(in oklab, var(--primary) 18%, transparent);
+}
+
+.magnetic-cta:active {
+  transform: scale(0.97);
+}
+
+@media (pointer: fine) {
+  .magnetic-cta:hover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      120px circle at var(--mx) var(--my),
+      rgba(255, 255, 255, 0.18),
+      transparent 70%
+    );
+  }
+  .magnetic-cta {
+    position: relative;
+    overflow: hidden;
+  }
+}
+
 @utility scanline {
   position: relative;
   overflow: hidden;
@@ -638,7 +675,11 @@
   .btn-glow {
     animation: none !important;
   }
-  .glass-hover:hover {
+  .glass-hover:hover,
+  .magnetic-cta:hover {
     transform: none !important;
+  }
+  .magnetic-cta:hover::after {
+    display: none !important;
   }
 }

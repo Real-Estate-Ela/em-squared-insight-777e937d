@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowRight,
   ArrowUpRight,
   Check,
   Loader2,
@@ -216,7 +215,6 @@ function Home() {
                 className="btn-glow mt-10 inline-flex items-center gap-2.5 rounded-xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground transition-transform duration-200 hover:scale-[1.03]"
               >
                 {t.hero.cta}
-                <ArrowRight className="h-5 w-5" />
               </button>
             </Reveal>
           </div>
@@ -570,7 +568,6 @@ function Home() {
                             style={{ color }}
                           >
                             {t.pricing.contactSales}
-                            <ArrowRight className="h-4 w-4" />
                           </Link>
                         ) : isCurrent ? (
                           <button
@@ -587,7 +584,6 @@ function Home() {
                             className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
                           >
                             {plan.isFree ? t.pricing.getStarted : t.pricing.upgrade}
-                            <ArrowRight className="h-4 w-4" />
                           </button>
                         )}
                       </div>
@@ -986,11 +982,11 @@ function Home() {
               <span className="h-px w-20 bg-border" />
               <span className="text-xs">Link</span>
               <span className="h-px w-16 bg-border" />
-              <span className="text-lg">→</span>
+              <span className="text-lg text-primary">•</span>
               <span className="h-px w-16 bg-border" />
               <span className="text-xs">Analiz</span>
               <span className="h-px w-16 bg-border" />
-              <span className="text-lg">→</span>
+              <span className="text-lg text-primary">•</span>
               <span className="h-px w-16 bg-border" />
               <span className="text-xs">Karar</span>
               <span className="h-px w-20 bg-border" />

@@ -1,6 +1,6 @@
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export type Slide = {
   img: string;
@@ -123,7 +123,7 @@ export function AnalysisSlider({ slides }: { slides: Slide[] }) {
             aria-label="Önceki"
             className="rounded-lg border border-border p-2.5 transition-all hover:bg-muted hover:-translate-y-0.5"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -131,7 +131,7 @@ export function AnalysisSlider({ slides }: { slides: Slide[] }) {
             aria-label="Sonraki"
             className="rounded-lg border border-border p-2.5 transition-all hover:bg-muted hover:-translate-y-0.5"
           >
-            <ArrowRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>

@@ -3,24 +3,83 @@ import { useState, useRef, useEffect } from "react";
 import { LogOut, User, Crown, Shield } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { signOut } from "@/lib/supabase/auth";
+import { useI18n } from "@/lib/i18n";
 
-function AuthButtons() {
+export function AuthButtons({ variant = "row" }: { variant?: "row" | "stack" }) {
+  const { t } = useI18n();
+  const isStack = variant === "stack";
   return (
-    <div className="flex items-center gap-2">
+    <div className={isStack ? "flex flex-col gap-2" : "flex items-center gap-2"}>
       <Link
         to="/giris"
-        search={{ redirect: undefined }}
-        className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className={`text-sm font-medium text-[var(--header-fg,var(--muted-foreground))] transition-colors hover:opacity-80 ${isStack ? "block rounded-lg px-4 py-3 hover:bg-muted" : "rounded-lg px-4 py-2"}`}
       >
-        Giriş Yap
+        {t.nav.signIn}
       </Link>
+      <MagneticSignUp label={t.nav.signUp} className={isStack ? "w-full text-center" : ""} />
+    </div>
+  );
+}
+
+function MagneticSignUp({ label, className = "" }: { label: string; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isCoarse || reducedMotion) return;
+
+    const link = el.querySelector("a");
+
+    const onMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const threshold = 40;
+      if (dist < threshold) {
+        const pull = (1 - dist / threshold) * 8;
+        const angle = Math.atan2(dy, dx);
+        el.style.transform = `translate(${Math.cos(angle) * pull}px, ${Math.sin(angle) * pull}px)`;
+      } else {
+        el.style.transform = "";
+      }
+    };
+    const onLeave = () => { el.style.transform = ""; };
+
+    const onLinkMove = (e: MouseEvent) => {
+      if (!link) return;
+      const rect = link.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      link.style.setProperty("--mx", `${mx}px`);
+      link.style.setProperty("--my", `${my}px`);
+    };
+
+    document.addEventListener("mousemove", onMove, { passive: true });
+    el.addEventListener("mouseleave", onLeave);
+    if (link) link.addEventListener("mousemove", onLinkMove, { passive: true });
+
+    return () => {
+      document.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mouseleave", onLeave);
+      if (link) link.removeEventListener("mousemove", onLinkMove);
+    };
+  }, []);
+
+  return (
+    <span ref={ref} className="inline-block" style={{ willChange: "transform", transition: "transform 200ms ease-out" }}>
       <Link
         to="/kayit"
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
+        className={`magnetic-cta inline-block rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 ${className}`}
       >
-        Kayıt Ol
+        {label}
       </Link>
-    </div>
+    </span>
   );
 }
 
