@@ -22,8 +22,6 @@ import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard, CountUp } from "@/components/MouseCard";
-import { BillingRepository, BillingService, QuotaExhaustedError } from "@/lib/billing/billing";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useI18n } from "@/lib/i18n";
 
 type AnalyseErrorResponse = { error: string; resource?: "analysis" | "report" };
@@ -555,14 +553,23 @@ function Home() {
                     className="btn-tactile btn-tactile-positive"
                     onClick={async () => {
                       try {
-                        const db = getSupabaseBrowserClient();
-                        const svc = new BillingService(new BillingRepository(db));
-                        await svc.downloadReport("placeholder", "pdf");
-                      } catch (err) {
-                        if (err instanceof QuotaExhaustedError) {
-                          setQuotaError(err.resource);
-                          document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" });
+                        const res = await fetch("/api/report", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ analysisId: "placeholder", format: "pdf" }),
+                        });
+                        if (!res.ok) {
+                          const body: AnalyseErrorResponse = await res.json();
+                          if (res.status === 429 && body.resource) {
+                            setQuotaError(body.resource);
+                            document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" });
+                          }
+                          if (res.status === 401) {
+                            window.location.href = "/giris";
+                          }
                         }
+                      } catch {
+                        // network error — silently ignore
                       }
                     }}
                   >

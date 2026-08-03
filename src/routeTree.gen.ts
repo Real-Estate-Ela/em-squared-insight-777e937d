@@ -21,6 +21,7 @@ import { Route as GorsellerRouteImport } from './routes/gorseller'
 import { Route as GirisRouteImport } from './routes/giris'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as ApiReportRouteImport } from './routes/api/report'
 import { Route as ApiAnalyseRouteImport } from './routes/api/analyse'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -83,6 +84,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiReportRoute = ApiReportRouteImport.update({
+  id: '/api/report',
+  path: '/api/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAnalyseRoute = ApiAnalyseRouteImport.update({
   id: '/api/analyse',
   path: '/api/analyse',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/analyse': typeof ApiAnalyseRoute
+  '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/analyse': typeof ApiAnalyseRoute
+  '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/analyse': typeof ApiAnalyseRoute
+  '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/sifre-yenile'
     | '/sitemap.xml'
     | '/api/analyse'
+    | '/api/report'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/sifre-yenile'
     | '/sitemap.xml'
     | '/api/analyse'
+    | '/api/report'
     | '/auth/callback'
   id:
     | '__root__'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/sifre-yenile'
     | '/sitemap.xml'
     | '/api/analyse'
+    | '/api/report'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   SifreYenileRoute: typeof SifreYenileRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAnalyseRoute: typeof ApiAnalyseRoute
+  ApiReportRoute: typeof ApiReportRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/report': {
+      id: '/api/report'
+      path: '/api/report'
+      fullPath: '/api/report'
+      preLoaderRoute: typeof ApiReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/analyse': {
       id: '/api/analyse'
       path: '/api/analyse'
@@ -308,6 +328,7 @@ const rootRouteChildren: RootRouteChildren = {
   SifreYenileRoute: SifreYenileRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAnalyseRoute: ApiAnalyseRoute,
+  ApiReportRoute: ApiReportRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
