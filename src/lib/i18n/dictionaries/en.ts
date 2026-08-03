@@ -26,6 +26,18 @@ export const en: Dictionary = {
     contactSales: "Contact sales",
     free: "Free",
     perMonth: "/ mo",
+    monthlyAnalysisCount: "monthly analyses",
+    monthlyReportCount: "monthly report downloads",
+    planDescriptions: {
+      free: "Explore the platform. Start making data-driven real estate investment decisions today.",
+      pro: "Built for active investors. Never miss an opportunity with extensive analysis capacity and detailed reports.",
+      enterprise: "For real estate agencies and portfolio managers. Unlimited analysis capacity and dedicated support across your team.",
+    },
+    planFeatures: {
+      free: ["Basic investment analysis", "Rental yield calculation", "Neighborhood analysis report", "Price comparison across 3 platforms"],
+      pro: ["All free features", "Detailed PDF and Excel reports", "Regional comparison", "Priority email support", "Advanced risk analysis"],
+      enterprise: ["All Pro features", "API access", "Team accounts and management panel", "Dedicated account manager", "Custom integrations"],
+    },
   },
   usage: {
     heading: "Usage",
@@ -41,5 +53,15 @@ export const en: Dictionary = {
     analysisExhausted: "You've used all your analyses for this period.",
     reportExhausted: "You've used all your report downloads for this period.",
     viewPlans: "View plans",
+  },
+  auth: {
+    loginRequired: "Sign in to start an analysis",
+    loginToAnalyze: "Sign In",
+  },
+  hero: {
+    titleBefore: "Price alone",
+    titleHighlight: "means nothing.",
+    subtitle: "A listing's numbers only make sense when placed side by side with its neighborhood's numbers.",
+    cta: "Get Started",
   },
 };

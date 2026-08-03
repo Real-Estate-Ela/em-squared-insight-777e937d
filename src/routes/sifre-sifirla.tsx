@@ -43,6 +43,7 @@ function ResetPasswordPage() {
           </p>
           <Link
             to="/giris"
+            search={{ redirect: undefined }}
             className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -103,6 +104,7 @@ function ResetPasswordPage() {
         <p className="mt-6 text-center text-sm text-muted-foreground">
           <Link
             to="/giris"
+            search={{ redirect: undefined }}
             className="inline-flex items-center gap-1.5 font-medium text-primary hover:text-primary/80"
           >
             <ArrowLeft className="h-3.5 w-3.5" />

@@ -1,12 +1,24 @@
 import { Link, useMatches } from "@tanstack/react-router";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { EmSquareMark, Wordmark } from "./Logo";
 import { UserMenu, AuthButtons } from "./auth/UserMenu";
 import { useI18n } from "@/lib/i18n";
 
-const NAV_KEYS = ["home", "packages", "about", "contact"] as const;
-const NAV_ROUTES = ["/", "/paketler", "/hakkimizda", "/iletisim"] as const;
+const NAV_KEYS = ["home", "about", "contact"] as const;
+const NAV_ROUTES = ["/", "/hakkimizda", "/iletisim"] as const;
+
+function Hamburger({ open }: { open: boolean }) {
+  const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const base = "block h-0.5 w-5 rounded-full bg-current";
+  const transition = reduced ? "" : "transition-all duration-300 ease-out";
+  return (
+    <span className="flex h-5 w-5 flex-col items-center justify-center gap-[5px]" aria-hidden="true">
+      <span className={`${base} ${transition} ${open ? "translate-y-[7px] rotate-45" : ""}`} />
+      <span className={`${base} ${transition} ${open ? "scale-x-0 opacity-0" : ""}`} />
+      <span className={`${base} ${transition} ${open ? "-translate-y-[7px] -rotate-45" : ""}`} />
+    </span>
+  );
+}
 
 export function Header() {
   const { t } = useI18n();
@@ -22,7 +34,6 @@ export function Header() {
   const navRef = useRef<HTMLElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
 
-  // --- scroll shadow + progress ---
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 12);
@@ -34,7 +45,6 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // --- lock body scroll when mobile menu open ---
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -44,7 +54,6 @@ export function Header() {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  // --- IntersectionObserver for data-header sections ---
   useEffect(() => {
     const header = headerRef.current;
     if (!header) return;
@@ -71,7 +80,6 @@ export function Header() {
     return () => observer.disconnect();
   }, []);
 
-  // --- active link indicator (desktop) ---
   const positionIndicator = useCallback(() => {
     const nav = navRef.current;
     const indicator = indicatorRef.current;
@@ -89,13 +97,17 @@ export function Header() {
     indicator.style.opacity = "1";
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     positionIndicator();
   }, [activePath, positionIndicator]);
 
   useEffect(() => {
-    window.addEventListener("resize", positionIndicator);
-    return () => window.removeEventListener("resize", positionIndicator);
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const ro = new ResizeObserver(() => positionIndicator());
+    ro.observe(nav);
+    return () => ro.disconnect();
   }, [positionIndicator]);
 
   const isDark = headerTheme === "dark";
@@ -123,7 +135,6 @@ export function Header() {
         color: "var(--header-fg)",
       }}
     >
-      {/* reading progress bar */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-0.5 origin-left"
@@ -140,49 +151,65 @@ export function Header() {
           <Wordmark className="truncate text-xl md:text-2xl" />
         </Link>
 
-        {/* desktop nav */}
         <nav
           ref={navRef}
           className="relative hidden items-center gap-7 md:flex"
           aria-label="Ana menü"
         >
-          {links.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              activeOptions={{ exact: l.to === "/" }}
-              activeProps={{ className: "!opacity-100" }}
-              aria-current={activePath === l.to ? "page" : undefined}
-              className="text-sm font-medium opacity-70 transition-opacity duration-200 ease-out hover:opacity-100"
-              style={{ color: "var(--header-fg)" }}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {links.map((l) => {
+            const isActive = activePath === l.to;
+            return (
+              <Link
+                key={l.to}
+                to={l.to}
+                activeOptions={{ exact: l.to === "/" }}
+                aria-current={isActive ? "page" : undefined}
+                className="group relative text-sm transition-all duration-200 ease-out"
+                style={{
+                  color: isActive
+                    ? "var(--header-fg)"
+                    : "color-mix(in srgb, var(--header-fg) 62%, transparent)",
+                  fontWeight: isActive ? 600 : 500,
+                }}
+              >
+                {l.label}
+                <span
+                  aria-hidden="true"
+                  className="absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-current transition-transform duration-[220ms] ease-out group-hover:scale-x-100"
+                />
+              </Link>
+            );
+          })}
 
           <Link
             to="/"
             hash="analiz"
-            className="text-sm font-medium opacity-70 transition-opacity duration-200 ease-out hover:opacity-100"
-            style={{ color: "var(--header-fg)" }}
+            className="group relative text-sm transition-all duration-200 ease-out"
+            style={{
+              color: "color-mix(in srgb, var(--header-fg) 62%, transparent)",
+              fontWeight: 500,
+            }}
           >
             {t.nav.analyse}
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-current transition-transform duration-[220ms] ease-out group-hover:scale-x-100"
+            />
           </Link>
 
           <UserMenu />
 
-          {/* active indicator */}
           <span
             ref={indicatorRef}
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-1 left-0 h-0.5 w-[1px] origin-left rounded-full bg-current opacity-0"
+            className="pointer-events-none absolute -bottom-1 left-0 h-0.5 w-[1px] origin-left rounded-full opacity-0"
             style={{
+              backgroundColor: "var(--primary)",
               transition: "transform 250ms ease-out, opacity 250ms ease-out",
             }}
           />
         </nav>
 
-        {/* mobile hamburger */}
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -190,11 +217,10 @@ export function Header() {
           aria-expanded={open}
           className="flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-muted/50 md:hidden"
         >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <Hamburger open={open} />
         </button>
       </div>
 
-      {/* mobile panel */}
       {open && (
         <>
           <div

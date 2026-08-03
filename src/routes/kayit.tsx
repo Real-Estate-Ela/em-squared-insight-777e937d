@@ -110,6 +110,7 @@ function SignupPage() {
           </div>
           <Link
             to="/giris"
+            search={{ redirect: undefined }}
             className="mt-6 inline-block text-sm font-medium text-primary hover:text-primary/80"
           >
             Giriş sayfasına dön
@@ -252,7 +253,7 @@ function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Zaten hesabınız var mı?{" "}
-          <Link to="/giris" className="font-medium text-primary hover:text-primary/80">
+          <Link to="/giris" search={{ redirect: undefined }} className="font-medium text-primary hover:text-primary/80">
             Giriş Yap
           </Link>
         </p>

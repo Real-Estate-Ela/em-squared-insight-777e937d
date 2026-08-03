@@ -47,7 +47,8 @@ function UsageCard() {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">{u.heading}</h3>
         <Link
-          to="/paketler"
+          to="/"
+          hash="paketler"
           className="text-xs font-medium text-primary hover:underline"
         >
           {u.viewPlans}

@@ -16,7 +16,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
     if (loading) return;
 
     if (!user) {
-      navigate({ to: "/giris" });
+      navigate({ to: "/giris", search: { redirect: undefined } });
       return;
     }
 

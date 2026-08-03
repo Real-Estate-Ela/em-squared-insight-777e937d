@@ -1,11 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowRight,
   ArrowUpRight,
   Check,
   Loader2,
-  TrendingUp,
   MapPin,
   BarChart3,
   Shield,
@@ -13,6 +11,10 @@ import {
   Cpu,
   FileCheck,
   AlertTriangle,
+  Sparkles,
+  Crown,
+  Zap,
+  Building2,
 } from "lucide-react";
 import prop1 from "@/assets/property-1.jpg";
 import prop2 from "@/assets/property-2.jpg";
@@ -21,28 +23,31 @@ import mapView from "@/assets/map-view.jpg";
 import { Reveal } from "@/components/Reveal";
 import { Bars, Gauge, TrendChart } from "@/components/Charts";
 import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
-import { MouseCard, CountUp } from "@/components/MouseCard";
+import { MouseCard } from "@/components/MouseCard";
+import { BillingRepository, BillingService, Plan, type Entitlements } from "@/lib/billing/billing";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 type AnalyseErrorResponse = { error: string; resource?: "analysis" | "report" };
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "emlakmetric — İlan linkiyle 20 saniyede yatırım analizi" },
+      { title: "emlakmetric — Fiyat tek başına bir şey söylemez" },
       {
         name: "description",
         content:
-          "İlan linkini yapıştır; kira getirisi, amortisman, 5 yıl ROI ve çevre analizini saniyeler içinde gör. Konut, arsa ve ticari mülk için veri odaklı analiz.",
+          "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Konut, arsa ve ticari mülk için mahalle bazlı karşılaştırmalı analiz.",
       },
       {
         property: "og:title",
-        content: "emlakmetric — Gayrimenkul analiz platformu",
+        content: "emlakmetric — Fiyat tek başına bir şey söylemez",
       },
       {
         property: "og:description",
         content:
-          "Getiri, çevre analizi ve yatırım kararı 20 saniyede. Konut, arsa ve dükkan için ROI hesabı.",
+          "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Mahalle bazlı karşılaştırmalı analiz.",
       },
     ],
   }),
@@ -56,13 +61,6 @@ const metrics = [
   { label: "Amortisman", value: "15,6 yıl", tone: "" },
   { label: "5 yıl ROI", value: "%41", tone: "text-positive" },
   { label: "Arz riski", value: "Yüksek", tone: "text-risk" },
-];
-
-const highlights = [
-  { icon: TrendingUp, label: "ROI Analizi", desc: "5 yıllık getiri tahmini", color: "var(--positive)" },
-  { icon: MapPin, label: "Çevre Analizi", desc: "Mahalle bazlı veri", color: "var(--primary)" },
-  { icon: Shield, label: "Risk Skoru", desc: "Arz ve talep dengesi", color: "var(--risk)" },
-  { icon: BarChart3, label: "Karşılaştırma", desc: "3 platformdan fiyat", color: "var(--primary)" },
 ];
 
 const listings = [
@@ -95,6 +93,12 @@ const bars = [
   { k: "Arz yoğunluğu", v: 22, tone: "risk" as const },
 ];
 
+const FALLBACK_PLANS = [
+  new Plan("free", "Free", 0, "TRY", 3, 3, false, 1),
+  new Plan("pro", "Pro", 0, "TRY", 100, 100, true, 2),
+  new Plan("enterprise", "Enterprise", 0, "TRY", 1000, 1000, false, 3),
+];
+
 const beforeAfter = [
   { label: "m² fiyat", before: "28.500 ₺", after: "41.200 ₺", change: "+%44", positive: true },
   { label: "Ortalama kira", before: "14.000 ₺", after: "22.500 ₺", change: "+%60", positive: true },
@@ -103,20 +107,42 @@ const beforeAfter = [
 ];
 
 function Home() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<string>(tabs[0]);
   const [url, setUrl] = useState("emlakjet.com/ilan/9931-daire");
   const [step, setStep] = useState(-1);
   const [done, setDone] = useState(true);
+  const [authPrompt, setAuthPrompt] = useState(false);
   const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
+  const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
+  const [ent, setEnt] = useState<Entitlements | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  useEffect(() => {
+    try {
+      const db = getSupabaseBrowserClient();
+      const service = new BillingService(new BillingRepository(db));
+      service.listPlans().then(p => setPlans(p.length ? p : FALLBACK_PLANS)).catch(() => {});
+      service.entitlements().then(setEnt).catch(() => {});
+    } catch {
+      // Supabase env vars not set — keep fallback plans
+    }
+  }, []);
 
   const runAnalysis = async () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setQuotaError(null);
+    setAuthPrompt(false);
+
+    if (!user) {
+      setAuthPrompt(true);
+      return;
+    }
 
     const kind = tab === "Arsa" ? "arsa" : tab === "Dükkan/Ticari" ? "ticari" : "konut";
 
@@ -174,31 +200,18 @@ function Home() {
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
         }}
       >
-        
-        {/* Left veil for text readability */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.6) 45%, transparent 70%)",
-          }}
-        />
-
-        <div className="relative z-10 mx-auto max-w-6xl px-5 py-32 md:px-8 md:py-40 lg:py-48">
-          <div className="text-center md:text-left md:max-w-xl">
+        <div className="relative z-10 mx-auto max-w-6xl px-5 py-24 md:px-8 md:py-36 lg:py-44">
+          <div className="mx-auto max-w-2xl text-center">
             <Reveal delay={100}>
-              <h1 className="text-4xl font-extrabold leading-[1.04] tracking-tight md:text-6xl lg:text-[76px]">
-                İlan linkini yapıştır,
-                <br />
-                <span className="text-primary">yatırım kararını</span> saniyede
-                al.
+              <h1 className="text-[clamp(2rem,6vw,4.75rem)] font-extrabold leading-[1.08] tracking-tight">
+                {t.hero.titleBefore}{" "}
+                <span className="text-primary">{t.hero.titleHighlight}</span>
               </h1>
             </Reveal>
 
             <Reveal delay={200} variant="fade">
-              <p className="mt-6 max-w-lg text-lg text-muted-foreground">
-                Konut, arsa ve ticari mülk için getiri analizi, çevre
-                değerlendirmesi ve risk skoru.
+              <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
+                {t.hero.subtitle}
               </p>
             </Reveal>
 
@@ -212,43 +225,12 @@ function Home() {
                 }
                 className="btn-glow mt-10 inline-flex items-center gap-2.5 rounded-xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground transition-transform duration-200 hover:scale-[1.03]"
               >
-                Hemen Başla
-                <ArrowRight className="h-5 w-5" />
+                {t.hero.cta}
               </button>
             </Reveal>
           </div>
         </div>
       </section>
-
-      {/* ===== FEATURE HIGHLIGHTS ===== */}
-      <div className="glass border-y-0 rounded-none">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4">
-          {highlights.map((h, i) => (
-            <Reveal key={h.label} delay={i * 60} variant="scale">
-              <div
-                className={`flex items-center gap-3 px-5 py-4 ${
-                  i < highlights.length - 1
-                    ? "border-r border-border/40"
-                    : ""
-                }`}
-              >
-                <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                  style={{
-                    backgroundColor: `color-mix(in oklab, ${h.color} 12%, transparent)`,
-                  }}
-                >
-                  <h.icon className="h-4 w-4" style={{ color: h.color }} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">{h.label}</p>
-                  <p className="text-xs text-muted-foreground">{h.desc}</p>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
 
       {/* ===== PRODUCT PREVIEW ===== */}
       <section data-header="light">
@@ -325,39 +307,6 @@ function Home() {
         </div>
       </section>
 
-      {/* ===== STATS ===== */}
-      <section data-header="light">
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              { label: "Analiz edilen mülk", value: 12450, suffix: "+", color: "var(--primary)" },
-              { label: "İlçe kapsama", value: 39, suffix: "", color: "var(--primary)" },
-              { label: "Ortalama doğruluk", value: 94, suffix: "%", color: "var(--positive)" },
-              { label: "Aktif kullanıcı", value: 3200, suffix: "+", color: "var(--risk)" },
-            ].map((s, i) => (
-              <Reveal key={s.label} delay={i * 80} variant="scale">
-                <MouseCard
-                  className="glass rounded-xl p-6 text-center"
-                  glowColor={s.color}
-                  tiltMax={8}
-                  glowOpacity={0.06}
-                >
-                  <p
-                    className="text-3xl font-bold"
-                    style={{ color: s.color }}
-                  >
-                    <CountUp value={s.value} suffix={s.suffix} />
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {s.label}
-                  </p>
-                </MouseCard>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ===== ANALYSIS INPUT ===== */}
       <section
         data-header="light"
@@ -401,6 +350,30 @@ function Home() {
           </Reveal>
 
           <Reveal delay={200}>
+            {authPrompt && (
+              <div
+                className="mb-4 flex flex-col items-start gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                style={{
+                  borderColor: "color-mix(in oklab, var(--primary) 30%, transparent)",
+                  backgroundColor: "color-mix(in oklab, var(--primary) 6%, transparent)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <Shield className="h-5 w-5 shrink-0 text-primary" />
+                  <p className="text-sm font-medium text-foreground">
+                    {t.auth.loginRequired}
+                  </p>
+                </div>
+                <Link
+                  to="/giris"
+                  search={{ redirect: "/#analiz" }}
+                  className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all hover:-translate-y-0.5"
+                >
+                  {t.auth.loginToAnalyze}
+                </Link>
+              </div>
+            )}
+
             {quotaError && (
               <div
                 className="mb-4 flex flex-col items-start gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
@@ -417,12 +390,13 @@ function Home() {
                       : t.quota.reportExhausted}
                   </p>
                 </div>
-                <Link
-                  to="/paketler"
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("paketler")?.scrollIntoView({ behavior: "smooth" })}
                   className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all hover:-translate-y-0.5"
                 >
                   {t.quota.viewPlans}
-                </Link>
+                </button>
               </div>
             )}
 
@@ -511,6 +485,128 @@ function Home() {
           </Reveal>
         </div>
       </section>
+
+      {/* ===== PRICING ===== */}
+      {plans.length > 0 && (
+        <section id="paketler">
+          <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
+            <Reveal variant="blur">
+              <div className="text-center">
+                <p className="label-mono">{t.pricing.title}</p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+                  {t.pricing.subtitle}
+                </h2>
+              </div>
+            </Reveal>
+
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {plans.map((plan, i) => {
+                const isCurrent = ent?.planCode === plan.code;
+                const Icon = plan.code === "enterprise" ? Building2 : plan.code === "pro" ? Crown : Sparkles;
+                const color = plan.code === "enterprise" ? "var(--positive)" : plan.code === "pro" ? "var(--primary)" : "var(--muted-foreground)";
+                const desc = t.pricing.planDescriptions[plan.code];
+                const features = t.pricing.planFeatures[plan.code];
+
+                return (
+                  <Reveal key={plan.code} delay={i * 100} variant="scale">
+                    <MouseCard
+                      className={`glass relative flex h-full flex-col rounded-2xl p-6 ${plan.isFeatured ? "ring-2 ring-primary/30" : ""}`}
+                      glowColor={color}
+                      tiltMax={6}
+                      glowOpacity={0.08}
+                    >
+                      {plan.isFeatured && (
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold text-primary-foreground shadow-md shadow-primary/20">
+                          {t.pricing.badge}
+                        </span>
+                      )}
+
+                      {isCurrent && (
+                        <span className="absolute -top-3 right-4 rounded-full bg-positive px-3 py-1 text-xs font-bold text-white shadow-md">
+                          {t.pricing.currentPlan}
+                        </span>
+                      )}
+
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-xl"
+                          style={{ backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)` }}
+                        >
+                          <Icon className="h-5 w-5" style={{ color }} />
+                        </div>
+                        <h3 className="text-lg font-bold">{plan.name}</h3>
+                      </div>
+
+                      <div className="mt-4">
+                        <span className="text-3xl font-extrabold">
+                          {plan.formatPrice(locale === "en" ? "en-US" : "tr-TR")}
+                        </span>
+                        {!plan.isFree && (
+                          <span className="ml-1 text-sm text-muted-foreground">{t.pricing.perMonth}</span>
+                        )}
+                      </div>
+
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+
+                      <div className="mt-5 space-y-2.5 rounded-xl bg-muted/30 p-4">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4 shrink-0" style={{ color }} />
+                          <span className="text-sm font-semibold">
+                            {plan.analysisQuota} {t.pricing.monthlyAnalysisCount}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 shrink-0" style={{ color }} />
+                          <span className="text-sm font-semibold">
+                            {plan.reportQuota} {t.pricing.monthlyReportCount}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 space-y-2.5">
+                        {features.map((f) => (
+                          <div key={f} className="flex items-start gap-2">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-positive" />
+                            <span className="text-sm text-muted-foreground">{f}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-auto pt-6">
+                        {plan.code === "enterprise" ? (
+                          <Link
+                            to="/iletisim"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-current px-6 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5"
+                            style={{ color }}
+                          >
+                            {t.pricing.contactSales}
+                          </Link>
+                        ) : isCurrent ? (
+                          <button
+                            type="button"
+                            disabled
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-positive/10 px-6 py-3 text-sm font-semibold text-positive"
+                          >
+                            <Check className="h-4 w-4" />
+                            {t.pricing.currentPlan}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
+                          >
+                            {plan.isFree ? t.pricing.getStarted : t.pricing.upgrade}
+                          </button>
+                        )}
+                      </div>
+                    </MouseCard>
+                  </Reveal>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== DECISION ===== */}
       <section data-header="light" id="karar">
@@ -910,11 +1006,11 @@ function Home() {
               <span className="h-px w-20 bg-border" />
               <span className="text-xs">Link</span>
               <span className="h-px w-16 bg-border" />
-              <span className="text-lg">→</span>
+              <span className="text-lg text-primary">•</span>
               <span className="h-px w-16 bg-border" />
               <span className="text-xs">Analiz</span>
               <span className="h-px w-16 bg-border" />
-              <span className="text-lg">→</span>
+              <span className="text-lg text-primary">•</span>
               <span className="h-px w-16 bg-border" />
               <span className="text-xs">Karar</span>
               <span className="h-px w-20 bg-border" />

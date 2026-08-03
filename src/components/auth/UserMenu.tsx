@@ -26,8 +26,12 @@ function MagneticSignUp({ label, className = "" }: { label: string; className?: 
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || window.matchMedia("(pointer: coarse)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el) return;
+    const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isCoarse || reducedMotion) return;
+
+    const link = el.querySelector("a");
 
     const onMove = (e: MouseEvent) => {
       const rect = el.getBoundingClientRect();
@@ -47,11 +51,23 @@ function MagneticSignUp({ label, className = "" }: { label: string; className?: 
     };
     const onLeave = () => { el.style.transform = ""; };
 
+    const onLinkMove = (e: MouseEvent) => {
+      if (!link) return;
+      const rect = link.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      link.style.setProperty("--mx", `${mx}px`);
+      link.style.setProperty("--my", `${my}px`);
+    };
+
     document.addEventListener("mousemove", onMove, { passive: true });
     el.addEventListener("mouseleave", onLeave);
+    if (link) link.addEventListener("mousemove", onLinkMove, { passive: true });
+
     return () => {
       document.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
+      if (link) link.removeEventListener("mousemove", onLinkMove);
     };
   }, []);
 
@@ -59,7 +75,7 @@ function MagneticSignUp({ label, className = "" }: { label: string; className?: 
     <span ref={ref} className="inline-block" style={{ willChange: "transform", transition: "transform 200ms ease-out" }}>
       <Link
         to="/kayit"
-        className={`inline-block rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 ${className}`}
+        className={`magnetic-cta inline-block rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 ${className}`}
       >
         {label}
       </Link>
