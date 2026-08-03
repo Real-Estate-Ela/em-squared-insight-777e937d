@@ -63,5 +63,10 @@ export const en: Dictionary = {
     titleHighlight: "means nothing.",
     subtitle: "A listing's numbers only make sense when placed side by side with its neighborhood's numbers.",
     cta: "Get Started",
+    unitLabel: "₺/m²",
+    medianLabel: "BUILDING MEDIAN",
+    floorLabels: ["14th floor", "12th floor", "10th floor", "8th floor", "6th floor", "4th floor", "2nd floor", "ground"],
+    floorNoteTop: "terrace",
+    floorNoteBottom: "shop",
   },
 };

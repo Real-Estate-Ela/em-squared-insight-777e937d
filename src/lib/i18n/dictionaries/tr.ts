@@ -61,6 +61,11 @@ export const tr = {
     titleHighlight: "bir şey söylemez.",
     subtitle: "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır.",
     cta: "Hemen Başla",
+    unitLabel: "₺/m²",
+    medianLabel: "BİNA MEDYANI",
+    floorLabels: ["14. kat", "12. kat", "10. kat", "8. kat", "6. kat", "4. kat", "2. kat", "zemin"],
+    floorNoteTop: "teras",
+    floorNoteBottom: "dükkân",
   },
 } as const satisfies Dictionary;
 
@@ -118,5 +123,10 @@ export interface Dictionary {
     titleHighlight: string;
     subtitle: string;
     cta: string;
+    unitLabel: string;
+    medianLabel: string;
+    floorLabels: readonly string[];
+    floorNoteTop: string;
+    floorNoteBottom: string;
   };
 }

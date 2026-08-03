@@ -26,6 +26,7 @@ import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
 import { MouseCard } from "@/components/MouseCard";
 import { BillingRepository, BillingService, Plan, type Entitlements } from "@/lib/billing/billing";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { HeroSectionCanvas } from "@/components/hero/HeroSectionCanvas";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -194,39 +195,45 @@ function Home() {
       {/* ===== HERO ===== */}
       <section
         data-header="light"
-        className="relative overflow-hidden md:min-h-[560px]"
+        className="relative overflow-hidden"
         style={{
           background:
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 60%)",
         }}
       >
-        <div className="relative z-10 mx-auto max-w-6xl px-5 py-24 md:px-8 md:py-36 lg:py-44">
-          <div className="mx-auto max-w-2xl text-center">
-            <Reveal delay={100}>
-              <h1 className="text-[clamp(2rem,6vw,4.75rem)] font-extrabold leading-[1.08] tracking-tight">
-                {t.hero.titleBefore}{" "}
-                <span className="text-primary">{t.hero.titleHighlight}</span>
-              </h1>
-            </Reveal>
+        <div className="relative z-10 mx-auto max-w-6xl px-5 py-20 md:px-8 md:py-28 lg:py-36">
+          <div className="grid grid-cols-1 items-center gap-8 min-[880px]:grid-cols-2 min-[880px]:gap-12">
+            <div>
+              <Reveal delay={100}>
+                <h1 className="text-[clamp(2rem,5vw,3.75rem)] font-extrabold leading-[1.08] tracking-tight">
+                  {t.hero.titleBefore}{" "}
+                  <span className="text-primary">{t.hero.titleHighlight}</span>
+                </h1>
+              </Reveal>
 
-            <Reveal delay={200} variant="fade">
-              <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
-                {t.hero.subtitle}
-              </p>
-            </Reveal>
+              <Reveal delay={200} variant="fade">
+                <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
+                  {t.hero.subtitle}
+                </p>
+              </Reveal>
 
-            <Reveal delay={300}>
-              <button
-                type="button"
-                onClick={() =>
-                  document
-                    .getElementById("analiz")
-                    ?.scrollIntoView({ behavior: "smooth" })
-                }
-                className="btn-glow mt-10 inline-flex items-center gap-2.5 rounded-xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground transition-transform duration-200 hover:scale-[1.03]"
-              >
-                {t.hero.cta}
-              </button>
+              <Reveal delay={300}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById("analiz")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="btn-glow mt-10 inline-flex items-center gap-2.5 rounded-xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground transition-transform duration-200 hover:scale-[1.03]"
+                >
+                  {t.hero.cta}
+                </button>
+              </Reveal>
+            </div>
+
+            <Reveal delay={250} variant="scale">
+              <HeroSectionCanvas />
             </Reveal>
           </div>
         </div>
