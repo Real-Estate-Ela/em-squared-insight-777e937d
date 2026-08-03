@@ -167,6 +167,7 @@ function Home() {
     <div>
       {/* ===== HERO ===== */}
       <section
+        data-header="light"
         className="relative overflow-hidden md:min-h-[560px]"
         style={{
           background:
@@ -250,7 +251,7 @@ function Home() {
       </div>
 
       {/* ===== PRODUCT PREVIEW ===== */}
-      <section>
+      <section data-header="light">
         <div className="mx-auto max-w-5xl px-5 py-16 md:px-8">
           <Reveal variant="scale">
             <MouseCard
@@ -325,7 +326,7 @@ function Home() {
       </section>
 
       {/* ===== STATS ===== */}
-      <section>
+      <section data-header="light">
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
@@ -359,6 +360,7 @@ function Home() {
 
       {/* ===== ANALYSIS INPUT ===== */}
       <section
+        data-header="light"
         id="analiz"
         style={{
           background:
@@ -511,7 +513,7 @@ function Home() {
       </section>
 
       {/* ===== DECISION ===== */}
-      <section id="karar">
+      <section data-header="light" id="karar">
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal variant="blur">
             <div className="text-center">
@@ -652,6 +654,7 @@ function Home() {
 
       {/* ===== BEFORE / AFTER ===== */}
       <section
+        data-header="light"
         style={{
           background:
             "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
@@ -713,6 +716,7 @@ function Home() {
 
       {/* ===== COMPARISON TABLE ===== */}
       <section
+        data-header="light"
         style={{
           background:
             "linear-gradient(180deg, var(--surface-warm) 0%, var(--background) 100%)",
@@ -787,7 +791,7 @@ function Home() {
       </section>
 
       {/* ===== SLIDER ===== */}
-      <section>
+      <section data-header="light">
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal variant="blur">
             <div className="text-center">
@@ -807,6 +811,7 @@ function Home() {
 
       {/* ===== BARS ===== */}
       <section
+        data-header="light"
         style={{
           background:
             "linear-gradient(180deg, var(--surface-mint) 0%, var(--background) 100%)",
@@ -834,7 +839,7 @@ function Home() {
       </section>
 
       {/* ===== HOW IT WORKS ===== */}
-      <section>
+      <section data-header="light">
         <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
           <Reveal variant="blur">
             <div className="text-center">
@@ -920,6 +925,7 @@ function Home() {
 
       {/* ===== CTA ===== */}
       <section
+        data-header="light"
         style={{
           background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
         }}

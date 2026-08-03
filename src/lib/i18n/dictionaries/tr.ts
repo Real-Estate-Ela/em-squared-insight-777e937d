@@ -1,4 +1,14 @@
 export const tr = {
+  nav: {
+    home: "Ana Sayfa",
+    packages: "Paketler",
+    about: "Hakkımızda",
+    contact: "İletişim",
+    analyse: "Analiz Et",
+    signIn: "Giriş Yap",
+    signUp: "Kayıt Ol",
+    menu: "Menü",
+  },
   pricing: {
     title: "Paketler",
     subtitle: "İhtiyacınıza uygun planı seçin",
@@ -32,4 +42,8 @@ export const tr = {
   },
 } as const;
 
-export type Dictionary = typeof tr;
+type DeepStringify<T> = {
+  [K in keyof T]: T[K] extends object ? DeepStringify<T[K]> : string;
+};
+
+export type Dictionary = DeepStringify<typeof tr>;

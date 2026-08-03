@@ -1,6 +1,16 @@
 import type { Dictionary } from "./tr";
 
 export const en: Dictionary = {
+  nav: {
+    home: "Home",
+    packages: "Pricing",
+    about: "About",
+    contact: "Contact",
+    analyse: "Analyse",
+    signIn: "Sign In",
+    signUp: "Sign Up",
+    menu: "Menu",
+  },
   pricing: {
     title: "Pricing",
     subtitle: "Choose the plan that fits your needs",
