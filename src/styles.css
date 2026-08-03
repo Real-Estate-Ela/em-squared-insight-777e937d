@@ -720,6 +720,58 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
+/* ---- Bargain slider ---- */
+
+.bargain-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+}
+
+.bargain-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--background);
+  box-shadow: 0 1px 4px oklch(0 0 0 / 0.15);
+  cursor: grab;
+}
+
+.bargain-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--background);
+  box-shadow: 0 1px 4px oklch(0 0 0 / 0.15);
+  cursor: grab;
+}
+
+.bargain-range::-webkit-slider-thumb:active { cursor: grabbing; }
+.bargain-range::-moz-range-thumb:active { cursor: grabbing; }
+
+@media (pointer: coarse) {
+  .bargain-range::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+  }
+  .bargain-range::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+  }
+  .bargain-range {
+    height: 8px;
+    padding: 10px 0;
+  }
+}
+
 /* ---- Neighborhood swarm ---- */
 
 .swarm-wrap {

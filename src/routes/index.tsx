@@ -35,6 +35,7 @@ import heroCity768Jpg from "@/assets/hero/hero-city-768.jpg";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { NeighborhoodSwarm } from "@/components/analysis/NeighborhoodSwarm";
+import { derive } from "@/lib/analysis/derive";
 
 type AnalyseErrorResponse = { error: string; resource?: "analysis" | "report" };
 
@@ -138,22 +139,28 @@ const demoMedian = demoComps[Math.floor(demoComps.length * 0.5)];
 const demoQ1 = demoComps[Math.floor(demoComps.length * 0.25)];
 const demoQ3 = demoComps[Math.floor(demoComps.length * 0.75)];
 const demoListingPrice = Math.round(demoMedian * 0.91);
+const demoArea = 115;
+const demoRent = demoListingPrice * demoArea * 0.0044;
+const demoNoise = 1.8;
+const demoBase = derive(demoListingPrice, demoMedian, demoArea, demoRent, demoNoise);
 
 const SPINE_LABELS = ["VERİ", "MEDYAN", "GETİRİ", "KARAR"] as const;
 const SPINE_LABELS_SHORT = ["VERİ", "MDY", "GTR", "KRR"] as const;
 
 function SlotNumber({ text, animate }: { text: string; animate: boolean }) {
   const [display, setDisplay] = useState(text);
-  const settled = useRef(0);
+  const didAnimate = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!animate) {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    if (!animate || didAnimate.current) {
       setDisplay(text);
-      settled.current = 0;
-      if (intervalRef.current) clearInterval(intervalRef.current);
       return;
     }
+
+    didAnimate.current = true;
 
     const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mql.matches) {
@@ -161,7 +168,6 @@ function SlotNumber({ text, animate }: { text: string; animate: boolean }) {
       return;
     }
 
-    settled.current = 0;
     const chars = text.split("");
     const duration = 1100;
     const perChar = duration / chars.length;
@@ -169,11 +175,7 @@ function SlotNumber({ text, animate }: { text: string; animate: boolean }) {
 
     intervalRef.current = setInterval(() => {
       const elapsed = performance.now() - start;
-      const settledCount = Math.min(
-        chars.length,
-        Math.floor(elapsed / perChar),
-      );
-      settled.current = settledCount;
+      const settledCount = Math.min(chars.length, Math.floor(elapsed / perChar));
 
       if (settledCount >= chars.length) {
         setDisplay(text);
@@ -212,6 +214,7 @@ function Home() {
   const [authPrompt, setAuthPrompt] = useState(false);
   const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
   const [animateResults, setAnimateResults] = useState(false);
+  const [discount, setDiscount] = useState(0);
   const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
   const [ent, setEnt] = useState<Entitlements | null>(null);
   const heroRef = useRef<HTMLElement>(null);
@@ -317,6 +320,17 @@ function Home() {
       );
     });
   };
+
+  const bargainPrice = Math.round(demoListingPrice * (1 - discount / 100));
+  const derived = derive(bargainPrice, demoMedian, demoArea, demoRent, demoNoise);
+  const scoreDiff = derived.score - demoBase.score;
+
+  const liveMetrics = [
+    { label: "Kira getirisi", value: `%${derived.yieldPct.toFixed(1).replace(".", ",")}`, tone: "text-positive" },
+    { label: "Amortisman", value: `${derived.payback.toFixed(1).replace(".", ",")} yıl`, tone: "" },
+    { label: "Medyan farkı", value: `%${derived.delta.toFixed(1).replace(".", ",")}`, tone: derived.delta <= 0 ? "text-positive" : "text-risk" },
+    { label: "Skor", value: `${derived.score}/96`, tone: derived.score >= 60 ? "text-positive" : derived.score >= 40 ? "" : "text-risk" },
+  ];
 
   return (
     <div>
@@ -798,8 +812,56 @@ function Home() {
                 median={demoMedian}
                 q1={demoQ1}
                 q3={demoQ3}
-                price={demoListingPrice}
+                price={bargainPrice}
               />
+
+              {/* Bargain slider */}
+              <div className="mt-6 rounded-xl border border-border/40 bg-muted/20 p-4 md:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <label
+                    htmlFor="bargain-slider"
+                    className="font-mono text-[10.5px] font-medium uppercase tracking-[.06em] text-muted-foreground"
+                  >
+                    İndirim
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <span className="min-w-[3.5rem] text-right font-mono text-sm font-semibold tabular-nums text-foreground">
+                      %{discount.toFixed(1).replace(".", ",")}
+                    </span>
+                    {discount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setDiscount(0)}
+                        className="rounded-md border border-border/60 bg-background px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        Sıfırla
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <input
+                  id="bargain-slider"
+                  type="range"
+                  min={0}
+                  max={25}
+                  step={0.5}
+                  value={discount}
+                  onChange={(e) => setDiscount(Number(e.target.value))}
+                  aria-label={`İndirim: %${discount.toFixed(1)} — Yeni fiyat: ${bargainPrice.toLocaleString("tr-TR")} ₺/m²`}
+                  aria-valuetext={`Yüzde ${discount.toFixed(1)} indirim, ${bargainPrice.toLocaleString("tr-TR")} lira metrekare`}
+                  className="bargain-range mt-3 w-full"
+                  style={{ touchAction: "none" }}
+                />
+                {discount > 0 && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    %{discount.toFixed(1).replace(".", ",")} indirim skoru{" "}
+                    <span className={scoreDiff > 0 ? "font-semibold text-positive" : "font-semibold text-risk"}>
+                      {scoreDiff > 0 ? "+" : ""}{scoreDiff} puan
+                    </span>{" "}
+                    değiştirdi.
+                  </p>
+                )}
+              </div>
             </div>
           </Reveal>
 
@@ -862,7 +924,7 @@ function Home() {
                 </div>
               </div>
               <dl className="self-center" aria-live="polite">
-                {metrics.map((m, i) => (
+                {liveMetrics.map((m, i) => (
                   <div
                     key={m.label}
                     className={`flex items-baseline justify-between border-t border-border/40 py-4 last:border-b last:border-border/40 ${animateResults ? "card-entrance" : ""}`}
