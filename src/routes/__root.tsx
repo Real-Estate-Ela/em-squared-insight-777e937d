@@ -78,11 +78,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "emlakmetric — Gayrimenkul analiz terminali" },
+      { title: "emlakmetric — sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama" },
       {
         name: "description",
         content:
-          "İlan linkini yapıştır; getiri, çevre analizi ve yatırım kararı 20 saniyede.",
+          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir. m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi 160 ms içinde.",
       },
       { name: "author", content: "emlakmetric" },
       { property: "og:title", content: "emlakmetric" },
@@ -156,7 +156,7 @@ function RootComponent() {
         <I18nProvider>
           <div className="flex min-h-screen flex-col">
             <Header />
-            <main className="flex-1 pt-14">
+            <main className="flex-1">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
             </main>

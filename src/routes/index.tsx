@@ -1,1516 +1,2472 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import {
-  ArrowUpRight,
-  Check,
-  Loader2,
-  MapPin,
-  BarChart3,
-  Shield,
-  Link2,
-  Cpu,
-  FileCheck,
-  AlertTriangle,
-  Sparkles,
-  Crown,
-  Zap,
-  Building2,
-} from "lucide-react";
-import prop1 from "@/assets/property-1.jpg";
-import prop2 from "@/assets/property-2.jpg";
-import prop3 from "@/assets/property-3.jpg";
-import mapView from "@/assets/map-view.jpg";
-import { Reveal } from "@/components/Reveal";
-import { Bars, Gauge, TrendChart } from "@/components/Charts";
-import { AnalysisSlider, type Slide } from "@/components/AnalysisSlider";
-import { MouseCard } from "@/components/MouseCard";
-import { BillingRepository, BillingService, Plan, type Entitlements } from "@/lib/billing/billing";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import heroCity1920WebP from "@/assets/hero/hero-city-1920.webp";
-import heroCity1280WebP from "@/assets/hero/hero-city-1280.webp";
-import heroCity768WebP from "@/assets/hero/hero-city-768.webp";
-import heroCity1920Jpg from "@/assets/hero/hero-city-1920.jpg";
-import heroCity1280Jpg from "@/assets/hero/hero-city-1280.jpg";
-import heroCity768Jpg from "@/assets/hero/hero-city-768.jpg";
-import { useI18n } from "@/lib/i18n";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { NeighborhoodSwarm } from "@/components/analysis/NeighborhoodSwarm";
-import { derive } from "@/lib/analysis/derive";
-
-type AnalyseErrorResponse = { error: string; resource?: "analysis" | "report" };
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { ParticleField } from "@/components/ParticleField";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "emlakmetric — Fiyat tek başına bir şey söylemez" },
+      {
+        title:
+          "emlakmetric — sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
+      },
       {
         name: "description",
         content:
-          "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Konut, arsa ve ticari mülk için mahalle bazlı karşılaştırmalı analiz.",
+          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir. m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi 160 ms içinde.",
       },
       {
         property: "og:title",
-        content: "emlakmetric — Fiyat tek başına bir şey söylemez",
+        content:
+          "emlakmetric — sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
       },
       {
         property: "og:description",
         content:
-          "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Mahalle bazlı karşılaştırmalı analiz.",
+          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir.",
+      },
+      {
+        name: "keywords",
+        content:
+          "sahibinden ilan analizi, m2 fiyat sorgulama, konuma göre ev değeri, kira getirisi hesaplama, amortisman süresi, gayrimenkul analiz, bölge m2 raporu, arsa emsal analizi, emlak paketleri",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "Emlakmetric gayrimenkul değerlemesi yapıyor mu?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Hayır. Emlakmetric değerleme yapmaz; sahibinden.com üzerindeki canlı ilan verisini ve konum verisini okur, m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi gibi ölçülebilir sayılara çevirir.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "İlan linki olmadan konuma göre sorgulama yapabilir miyim?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Evet. Adres, mahalle veya harita konumu girerek o noktadaki m² fiyat aralığını, kira getirisi bandını ve son 12 aylık değişimi görebilirsiniz.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Ücretsiz paket neleri kapsıyor?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Başlangıç paketi ücretsizdir: ayda 5 ilan analizi, mahalle medyanı karşılaştırması ve 12 aylık m² trendi içerir.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Kira getirisi ve amortisman süresi nasıl hesaplanıyor?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Aynı mahalledeki aktif kiralık ilanların m² medyanı, ilanın net alanıyla çarpılır; yıllık kira toplam fiyata bölünerek brüt kira getirisi, tersi alınarak amortisman süresi bulunur.",
+              },
+            },
+          ],
+        }),
       },
     ],
   }),
   component: Home,
 });
 
-const tabs = ["Konut", "Arsa", "Dükkan/Ticari"] as const;
-
-const metrics = [
-  { label: "Kira getirisi", value: "%6,4", tone: "text-positive" },
-  { label: "Amortisman", value: "15,6 yıl", tone: "" },
-  { label: "5 yıl ROI", value: "%41", tone: "text-positive" },
-  { label: "Arz riski", value: "Yüksek", tone: "text-risk" },
+const DEMO_LINE = "sahibinden.com/ilan/9931-daire";
+const SRC_NAMES = [
+  "sahibinden.com",
+  "tapu bölge serisi",
+  "kiralık emsal",
+  "tüik endeksi",
+];
+const LOG_LINES = [
+  "ilan çözümlendi · 128 m² · 3+1 · 1999",
+  "312 emsal ilan okundu · 90 gün",
+  "mahalle medyanı kuruldu · 78.500 ₺/m²",
+  "kira emsali · 48.900 ₺/ay",
+  "sonuç hazır · 00:00,16",
 ];
 
-const listings = [
-  { platform: "sahibinden", url: "sahibinden.com/ilan/8842-daire", price: "4.150.000 ₺", m2: "112 m²", delta: "medyan +%3", positive: false },
-  { platform: "hepsiemlak", url: "hepsiemlak.com/ilan/5510-daire", price: "3.890.000 ₺", m2: "108 m²", delta: "medyan −%4", positive: true },
-  { platform: "emlakjet", url: "emlakjet.com/ilan/9931-daire", price: "3.725.000 ₺", m2: "115 m²", delta: "medyan −%9", positive: true },
+const REGIONS = [
+  { city: "İSTANBUL", name: "Kadıköy", price: "96.400 ₺/m²", change: "+4,2%", up: true },
+  { city: "İSTANBUL", name: "Beylikdüzü", price: "62.700 ₺/m²", change: "+3,4%", up: true },
+  { city: "İSTANBUL", name: "Esenyurt", price: "38.900 ₺/m²", change: "−2,3%", up: false },
+  { city: "ANKARA", name: "Çankaya", price: "54.900 ₺/m²", change: "+2,8%", up: true },
+  { city: "ANKARA", name: "Etimesgut", price: "33.400 ₺/m²", change: "+1,9%", up: true },
+  { city: "İZMİR", name: "Bornova", price: "47.150 ₺/m²", change: "−1,1%", up: false },
+  { city: "İZMİR", name: "Karşıyaka", price: "68.300 ₺/m²", change: "+5,1%", up: true },
+  { city: "BURSA", name: "Nilüfer", price: "44.300 ₺/m²", change: "+5,6%", up: true },
+  { city: "ANTALYA", name: "Muratpaşa", price: "71.800 ₺/m²", change: "+7,9%", up: true },
+  { city: "ANTALYA", name: "Konyaaltı", price: "79.500 ₺/m²", change: "+6,4%", up: true },
+  { city: "KOCAELİ", name: "İzmit", price: "41.600 ₺/m²", change: "+2,2%", up: true },
+  { city: "ESKİŞEHİR", name: "Tepebaşı", price: "36.750 ₺/m²", change: "−0,7%", up: false },
 ];
 
-const slides: Slide[] = [
-  { img: prop1, type: "Konut", title: "3+1 Daire — Ataşehir", roi: "%38", status: "Olumlu", positive: true, note: "Mahalle medyanının %9 altında; kira çarpanı bölge ortalamasının üstünde." },
-  { img: prop2, type: "Arsa", title: "İmarlı Parsel — Çekmeköy", roi: "%52", status: "Olumlu", positive: true, note: "İmar planı revizyonu sonrası emsal artışı; 24 ayda %52 değerlenme öngörüsü." },
-  { img: prop3, type: "Dükkan", title: "Cadde Üstü Dükkan — Kadıköy", roi: "%17", status: "Riskli", positive: false, note: "Yüksek giriş fiyatı ve dalgalı kira talebi; amortisman 28 yılın üzerinde." },
-  { img: mapView, type: "Harita", title: "Yoğunluk Kesiti — Anadolu Yakası", roi: "%29", status: "Olumlu", positive: true, note: "Ulaşım hattı yatırımı çevresinde metrekare fiyatı 18 ayda %29 arttı." },
-];
-
-const steps = [
-  "İlan verisi çekiliyor",
-  "Mahalle medyanı hesaplanıyor",
-  "Kira çarpanı & amortisman",
-  "Çevre analizi ve karar",
-];
-
-const trend = [18, 22, 21, 27, 31, 29, 36, 42, 40, 48, 54, 61];
-const riskTrend = [62, 58, 60, 51, 47, 49, 42, 38, 35, 33, 30, 26];
-
-const bars = [
-  { k: "Kira getirisi", v: 64, tone: "positive" as const },
-  { k: "Bölge fiyat artışı", v: 38, tone: "primary" as const },
-  { k: "Likidite (satış hızı)", v: 55, tone: "risk" as const },
-  { k: "Arz yoğunluğu", v: 22, tone: "risk" as const },
-];
-
-const FALLBACK_PLANS = [
-  new Plan("free", "Free", 0, "TRY", 3, 3, false, 1),
-  new Plan("pro", "Pro", 0, "TRY", 100, 100, true, 2),
-  new Plan("enterprise", "Enterprise", 0, "TRY", 1000, 1000, false, 3),
-];
-
-const beforeAfter = [
-  { label: "m² fiyat", before: "28.500 ₺", after: "41.200 ₺", change: "+%44", positive: true },
-  { label: "Ortalama kira", before: "14.000 ₺", after: "22.500 ₺", change: "+%60", positive: true },
-  { label: "Satış süresi", before: "62 gün", after: "28 gün", change: "−%55", positive: true },
-  { label: "Arz (aktif ilan)", before: "340", after: "520", change: "+%52", positive: false },
-];
-
-function mulberry32(seed: number) {
-  let s = seed;
-  return () => {
-    s |= 0;
-    s = (s + 0x6d2b79f5) | 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const _r = mulberry32(42);
-const _base = 36800;
-const demoComps: number[] = [];
-for (let i = 0; i < 90; i++) {
-  const g = (_r() + _r() + _r() + _r() - 2) / 2;
-  demoComps.push(
-    Math.max(_base * 0.4, Math.round(_base * (1 + g * 0.28))),
-  );
-}
-demoComps.sort((a, b) => a - b);
-const demoMedian = demoComps[Math.floor(demoComps.length * 0.5)];
-const demoQ1 = demoComps[Math.floor(demoComps.length * 0.25)];
-const demoQ3 = demoComps[Math.floor(demoComps.length * 0.75)];
-const demoListingPrice = Math.round(demoMedian * 0.91);
-const demoArea = 115;
-const demoRent = demoListingPrice * demoArea * 0.0044;
-const demoNoise = 1.8;
-const demoBase = derive(demoListingPrice, demoMedian, demoArea, demoRent, demoNoise);
-
-const SPINE_LABELS = ["VERİ", "MEDYAN", "GETİRİ", "KARAR"] as const;
-const SPINE_LABELS_SHORT = ["VERİ", "MDY", "GTR", "KRR"] as const;
-
-function SlotNumber({ text, animate }: { text: string; animate: boolean }) {
-  const [display, setDisplay] = useState(text);
-  const didAnimate = useRef(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    if (!animate || didAnimate.current) {
-      setDisplay(text);
-      return;
-    }
-
-    didAnimate.current = true;
-
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mql.matches) {
-      setDisplay(text);
-      return;
-    }
-
-    const chars = text.split("");
-    const duration = 1100;
-    const perChar = duration / chars.length;
-    const start = performance.now();
-
-    intervalRef.current = setInterval(() => {
-      const elapsed = performance.now() - start;
-      const settledCount = Math.min(chars.length, Math.floor(elapsed / perChar));
-
-      if (settledCount >= chars.length) {
-        setDisplay(text);
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        return;
-      }
-
-      const result = chars.map((ch, i) => {
-        if (i < settledCount) return ch;
-        if (/\d/.test(ch)) return String(Math.floor(Math.random() * 10));
-        return ch;
-      });
-      setDisplay(result.join(""));
-    }, 50);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [animate, text]);
-
-  return (
-    <span aria-label={text} className="slot-number">
-      {display}
-    </span>
-  );
+function fmt(n: number) {
+  return n.toFixed(1).replace(".", ",");
 }
 
 function Home() {
-  const { t, locale } = useI18n();
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const [tab, setTab] = useState<string>(tabs[0]);
-  const [url, setUrl] = useState("emlakjet.com/ilan/9931-daire");
-  const [step, setStep] = useState(-1);
-  const [done, setDone] = useState(true);
-  const [authPrompt, setAuthPrompt] = useState(false);
-  const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
-  const [animateResults, setAnimateResults] = useState(false);
-  const [discount, setDiscount] = useState(0);
-  const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
-  const [ent, setEnt] = useState<Entitlements | null>(null);
-  const heroRef = useRef<HTMLElement>(null);
-  const imgWrapRef = useRef<HTMLDivElement>(null);
-  const textWrapRef = useRef<HTMLDivElement>(null);
+  const [tab, setTab] = useState<"link" | "konum">("link");
+  const [query, setQuery] = useState("");
+  const [phase, setPhase] = useState<"idle" | "scan" | "done">("idle");
+  const [step, setStep] = useState(0);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [kira, setKira] = useState(0);
+  const [amort, setAmort] = useState(0);
+  const [sapma, setSapma] = useState(0);
+  const [skor, setSkor] = useState(0);
+  const [typed, setTyped] = useState("");
+
+  const analizRef = useRef<HTMLElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const readRef = useRef<HTMLSpanElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const [downPct, setDownPct] = useState(30);
-  const [termYears, setTermYears] = useState(10);
-  const [monthlyRate, setMonthlyRate] = useState(2.5);
-  const [barsVisible, setBarsVisible] = useState(false);
-  const barsFirstRender = useRef(true);
-  const barsRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  const autoDoneRef = useRef(false);
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const run = useCallback(() => {
+    if (phase === "scan") return;
+    setPhase("scan");
+    setStep(0);
+    setKira(0);
+    setAmort(0);
+    setSapma(0);
+    setSkor(0);
+    setLogs([]);
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+
+    [1, 2, 3, 4].forEach((s, i) =>
+      timers.current.push(setTimeout(() => setStep(s), 380 * (i + 1))),
+    );
+    LOG_LINES.forEach((l, i) =>
+      timers.current.push(
+        setTimeout(
+          () => setLogs((prev) => [...prev, l].slice(-4)),
+          340 + 380 * i,
+        ),
+      ),
+    );
+    timers.current.push(
+      setTimeout(() => {
+        setPhase("done");
+        const t0 = performance.now();
+        const tick = () => {
+          const p = Math.min(1, (performance.now() - t0) / 1100);
+          const e = 1 - Math.pow(1 - p, 3);
+          setKira(6.4 * e);
+          setAmort(15.6 * e);
+          setSapma(9 * e);
+          setSkor(Math.round(78 * e));
+          if (p < 1) rafRef.current = requestAnimationFrame(tick);
+        };
+        rafRef.current = requestAnimationFrame(tick);
+      }, 2050),
+    );
+  }, [phase]);
 
   useEffect(() => {
-    const hero = heroRef.current;
-    const imgWrap = imgWrapRef.current;
-    const textWrap = textWrapRef.current;
-    if (!hero || !imgWrap || !textWrap) return;
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mql.matches) return;
-
-    const onMove = (e: MouseEvent) => {
-      const { left, top, width, height } = hero.getBoundingClientRect();
-      const x = (e.clientX - left) / width - 0.5;
-      const y = (e.clientY - top) / height - 0.5;
-      imgWrap.style.transform = `translate(${x * -10}px, ${y * -10}px)`;
-      textWrap.style.transform = `translate(${x * 4}px, ${y * 4}px)`;
-    };
-    const onLeave = () => {
-      imgWrap.style.transform = "";
-      textWrap.style.transform = "";
-    };
-
-    hero.addEventListener("mousemove", onMove);
-    hero.addEventListener("mouseleave", onLeave);
-    return () => {
-      hero.removeEventListener("mousemove", onMove);
-      hero.removeEventListener("mouseleave", onLeave);
-    };
+    let i = 0;
+    let dir = 1;
+    const typer = setInterval(() => {
+      i += dir;
+      if (i > DEMO_LINE.length) {
+        dir = -1;
+        i = DEMO_LINE.length;
+      }
+      if (i < 0) {
+        dir = 1;
+        i = 0;
+      }
+      setTyped(DEMO_LINE.slice(0, i));
+    }, 95);
+    return () => clearInterval(typer);
   }, []);
 
   useEffect(() => {
-    try {
-      const db = getSupabaseBrowserClient();
-      const service = new BillingService(new BillingRepository(db));
-      service.listPlans().then(p => setPlans(p.length ? p : FALLBACK_PLANS)).catch(() => {});
-      service.entitlements().then(setEnt).catch(() => {});
-    } catch {
-      // Supabase env vars not set — keep fallback plans
-    }
-  }, []);
-
-  useEffect(() => {
-    const el = barsRef.current;
-    if (!el) return;
+    const el = analizRef.current;
+    if (!el || autoDoneRef.current) return;
     const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setBarsVisible(true);
+      (entries) => {
+        if (entries[0].isIntersecting && !autoDoneRef.current) {
+          autoDoneRef.current = true;
+          run();
           io.disconnect();
-          setTimeout(() => { barsFirstRender.current = false; }, 1300);
         }
       },
       { threshold: 0.3 },
     );
     io.observe(el);
     return () => io.disconnect();
+  }, [run]);
+
+  useEffect(() => {
+    return () => {
+      timers.current.forEach(clearTimeout);
+      cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
-  const runAnalysis = async () => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    setQuotaError(null);
-    setAuthPrompt(false);
-
-    if (!user) {
-      setAuthPrompt(true);
-      return;
-    }
-
-    const kind = tab === "Arsa" ? "arsa" : tab === "Dükkan/Ticari" ? "ticari" : "konut";
-
-    try {
-      const res = await fetch("/api/analyse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, kind }),
-      });
-
-      if (!res.ok) {
-        const body: AnalyseErrorResponse = await res.json();
-        if (res.status === 429 && body.resource) {
-          setQuotaError(body.resource);
-          return;
-        }
-        if (res.status === 401) {
-          window.location.href = "/giris";
-          return;
-        }
-      }
-    } catch {
-      return;
-    }
-
-    setDone(false);
-    setAnimateResults(false);
-    setStep(0);
-    steps.forEach((_, i) => {
-      timers.current.push(
-        setTimeout(() => {
-          setStep(i);
-          if (i === steps.length - 1) {
-            timers.current.push(
-              setTimeout(() => {
-                setDone(true);
-                setAnimateResults(true);
-                document
-                  .getElementById("karar")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }, 700),
-            );
-          }
-        }, i * 650),
+  const onMapMove = useCallback((e: React.MouseEvent) => {
+    const m = mapRef.current;
+    if (!m) return;
+    for (let i = 0; i < m.children.length; i++) {
+      const c = m.children[i] as HTMLElement;
+      const b = c.getBoundingClientRect();
+      const t = Math.max(
+        0,
+        1 -
+          Math.hypot(
+            b.left + b.width / 2 - e.clientX,
+            b.top + b.height / 2 - e.clientY,
+          ) /
+            320,
       );
-    });
-  };
+      c.style.background =
+        t > 0.02
+          ? `rgba(27,77,255,${(t * t * 0.85).toFixed(3)})`
+          : "transparent";
+    }
+  }, []);
 
-  const bargainPrice = Math.round(demoListingPrice * (1 - discount / 100));
-  const derived = derive(bargainPrice, demoMedian, demoArea, demoRent, demoNoise);
-  const scoreDiff = derived.score - demoBase.score;
+  const onHeroMove = useCallback((e: React.MouseEvent) => {
+    const ring = ringRef.current;
+    const read = readRef.current;
+    if (!ring) return;
+    const target = (e.currentTarget as HTMLElement).querySelector("canvas");
+    if (!target) return;
+    const r = target.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    ring.style.transform = `translate(${x}px,${y}px)`;
+    ring.style.opacity = "1";
+    if (read)
+      read.textContent = `E${String(((x / (r.width / 20)) | 0) + 1).padStart(2, "0")} · K${String(((y / (r.height / 12)) | 0) + 1).padStart(2, "0")} · m²`;
+  }, []);
 
-  const liveMetrics = [
-    { label: "Kira getirisi", value: `%${derived.yieldPct.toFixed(1).replace(".", ",")}`, tone: "text-positive" },
-    { label: "Amortisman", value: `${derived.payback.toFixed(1).replace(".", ",")} yıl`, tone: "" },
-    { label: "Medyan farkı", value: `%${derived.delta.toFixed(1).replace(".", ",")}`, tone: derived.delta <= 0 ? "text-positive" : "text-risk" },
-    { label: "Skor", value: `${derived.score}/96`, tone: derived.score >= 60 ? "text-positive" : derived.score >= 40 ? "" : "text-risk" },
-  ];
+  const onHeroLeave = useCallback(() => {
+    if (ringRef.current) ringRef.current.style.opacity = "0";
+  }, []);
 
-  const scoreParts = [
-    { key: "base", label: t.analysis.partBase, value: derived.parts.base, pct: Math.min(Math.abs(derived.parts.base) / 34 * 100, 100), color: "var(--muted-foreground)", tone: "" },
-    { key: "price", label: t.analysis.partPrice, value: derived.parts.fiyat, pct: Math.min(Math.abs(derived.parts.fiyat) / 34 * 100, 100), color: derived.parts.fiyat >= 0 ? "var(--positive)" : "var(--risk)", tone: derived.parts.fiyat >= 0 ? "text-positive" : "text-risk" },
-    { key: "yield", label: t.analysis.partYield, value: derived.parts.getiri, pct: Math.min(Math.abs(derived.parts.getiri) / 34 * 100, 100), color: derived.parts.getiri >= 0 ? "var(--positive)" : "var(--risk)", tone: derived.parts.getiri >= 0 ? "text-positive" : "text-risk" },
-    { key: "market", label: t.analysis.partMarket, value: derived.parts.piyasa, pct: Math.min(Math.abs(derived.parts.piyasa) / 34 * 100, 100), color: derived.parts.piyasa >= 0 ? "var(--positive)" : "var(--risk)", tone: derived.parts.piyasa >= 0 ? "text-positive" : "text-risk" },
-  ];
-
-  const fmtLocale = locale === "en" ? "en-US" : "tr-TR";
-  const mortgageLoan = derived.total * (1 - downPct / 100);
-  const mortgageN = termYears * 12;
-  const mortgageI = monthlyRate / 100;
-  const mortgagePayment = mortgageI > 0
-    ? mortgageLoan * mortgageI * Math.pow(1 + mortgageI, mortgageN) / (Math.pow(1 + mortgageI, mortgageN) - 1)
-    : mortgageLoan / mortgageN;
-  const coveragePct = mortgagePayment > 0 ? (demoRent / mortgagePayment) * 100 : 0;
-  const mortgageTotalPayment = mortgagePayment * mortgageN;
-  const mortgageTotalRatio = derived.total > 0 ? mortgageTotalPayment / derived.total : 0;
-  const coverageColor = coveragePct >= 100 ? "var(--positive)" : coveragePct >= 60 ? "var(--primary)" : "var(--risk)";
-  const coverageTone = coveragePct >= 100 ? "text-positive" : coveragePct >= 60 ? "text-primary" : "text-risk";
+  const gaugeOffset = (239 * (1 - skor / 100)).toFixed(1);
+  const sources = SRC_NAMES.map((name, i) => {
+    const ok = step > i || phase === "done";
+    return {
+      name,
+      state: ok ? "OK" : "okunuyor…",
+      color: ok ? "#00875A" : "#1B4DFF",
+      pct: ok ? "100%" : `${18 + i * 6}%`,
+    };
+  });
 
   return (
-    <div>
-      {/* ===== HERO ===== */}
+    <div
+      style={{
+        background: "#FFFFFF",
+        fontFamily: "'Space Grotesk', system-ui, sans-serif",
+        color: "#0E1116",
+        position: "relative",
+      }}
+    >
+      {/* ═══ HERO ═══ */}
       <section
-        ref={heroRef}
-        data-header="dark"
-        className="relative -mt-14 overflow-hidden"
-        style={{ height: "min(100svh, 880px)" }}
-      >
-        <div className="absolute -inset-3 overflow-hidden">
-          <div ref={imgWrapRef} className="h-[calc(100%+24px)] w-[calc(100%+24px)]">
-            <picture>
-              <source
-                type="image/webp"
-                srcSet={`${heroCity768WebP} 768w, ${heroCity1280WebP} 1280w, ${heroCity1920WebP} 1920w`}
-                sizes="100vw"
-              />
-              <img
-                src={heroCity1920Jpg}
-                srcSet={`${heroCity768Jpg} 768w, ${heroCity1280Jpg} 1280w, ${heroCity1920Jpg} 1920w`}
-                sizes="100vw"
-                alt=""
-                fetchPriority="high"
-                loading="eager"
-                decoding="async"
-                className="hero-img h-full w-full object-cover"
-                style={{ objectPosition: "center 78%" }}
-              />
-            </picture>
-          </div>
-        </div>
-
-        <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.18) 40%, rgba(0,0,0,0.46) 100%)" }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.30) 0%, transparent 70%)" }}
-        />
-
-        <div className="relative z-10 mx-auto flex h-full max-w-6xl items-center px-5 pt-14 md:px-8">
-          <div ref={textWrapRef} className="max-w-[34rem]">
-            <p
-              className="hero-entrance flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em]"
-              style={{ color: "rgba(255,255,255,0.70)" }}
-            >
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-positive" />
-              {t.hero.badge}
-            </p>
-
-            <h1
-              className="hero-entrance mt-5 font-bold leading-[1.08] tracking-tight text-white"
-              style={{ fontSize: "clamp(2.6rem, 5.6vw, 4.4rem)", animationDelay: "80ms" }}
-            >
-              {t.hero.titleBefore}{" "}
-              <span style={{ color: "#7C9BFF" }}>{t.hero.titleHighlight}</span>
-            </h1>
-
-            <p
-              className="hero-entrance mt-6 leading-relaxed"
-              style={{ fontSize: "clamp(15px, 1.6vw, 18px)", color: "rgba(255,255,255,0.78)", animationDelay: "160ms" }}
-            >
-              {t.hero.subtitle}
-            </p>
-
-            <div
-              className="hero-entrance mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4"
-              style={{ animationDelay: "240ms" }}
-            >
-              <button
-                type="button"
-                onClick={() => document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" })}
-                className="hero-btn-filled"
-              >
-                {t.hero.ctaPrimary}
-              </button>
-              <button
-                type="button"
-                onClick={() => document.getElementById("nasil-calisir")?.scrollIntoView({ behavior: "smooth" })}
-                className="hero-btn-glass"
-              >
-                {t.hero.ctaSecondary}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ===== PRODUCT PREVIEW ===== */}
-      <section data-header="light">
-        <div className="mx-auto max-w-5xl px-5 py-16 md:px-8">
-          <Reveal variant="scale">
-            <MouseCard
-              className="glass overflow-hidden rounded-2xl"
-              glowColor="var(--primary)"
-              tiltMax={3}
-              glowOpacity={0.04}
-            >
-              <div className="flex items-center gap-3 border-b px-5 py-3" style={{ borderColor: "color-mix(in oklab, var(--border) 40%, transparent)" }}>
-                <span className="flex gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-risk/50" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/25" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-positive/50" />
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  emlakmetric — Ataşehir 3+1 Analizi
-                </span>
-              </div>
-
-              <div className="p-4 md:p-6">
-                <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
-                  <div className="rounded-xl border border-border/50 bg-card/80 p-5">
-                    <TrendChart
-                      points={trend}
-                      tone="positive"
-                      label="m² fiyat trendi — 24 ay"
-                      value="+%38"
-                    />
-                  </div>
-                  <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/80 p-5">
-                    <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-                  {metrics.map((m) => (
-                    <div
-                      key={m.label}
-                      className="glass-hover rounded-xl border border-border/50 bg-card/80 p-4 text-center"
-                    >
-                      <p className={`text-xl font-bold ${m.tone}`}>
-                        {m.value}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {m.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div
-                  className="mt-4 flex items-center justify-between rounded-xl bg-positive/5 px-5 py-3"
-                  style={{
-                    border:
-                      "1px solid color-mix(in oklab, var(--positive) 20%, transparent)",
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-positive" />
-                    <span className="text-sm font-semibold text-positive">
-                      Olumlu Karar — Al, 5 yıl tut
-                    </span>
-                  </div>
-                  <span className="hidden text-xs text-muted-foreground sm:block">
-                    Risk: Düşük
-                  </span>
-                </div>
-              </div>
-            </MouseCard>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ===== ANALYSIS INPUT ===== */}
-      <section
-        data-header="light"
-        id="analiz"
+        id="top"
+        data-bg="light"
+        onMouseMove={onHeroMove}
+        onMouseLeave={onHeroLeave}
         style={{
-          background:
-            "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+          position: "relative",
+          minHeight: "100vh",
+          background: "#FFFFFF",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          padding: "104px clamp(16px, 4vw, 44px) 0",
         }}
       >
-        <div className="mx-auto max-w-3xl px-5 py-20 md:px-8 md:py-28">
-          <Reveal variant="blur">
-            <div className="text-center">
-              <p className="label-mono">Analiz</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-                İlan linkini yapıştır
-              </h2>
-              <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-                Sahibinden, Hepsiemlak veya Emlakjet'ten herhangi bir ilan
-                linki.
-              </p>
-            </div>
-          </Reveal>
-
-          <Reveal delay={100}>
-            <div className="mt-8 flex flex-wrap justify-center gap-2">
-              {tabs.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTab(t)}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
-                    tab === t
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                      : "glass text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </Reveal>
-
-          <Reveal delay={200}>
-            {authPrompt && (
-              <div
-                className="mb-4 flex flex-col items-start gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-                style={{
-                  borderColor: "color-mix(in oklab, var(--primary) 30%, transparent)",
-                  backgroundColor: "color-mix(in oklab, var(--primary) 6%, transparent)",
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <Shield className="h-5 w-5 shrink-0 text-primary" />
-                  <p className="text-sm font-medium text-foreground">
-                    {t.auth.loginRequired}
-                  </p>
-                </div>
-                <Link
-                  to="/giris"
-                  search={{ redirect: "/#analiz" }}
-                  className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all hover:-translate-y-0.5"
-                >
-                  {t.auth.loginToAnalyze}
-                </Link>
-              </div>
-            )}
-
-            {quotaError && (
-              <div
-                className="mb-4 flex flex-col items-start gap-3 rounded-xl border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-                style={{
-                  borderColor: "color-mix(in oklab, var(--risk) 30%, transparent)",
-                  backgroundColor: "color-mix(in oklab, var(--risk) 6%, transparent)",
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 shrink-0 text-risk" />
-                  <p className="text-sm font-medium text-foreground">
-                    {quotaError === "analysis"
-                      ? t.quota.analysisExhausted
-                      : t.quota.reportExhausted}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => document.getElementById("paketler")?.scrollIntoView({ behavior: "smooth" })}
-                  className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all hover:-translate-y-0.5"
-                >
-                  {t.quota.viewPlans}
-                </button>
-              </div>
-            )}
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                runAnalysis();
+        <ParticleField
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "clamp(250px, 46vh, 520px)",
+            margin: "0 0 clamp(10px, 2.5vw, 34px)",
+          }}
+        />
+        <div
+          ref={ringRef}
+          className="em-hide"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: 108,
+            height: 108,
+            margin: "-54px 0 0 -54px",
+            border: "1px solid rgba(27,77,255,.7)",
+            pointerEvents: "none",
+            opacity: 0,
+            transition: "opacity 220ms linear",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: -16,
+              bottom: -16,
+              width: 1,
+              background: "rgba(226,61,40,.45)",
+            }}
+          />
+          <span
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: -16,
+              right: -16,
+              height: 1,
+              background: "rgba(226,61,40,.45)",
+            }}
+          />
+          <span
+            ref={readRef}
+            style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              background: "#1B4DFF",
+              color: "#fff",
+              font: "400 9px 'Space Mono', monospace",
+              letterSpacing: ".12em",
+              padding: "3px 6px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            E00 · K00
+          </span>
+        </div>
+        <div
+          style={{
+            position: "relative",
+            maxWidth: 1560,
+            width: "100%",
+            margin: "0 auto",
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              font: "700 clamp(32px, 6.2vw, 118px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.06em",
+              lineHeight: 0.86,
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                animation:
+                  "em-line-in 1.15s .15s cubic-bezier(.2,.8,.2,1) both",
               }}
-              className="glass mt-5 overflow-hidden rounded-xl transition-shadow duration-200 focus-within:shadow-xl focus-within:shadow-primary/10"
             >
-              <div className="flex min-w-0 items-center gap-3 px-5 py-4">
-                <MapPin className="h-4 w-4 shrink-0 text-primary" />
-                <input
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  aria-label="İlan linki"
-                  placeholder="sahibinden.com / hepsiemlak / emlakjet ilan linki"
-                  className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                />
-              </div>
-              <div className="border-t border-border/40 p-1.5">
-                <button
-                  type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
-                >
-                  {done ? (
-                    "Analiz Et"
-                  ) : (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                  {done ? null : "Analiz ediliyor"}
-                </button>
-              </div>
-            </form>
-          </Reveal>
-
-          <Reveal delay={300}>
-            <div className="mt-8 px-2" role="progressbar" aria-valuenow={done ? 4 : step + 1} aria-valuemin={0} aria-valuemax={4}>
-              <div className="relative flex items-center justify-between">
-                <div className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 bg-border/40" />
-                <div
-                  className="absolute left-0 top-1/2 h-0.5 -translate-y-1/2 bg-positive transition-all duration-500 ease-out"
-                  style={{ width: `${done ? 100 : step >= 0 ? (step / (steps.length - 1)) * 100 : 0}%` }}
-                />
-                {steps.map((_, i) => {
-                  const active = !done && step === i;
-                  const complete = done || step > i;
-                  return (
-                    <div key={i} className="relative z-10 flex flex-col items-center">
-                      <div
-                        className={`relative flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-300 ${
-                          complete
-                            ? "bg-positive"
-                            : active
-                              ? "spine-active bg-primary"
-                              : "bg-border/40"
-                        }`}
-                      >
-                        {complete && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <span
-                        className={`mt-2.5 font-mono text-[10.5px] font-medium uppercase transition-opacity duration-300 ${
-                          complete || active ? "opacity-100" : "opacity-50"
-                        }`}
-                        style={{ letterSpacing: ".06em" }}
-                      >
-                        <span className="hidden sm:inline">{SPINE_LABELS[i]}</span>
-                        <span className="sm:hidden">{SPINE_LABELS_SHORT[i]}</span>
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </Reveal>
+              FİYAT BİR İDDİA.
+            </span>
+            <span
+              style={{
+                display: "block",
+                color: "#1B4DFF",
+                animation:
+                  "em-line-in 1.15s .38s cubic-bezier(.2,.8,.2,1) both",
+              }}
+            >
+              M² BİR KANIT
+              <span style={{ color: "#E23D28" }}>.</span>
+            </span>
+          </h1>
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              gap: "clamp(24px, 5vw, 90px)",
+              alignItems: "flex-end",
+              marginTop: "clamp(26px, 4vw, 54px)",
+              paddingBottom: 20,
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                maxWidth: 480,
+                font: "400 clamp(13px, 1.1vw, 16px) 'Space Mono', monospace",
+                lineHeight: 1.8,
+                color: "rgba(14,17,22,.6)",
+                animation:
+                  "em-line-in 1.1s .95s cubic-bezier(.2,.8,.2,1) both",
+              }}
+            >
+              İlanın hikâyesini değil{" "}
+              <span style={{ color: "#0E1116" }}>medyanını</span> okuyoruz.
+              Sahibinden.com&apos;daki canlı veriyi ve girdiğin konumu dört
+              sayıya indiriyoruz — gerisi pazarlık.
+            </p>
+            <a
+              href="#analiz"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById("analiz");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              style={{
+                marginLeft: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                background: "#1B4DFF",
+                color: "#fff",
+                padding: "21px 32px",
+                font: "700 12px 'Space Mono', monospace",
+                letterSpacing: ".24em",
+                border: "1px solid #1B4DFF",
+                whiteSpace: "nowrap",
+                textDecoration: "none",
+                animation:
+                  "em-line-in 1.1s 1.15s cubic-bezier(.2,.8,.2,1) both",
+              }}
+            >
+              <span>ANALİZ ET</span>
+              <span
+                style={{
+                  display: "inline-block",
+                  animation: "em-arrow-loop 1.6s ease-in-out infinite",
+                }}
+              >
+                ↓
+              </span>
+            </a>
+          </div>
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              borderTop: "1px solid rgba(14,17,22,.16)",
+              padding: "18px 0 20px",
+              animation:
+                "em-line-in 1.1s 1.4s cubic-bezier(.2,.8,.2,1) both",
+            }}
+          >
+            <span
+              style={{
+                font: "400 11px 'Space Mono', monospace",
+                letterSpacing: ".2em",
+                color: "#1B4DFF",
+                whiteSpace: "nowrap",
+              }}
+            >
+              &gt; ŞİMDİ DENE
+            </span>
+            <span
+              style={{
+                font: "400 clamp(12px, 1.2vw, 17px) 'Space Mono', monospace",
+                color: "rgba(14,17,22,.75)",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+              }}
+            >
+              {typed}
+              <span
+                style={{
+                  color: "#E23D28",
+                  animation: "em-pulse-dot 1.15s steps(1) infinite",
+                }}
+              >
+                ▌
+              </span>
+            </span>
+            <span
+              className="em-hide"
+              style={{
+                marginLeft: "auto",
+                font: "400 10px 'Space Mono', monospace",
+                letterSpacing: ".18em",
+                color: "rgba(14,17,22,.4)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              160 MS · 4 KAYNAK · ÜCRETSİZ
+            </span>
+          </div>
+        </div>
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "center",
+            padding: "20px 0 16px",
+            font: "400 10px 'Space Mono', monospace",
+            letterSpacing: ".3em",
+            color: "rgba(14,17,22,.35)",
+          }}
+        >
+          AŞAĞI KAYDIR{" "}
+          <span
+            style={{
+              display: "inline-block",
+              animation: "em-arrow-loop 1.8s ease-in-out infinite",
+            }}
+          >
+            ↓
+          </span>
         </div>
       </section>
 
-      {/* ===== PRICING ===== */}
-      {plans.length > 0 && (
-        <section id="paketler">
-          <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-            <Reveal variant="blur">
-              <div className="text-center">
-                <p className="label-mono">{t.pricing.title}</p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-                  {t.pricing.subtitle}
-                </h2>
-              </div>
-            </Reveal>
+      {/* ═══ STICKY LAYERS ═══ */}
+      <div style={{ position: "relative" }}>
+        <StickyLayer
+          bg="#FFFFFF"
+          color="#0E1116"
+          dataBg="light"
+          num="01"
+          label="İLAN"
+          tag="GİRDİ"
+          lineBorder="rgba(14,17,22,.16)"
+          lineColor="rgba(14,17,22,.16)"
+          labelColor="#1B4DFF"
+        >
+          <StickyTitle words={["Emlakçının", "cümlesi", "var;", "bizde", "metrekare", "var"]} blueFrom={3} blueTo={4} redDot />
+          <p
+            style={{
+              margin: 0,
+              maxWidth: 560,
+              font: "400 13px 'Space Mono', monospace",
+              lineHeight: 1.85,
+              color: "rgba(14,17,22,.6)",
+            }}
+          >
+            &ldquo;Ferah, yatırıma uygun, emsalsiz&rdquo; bir cümledir. 71.400
+            ₺/m² bir ölçüdür. Terminal ilan metnine bakmaz; fiyatı, alanı, katı
+            ve yaşı okur.
+          </p>
+        </StickyLayer>
 
-            <div className="mt-12 grid gap-6 md:grid-cols-3">
-              {plans.map((plan, i) => {
-                const isCurrent = ent?.planCode === plan.code;
-                const Icon = plan.code === "enterprise" ? Building2 : plan.code === "pro" ? Crown : Sparkles;
-                const color = plan.code === "enterprise" ? "var(--positive)" : plan.code === "pro" ? "var(--primary)" : "var(--muted-foreground)";
-                const desc = t.pricing.planDescriptions[plan.code];
-                const features = t.pricing.planFeatures[plan.code];
+        <StickyLayer
+          bg="#1B4DFF"
+          color="#FFFFFF"
+          dataBg="blue"
+          num="02"
+          label="EMSAL"
+          tag="KARŞILAŞTIRMA"
+          lineBorder="rgba(255,255,255,.4)"
+          lineColor="rgba(255,255,255,.4)"
+          labelColor="rgba(255,255,255,.8)"
+          scanline
+        >
+          <StickyTitle words={["312", "komşu", "ilan,", "tek", "medyan"]} blueFrom={3} blueTo={4} darkBlue redDot />
+          <p
+            style={{
+              margin: 0,
+              maxWidth: 520,
+              font: "400 13px 'Space Mono', monospace",
+              lineHeight: 1.85,
+              color: "rgba(255,255,255,.85)",
+            }}
+          >
+            Kopya ilan ayıklanır, aykırı fiyat filtrelenir. Kalan set mahallenin
+            gerçek m² medyanını verir — ilanın o çizginin ne kadar altında
+            olduğunu tek satırda görürsün.
+          </p>
+        </StickyLayer>
 
-                return (
-                  <Reveal key={plan.code} delay={i * 100} variant="scale">
-                    <MouseCard
-                      className={`glass relative flex h-full flex-col rounded-2xl p-6 ${plan.isFeatured ? "ring-2 ring-primary/30" : ""}`}
-                      glowColor={color}
-                      tiltMax={6}
-                      glowOpacity={0.08}
-                    >
-                      {plan.isFeatured && (
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold text-primary-foreground shadow-md shadow-primary/20">
-                          {t.pricing.badge}
-                        </span>
-                      )}
-
-                      {isCurrent && (
-                        <span className="absolute -top-3 right-4 rounded-full bg-positive px-3 py-1 text-xs font-bold text-white shadow-md">
-                          {t.pricing.currentPlan}
-                        </span>
-                      )}
-
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-10 w-10 items-center justify-center rounded-xl"
-                          style={{ backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)` }}
-                        >
-                          <Icon className="h-5 w-5" style={{ color }} />
-                        </div>
-                        <h3 className="text-lg font-bold">{plan.name}</h3>
-                      </div>
-
-                      <div className="mt-4">
-                        <span className="text-3xl font-extrabold">
-                          {plan.formatPrice(locale === "en" ? "en-US" : "tr-TR")}
-                        </span>
-                        {!plan.isFree && (
-                          <span className="ml-1 text-sm text-muted-foreground">{t.pricing.perMonth}</span>
-                        )}
-                      </div>
-
-                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{desc}</p>
-
-                      <div className="mt-5 space-y-2.5 rounded-xl bg-muted/30 p-4">
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className="h-4 w-4 shrink-0" style={{ color }} />
-                          <span className="text-sm font-semibold">
-                            {plan.analysisQuota} {t.pricing.monthlyAnalysisCount}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-4 w-4 shrink-0" style={{ color }} />
-                          <span className="text-sm font-semibold">
-                            {plan.reportQuota} {t.pricing.monthlyReportCount}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 space-y-2.5">
-                        {features.map((f) => (
-                          <div key={f} className="flex items-start gap-2">
-                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-positive" />
-                            <span className="text-sm text-muted-foreground">{f}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="mt-auto pt-6">
-                        {plan.code === "enterprise" ? (
-                          <Link
-                            to="/iletisim"
-                            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-current px-6 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5"
-                            style={{ color }}
-                          >
-                            {t.pricing.contactSales}
-                          </Link>
-                        ) : isCurrent ? (
-                          <button
-                            type="button"
-                            disabled
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-positive/10 px-6 py-3 text-sm font-semibold text-positive"
-                          >
-                            <Check className="h-4 w-4" />
-                            {t.pricing.currentPlan}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
-                          >
-                            {plan.isFree ? t.pricing.getStarted : t.pricing.upgrade}
-                          </button>
-                        )}
-                      </div>
-                    </MouseCard>
-                  </Reveal>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== DECISION ===== */}
-      <section data-header="light" id="karar">
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="blur">
-            <div className="text-center">
-              <p className="label-mono">Karar Raporu</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-                Yatırım analiz sonucu
-              </h2>
-            </div>
-          </Reveal>
-
-          <Reveal delay={60}>
-            <div className="glass mt-10 overflow-hidden rounded-2xl p-5 md:p-8">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-                <span className="font-mono text-[10.5px] font-medium uppercase tracking-[.06em] text-muted-foreground">
-                  Mahalle m² Dağılımı — 90 emsal
-                </span>
-              </div>
-              <NeighborhoodSwarm
-                comps={demoComps}
-                median={demoMedian}
-                q1={demoQ1}
-                q3={demoQ3}
-                price={bargainPrice}
-              />
-
-              {/* Bargain slider */}
-              <div className="mt-6 rounded-xl border border-border/40 bg-muted/20 p-4 md:p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <label
-                    htmlFor="bargain-slider"
-                    className="font-mono text-[10.5px] font-medium uppercase tracking-[.06em] text-muted-foreground"
-                  >
-                    İndirim
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <span className="min-w-[3.5rem] text-right font-mono text-sm font-semibold tabular-nums text-foreground">
-                      %{discount.toFixed(1).replace(".", ",")}
-                    </span>
-                    {discount > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setDiscount(0)}
-                        className="rounded-md border border-border/60 bg-background px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        Sıfırla
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <input
-                  id="bargain-slider"
-                  type="range"
-                  min={0}
-                  max={25}
-                  step={0.5}
-                  value={discount}
-                  onChange={(e) => setDiscount(Number(e.target.value))}
-                  aria-label={`İndirim: %${discount.toFixed(1)} — Yeni fiyat: ${bargainPrice.toLocaleString("tr-TR")} ₺/m²`}
-                  aria-valuetext={`Yüzde ${discount.toFixed(1)} indirim, ${bargainPrice.toLocaleString("tr-TR")} lira metrekare`}
-                  className="bargain-range mt-3 w-full"
-                  style={{ touchAction: "none" }}
-                />
-                {discount > 0 && (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    %{discount.toFixed(1).replace(".", ",")} indirim skoru{" "}
-                    <span className={scoreDiff > 0 ? "font-semibold text-positive" : "font-semibold text-risk"}>
-                      {scoreDiff > 0 ? "+" : ""}{scoreDiff} puan
-                    </span>{" "}
-                    değiştirdi.
-                  </p>
-                )}
-              </div>
-            </div>
-          </Reveal>
-
-          <Reveal delay={120} variant="scale">
-            <MouseCard
-              className="glass mt-6 grid gap-10 overflow-hidden rounded-2xl p-6 md:grid-cols-2 md:p-10"
-              glowColor="var(--positive)"
-              glowOpacity={0.06}
-              tiltMax={4}
-            >
+        <StickyLayer
+          bg="#0E1116"
+          color="#fff"
+          dataBg="dark"
+          num="03"
+          label="SAYI"
+          tag="ÇIKTI"
+          lineBorder="rgba(255,255,255,.22)"
+          lineColor="rgba(255,255,255,.22)"
+          labelColor="rgba(255,255,255,.75)"
+        >
+          <h2
+            style={{
+              margin: "0 0 clamp(24px, 3vw, 44px)",
+              font: "700 clamp(34px, 7.4vw, 124px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.06em",
+              lineHeight: 0.88,
+            }}
+          >
+            Dört sayı.{" "}
+            <span style={{ color: "#1B4DFF" }}>Bir yön.</span>
+          </h2>
+          <div
+            className="em-col-2"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              borderTop: "1px solid rgba(255,255,255,.18)",
+            }}
+          >
+            {[
+              { val: "%6,4", label: "KİRA GETİRİSİ" },
+              { val: "15,6 yıl", label: "AMORTİSMAN" },
+              { val: "−%9", label: "MEDYANA SAPMA" },
+              { val: "78/100", label: "LİKİDİTE" },
+            ].map((m, i) => (
               <div
+                key={m.label}
                 style={{
-                  borderLeft: "4px solid var(--positive)",
-                  paddingLeft: "1.5rem",
+                  padding: "20px 18px 0",
+                  borderRight:
+                    i < 3 ? "1px solid rgba(255,255,255,.18)" : undefined,
                 }}
               >
-                <span className="status-pill bg-positive/10 text-positive">
-                  <span className="status-dot" />
-                  Olumlu Karar
-                </span>
-                <h2 className="mt-3 text-3xl text-foreground md:text-4xl">
-                  Al — <span className="text-positive">5 yıl tut</span>
-                </h2>
-                <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-                  Bölge fiyat artışı son 24 ayda %38. İlan, mahalle medyanının
-                  %9 altında listelenmiş. Tek risk kalemi: yüksek arz
-                  yoğunluğu.
-                </p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    className="btn-tactile btn-tactile-positive"
-                    onClick={async () => {
-                      try {
-                        const res = await fetch("/api/report", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ analysisId: "placeholder", format: "pdf" }),
-                        });
-                        if (!res.ok) {
-                          const body: AnalyseErrorResponse = await res.json();
-                          if (res.status === 429 && body.resource) {
-                            setQuotaError(body.resource);
-                            document.getElementById("analiz")?.scrollIntoView({ behavior: "smooth" });
-                          }
-                          if (res.status === 401) {
-                            window.location.href = "/giris";
-                          }
-                        }
-                      } catch {
-                        // network error — silently ignore
-                      }
-                    }}
-                  >
-                    Raporu indir
-                  </button>
-                  <button type="button" className="btn-tactile">
-                    Riskleri gör
-                  </button>
+                <div
+                  style={{
+                    font: "500 clamp(22px, 2.6vw, 40px) 'Space Grotesk', sans-serif",
+                    letterSpacing: "-0.05em",
+                  }}
+                >
+                  {m.val}
+                </div>
+                <div
+                  style={{
+                    font: "400 10px 'Space Mono', monospace",
+                    letterSpacing: ".2em",
+                    opacity: 0.7,
+                    marginTop: 8,
+                  }}
+                >
+                  {m.label}
                 </div>
               </div>
-              <dl className="self-center" aria-live="polite">
-                {liveMetrics.map((m, i) => (
-                  <div
-                    key={m.label}
-                    className={`flex items-baseline justify-between border-t border-border/40 py-4 last:border-b last:border-border/40 ${animateResults ? "card-entrance" : ""}`}
-                    style={animateResults ? { animationDelay: `${i * 100}ms` } : undefined}
-                  >
-                    <dt className="text-sm text-muted-foreground">
-                      {m.label}
-                    </dt>
-                    <dd className={`text-sm font-semibold ${m.tone}`}>
-                      <SlotNumber text={m.value} animate={animateResults} />
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </MouseCard>
-          </Reveal>
+            ))}
+          </div>
+        </StickyLayer>
+      </div>
 
-          {/* ===== SCORE BREAKDOWN & MORTGAGE ===== */}
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <Reveal delay={180} variant="scale">
-              <div className="glass h-full rounded-2xl p-5 md:p-6">
-                <div className="mb-4 flex items-center gap-2">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span className="font-mono text-[10.5px] font-medium uppercase tracking-[.06em] text-muted-foreground">
-                    {t.analysis.scoreBreakdown}
-                  </span>
-                </div>
-                <div ref={barsRef} className="space-y-3">
-                  {scoreParts.map((part, i) => (
-                    <div key={part.key} className="flex items-center gap-3">
-                      <span className="w-28 shrink-0 text-xs text-muted-foreground">{part.label}</span>
-                      <div className="relative h-5 flex-1 overflow-hidden rounded-sm bg-muted/30">
+      {/* ═══ ANALIZ TERMINAL ═══ */}
+      <section
+        id="analiz"
+        data-bg="dark"
+        ref={analizRef}
+        style={{
+          background: "#00875A",
+          color: "#FFFFFF",
+          padding:
+            "clamp(64px, 8vw, 130px) clamp(16px, 4vw, 44px) clamp(64px, 8vw, 120px)",
+        }}
+      >
+        <div style={{ maxWidth: 1560, margin: "0 auto" }}>
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              gap: 30,
+              alignItems: "flex-end",
+              marginBottom: "clamp(26px, 4vw, 52px)",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  font: "400 11px 'Space Mono', monospace",
+                  letterSpacing: ".28em",
+                  color: "rgba(255,255,255,.85)",
+                  marginBottom: 18,
+                }}
+              >
+                01 · ANALİZ ET
+              </div>
+              <h2
+                style={{
+                  margin: 0,
+                  font: "700 clamp(32px, 5.6vw, 96px) 'Space Grotesk', sans-serif",
+                  letterSpacing: "-0.06em",
+                  lineHeight: 0.9,
+                  maxWidth: "16ch",
+                }}
+              >
+                Yapıştır.{" "}
+                <span style={{ color: "#0E1116" }}>Üç saniye.</span> Kararın
+                hazır
+                <span style={{ color: "#0E1116" }}>.</span>
+              </h2>
+            </div>
+            <p
+              style={{
+                margin: "0 0 6px auto",
+                maxWidth: 380,
+                font: "400 13px 'Space Mono', monospace",
+                lineHeight: 1.8,
+                color: "rgba(255,255,255,.8)",
+              }}
+            >
+              İlan linki, mahalle ya da harita noktası — hangisini verirsen
+              terminal aynı formatta yanıt verir. Ekranı izle: kaynaklar tek tek
+              açılır, sayılar yerine oturur.
+            </p>
+          </div>
+
+          <div
+            style={{
+              border: "1px solid rgba(14,17,22,.18)",
+              background: "#FFFFFF",
+              color: "#0E1116",
+            }}
+          >
+            <div
+              className="em-stack"
+              style={{
+                display: "flex",
+                alignItems: "stretch",
+                borderBottom: "1px solid rgba(14,17,22,.14)",
+              }}
+            >
+              <div style={{ display: "flex" }}>
+                <button
+                  onClick={() => setTab("link")}
+                  style={{
+                    background: tab === "link" ? "#1B4DFF" : "transparent",
+                    color: tab === "link" ? "#fff" : "rgba(14,17,22,.5)",
+                    border: 0,
+                    borderRight: "1px solid rgba(14,17,22,.14)",
+                    padding: "16px 24px",
+                    font: "700 11px 'Space Mono', monospace",
+                    letterSpacing: ".2em",
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                  }}
+                >
+                  İLAN LİNKİ
+                </button>
+                <button
+                  onClick={() => setTab("konum")}
+                  style={{
+                    background: tab === "konum" ? "#1B4DFF" : "transparent",
+                    color: tab === "konum" ? "#fff" : "rgba(14,17,22,.5)",
+                    border: 0,
+                    borderRight: "1px solid rgba(14,17,22,.14)",
+                    padding: "16px 24px",
+                    font: "700 11px 'Space Mono', monospace",
+                    letterSpacing: ".2em",
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                  }}
+                >
+                  KONUM
+                </button>
+              </div>
+              <div
+                className="em-hide"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginLeft: "auto",
+                  padding: "0 20px",
+                  font: "400 10px 'Space Mono', monospace",
+                  letterSpacing: ".2em",
+                  color: "rgba(14,17,22,.45)",
+                }}
+              >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    background: "#00875A",
+                    animation: "em-pulse-dot 2s ease-in-out infinite",
+                  }}
+                />
+                KAYNAKLAR CANLI · SON TARAMA 00:04
+              </div>
+            </div>
+
+            <div
+              className="em-stack"
+              style={{ display: "flex", alignItems: "stretch" }}
+            >
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "0 0 0 clamp(16px, 2vw, 28px)",
+                  font: "400 15px 'Space Mono', monospace",
+                  color: "#1B4DFF",
+                }}
+              >
+                &gt;
+              </span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") run();
+                }}
+                placeholder={
+                  tab === "link"
+                    ? "sahibinden.com/ilan/9931-daire"
+                    : "Kadıköy, Fikirtepe — cadde veya mahalle"
+                }
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  background: "transparent",
+                  border: 0,
+                  outline: "none",
+                  color: "#0E1116",
+                  font: "400 clamp(13px, 1.4vw, 19px) 'Space Mono', monospace",
+                  padding: "clamp(20px, 2.6vw, 34px) 14px",
+                }}
+              />
+              <button
+                onClick={run}
+                style={{
+                  background: "#1B4DFF",
+                  color: "#fff",
+                  border: 0,
+                  padding:
+                    "clamp(18px, 2.4vw, 30px) clamp(24px, 3vw, 46px)",
+                  font: "700 clamp(11px, 1.1vw, 13px) 'Space Mono', monospace",
+                  letterSpacing: ".24em",
+                  whiteSpace: "nowrap",
+                  cursor: "pointer",
+                }}
+              >
+                {phase === "scan"
+                  ? "TARANIYOR…"
+                  : phase === "done"
+                    ? "TEKRAR ÇALIŞTIR"
+                    : "ANALİZ ET"}
+              </button>
+            </div>
+
+            {phase !== "idle" && (
+              <>
+                <div
+                  className="em-col-2"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(4, 1fr)",
+                    borderTop: "1px solid rgba(14,17,22,.14)",
+                  }}
+                >
+                  {sources.map((s, i) => (
+                    <div
+                      key={s.name}
+                      style={{
+                        padding: "20px clamp(14px, 2vw, 26px)",
+                        borderRight:
+                          i < 3
+                            ? "1px solid rgba(14,17,22,.14)"
+                            : undefined,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          font: "400 10px 'Space Mono', monospace",
+                          letterSpacing: ".16em",
+                          color: "rgba(14,17,22,.55)",
+                        }}
+                      >
+                        <span>{s.name}</span>
+                        <span style={{ color: s.color }}>{s.state}</span>
+                      </div>
+                      <div
+                        style={{
+                          height: 2,
+                          background: "rgba(14,17,22,.14)",
+                          marginTop: 14,
+                        }}
+                      >
                         <div
-                          className="score-bar h-full rounded-sm"
                           style={{
-                            width: barsVisible ? `${part.pct}%` : "0%",
-                            backgroundColor: part.color,
-                            transitionTimingFunction: barsFirstRender.current ? "cubic-bezier(.16,1,.3,1)" : "ease",
-                            transitionDuration: barsFirstRender.current ? "900ms" : "200ms",
-                            transitionDelay: barsFirstRender.current ? `${i * 90}ms` : "0ms",
+                            height: 2,
+                            width: s.pct,
+                            background: s.color,
+                            transition: "width 420ms linear",
                           }}
                         />
                       </div>
-                      <span className={`w-12 shrink-0 text-right font-mono text-xs font-semibold tabular-nums ${part.tone}`}>
-                        {part.key === "base"
-                          ? part.value.toFixed(1).replace(".", locale === "en" ? "." : ",")
-                          : `${part.value > 0 ? "+" : ""}${part.value.toFixed(1).replace(".", locale === "en" ? "." : ",")}`}
-                      </span>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
-                  <span className="text-sm font-medium text-muted-foreground">{t.analysis.totalScore}</span>
-                  <span className="text-lg font-bold text-primary">{derived.score}/96</span>
-                </div>
-                {discount > 0 && (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    %{discount.toFixed(1).replace(".", ",")} indirim skoru{" "}
-                    <span className={scoreDiff > 0 ? "font-semibold text-positive" : "font-semibold text-risk"}>
-                      {scoreDiff > 0 ? "+" : ""}{scoreDiff} puan
-                    </span>{" "}
-                    değiştirdi.
-                  </p>
-                )}
-              </div>
-            </Reveal>
 
-            <Reveal delay={240} variant="scale">
-              <div className="glass h-full rounded-2xl p-5 md:p-6">
-                <div className="mb-4 flex items-center gap-2">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span className="font-mono text-[10.5px] font-medium uppercase tracking-[.06em] text-muted-foreground">
-                    {t.analysis.mortgageVsRent}
-                  </span>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="down-pct" className="text-xs text-muted-foreground">{t.analysis.downPayment}</label>
-                      <span className="font-mono text-sm font-semibold tabular-nums">%{downPct}</span>
-                    </div>
-                    <input
-                      id="down-pct"
-                      type="range"
-                      min={0}
-                      max={80}
-                      step={5}
-                      value={downPct}
-                      onChange={(e) => setDownPct(Number(e.target.value))}
-                      className="bargain-range mt-1.5 w-full"
-                      style={{ touchAction: "none" }}
-                      aria-label={`${t.analysis.downPayment}: %${downPct}`}
-                      aria-valuetext={`%${downPct}`}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="term-years" className="text-xs text-muted-foreground">{t.analysis.term}</label>
-                      <span className="font-mono text-sm font-semibold tabular-nums">{termYears} {t.analysis.years}</span>
-                    </div>
-                    <input
-                      id="term-years"
-                      type="range"
-                      min={1}
-                      max={20}
-                      step={1}
-                      value={termYears}
-                      onChange={(e) => setTermYears(Number(e.target.value))}
-                      className="bargain-range mt-1.5 w-full"
-                      style={{ touchAction: "none" }}
-                      aria-label={`${t.analysis.term}: ${termYears} ${t.analysis.years}`}
-                      aria-valuetext={`${termYears} ${t.analysis.years}`}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="monthly-rate" className="text-xs text-muted-foreground">{t.analysis.monthlyInterest}</label>
-                      <span className="font-mono text-sm font-semibold tabular-nums">%{monthlyRate.toFixed(1).replace(".", ",")}</span>
-                    </div>
-                    <input
-                      id="monthly-rate"
-                      type="range"
-                      min={0.5}
-                      max={5}
-                      step={0.1}
-                      value={monthlyRate}
-                      onChange={(e) => setMonthlyRate(Number(e.target.value))}
-                      className="bargain-range mt-1.5 w-full"
-                      style={{ touchAction: "none" }}
-                      aria-label={`${t.analysis.monthlyInterest}: %${monthlyRate.toFixed(1)}`}
-                      aria-valuetext={`%${monthlyRate.toFixed(1).replace(".", ",")}`}
-                    />
-                  </div>
-                </div>
-                <div className="mt-5 space-y-2.5 border-t border-border/40 pt-4">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs text-muted-foreground">{t.analysis.monthlyPayment}</span>
-                    <span className="font-mono text-sm font-semibold tabular-nums">
-                      {Math.round(mortgagePayment).toLocaleString(fmtLocale)} ₺
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs text-muted-foreground">{t.analysis.monthlyRent}</span>
-                    <span className="font-mono text-sm font-semibold tabular-nums">
-                      {Math.round(demoRent).toLocaleString(fmtLocale)} ₺
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-xs text-muted-foreground">{t.analysis.rentCoverage}</span>
-                      <span className={`font-mono text-sm font-semibold tabular-nums ${coverageTone}`}>
-                        %{Math.min(coveragePct, 999).toFixed(0)}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-muted/30">
-                      <div
-                        className={`h-full rounded-full transition-all duration-300 ${coveragePct >= 100 ? "coverage-glow" : ""}`}
-                        style={{
-                          width: `${Math.min(coveragePct, 100)}%`,
-                          backgroundColor: coverageColor,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-baseline justify-between border-t border-border/40 pt-2.5">
-                    <span className="text-xs text-muted-foreground">{t.analysis.totalPayment}</span>
-                    <div className="text-right">
-                      <span className="font-mono text-sm font-semibold tabular-nums">
-                        {Math.round(mortgageTotalPayment).toLocaleString(fmtLocale)} ₺
-                      </span>
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        ({t.analysis.timesPrice.replace("{x}", mortgageTotalRatio.toFixed(1).replace(".", locale === "en" ? "." : ","))})
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            <Reveal variant="slide-left" className="md:col-span-2">
-              <MouseCard
-                className={`glass rounded-xl p-6 ${animateResults ? "card-entrance" : ""}`}
-                glowColor="var(--positive)"
-                tiltMax={3}
-                style={animateResults ? { animationDelay: "0ms" } : undefined}
-              >
-                <TrendChart
-                  points={trend}
-                  tone="positive"
-                  label="m² fiyat trendi — 24 ay"
-                  value="+%38"
-                />
-              </MouseCard>
-              <MouseCard
-                className={`glass mt-4 rounded-xl p-6 ${animateResults ? "card-entrance" : ""}`}
-                glowColor="var(--risk)"
-                tiltMax={3}
-                style={animateResults ? { animationDelay: "100ms" } : undefined}
-              >
-                <TrendChart
-                  points={riskTrend}
-                  tone="risk"
-                  height={110}
-                  label="Ortalama satış süresi (gün)"
-                  value="−26 gün"
-                />
-              </MouseCard>
-            </Reveal>
-            <Reveal
-              delay={120}
-              variant="slide-right"
-              className="grid grid-cols-2 gap-6 self-center md:grid-cols-1"
-            >
-              <MouseCard
-                className={`glass flex items-center justify-center rounded-xl p-6 ${animateResults ? "card-entrance" : ""}`}
-                glowColor="var(--positive)"
-                tiltMax={8}
-                style={animateResults ? { animationDelay: "200ms" } : undefined}
-              >
-                <Gauge value={41} tone="positive" caption="5 Yıl ROI" />
-              </MouseCard>
-              <MouseCard
-                className={`glass flex items-center justify-center rounded-xl p-6 ${animateResults ? "card-entrance" : ""}`}
-                glowColor="var(--risk)"
-                tiltMax={8}
-                style={animateResults ? { animationDelay: "300ms" } : undefined}
-              >
-                <Gauge value={22} tone="risk" caption="Risk Skoru" />
-              </MouseCard>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== BEFORE / AFTER ===== */}
-      <section
-        data-header="light"
-        style={{
-          background:
-            "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
-        }}
-      >
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="blur">
-            <div className="text-center">
-              <p className="label-mono">Öncesi / Sonrası</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-                Ataşehir — 24 aylık değişim
-              </h2>
-            </div>
-          </Reveal>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {beforeAfter.map((item, i) => (
-              <Reveal key={item.label} delay={i * 100} variant="scale">
-                <MouseCard
-                  className="glass rounded-xl p-5"
-                  glowColor={
-                    item.positive ? "var(--positive)" : "var(--risk)"
-                  }
-                  tiltMax={10}
-                  glowOpacity={0.08}
-                >
-                  <p className="label-mono">{item.label}</p>
-                  <div className="mt-4 flex items-end justify-between gap-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Önce</p>
-                      <p className="mt-1 text-sm font-medium text-muted-foreground line-through decoration-muted-foreground/30">
-                        {item.before}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Şimdi</p>
-                      <p className="mt-1 text-sm font-bold">{item.after}</p>
-                    </div>
-                  </div>
+                {phase === "scan" && (
                   <div
-                    className="mt-3 flex items-center justify-center rounded-lg py-2"
                     style={{
-                      backgroundColor: item.positive
-                        ? "color-mix(in oklab, var(--positive) 8%, transparent)"
-                        : "color-mix(in oklab, var(--risk) 8%, transparent)",
+                      borderTop: "1px solid rgba(14,17,22,.14)",
+                      padding: "16px clamp(16px, 2vw, 28px)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 7,
+                      font: "400 11px 'Space Mono', monospace",
+                      color: "rgba(14,17,22,.5)",
+                      minHeight: 96,
                     }}
                   >
-                    <span
-                      className={`text-lg font-bold ${item.positive ? "text-positive" : "text-risk"}`}
-                    >
-                      {item.change}
-                    </span>
+                    {logs.map((l, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          animation:
+                            "em-rise-in 320ms cubic-bezier(.2,.8,.2,1) both",
+                        }}
+                      >
+                        <span style={{ color: "#1B4DFF" }}>&gt;</span> {l}
+                      </span>
+                    ))}
                   </div>
-                </MouseCard>
-              </Reveal>
-            ))}
+                )}
+
+                {phase === "done" && <AnalysisResult kira={kira} amort={amort} sapma={sapma} skor={skor} gaugeOffset={gaugeOffset} />}
+              </>
+            )}
+          </div>
+
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              gap: 16,
+              marginTop: 16,
+              font: "400 10px 'Space Mono', monospace",
+              letterSpacing: ".16em",
+              color: "rgba(255,255,255,.75)",
+            }}
+          >
+            <span>DEĞERLEME DEĞİL · İLAN VE KONUM VERİSİ OKUMASI</span>
+            <span className="em-hide" style={{ marginLeft: "auto" }}>
+              ÖRNEK: SAHİBİNDEN.COM/İLAN/9931 · KADIKÖY FİKİRTEPE
+            </span>
           </div>
         </div>
       </section>
 
-      {/* ===== COMPARISON TABLE ===== */}
+      {/* ═══ VERİ ═══ */}
       <section
-        data-header="light"
+        id="veri"
+        data-bg="light"
         style={{
-          background:
-            "linear-gradient(180deg, var(--surface-warm) 0%, var(--background) 100%)",
+          background: "#FFFFFF",
+          padding: "0 clamp(16px, 4vw, 44px) clamp(64px, 8vw, 120px)",
         }}
       >
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="blur">
-            <div className="text-center">
-              <p className="label-mono">Platform Karşılaştırması</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-                Aynı mülk, farklı platformlar
-              </h2>
-            </div>
-          </Reveal>
-          <Reveal delay={100} variant="scale">
-            <MouseCard
-              className="glass mt-10 overflow-hidden rounded-xl"
-              glowColor="var(--primary)"
-              tiltMax={2}
-            >
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-border/40 bg-muted/20">
-                      {["Platform", "İlan", "m²", "Fiyat", "Sapma"].map(
-                        (h) => (
-                          <th
-                            key={h}
-                            className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
-                            {h}
-                          </th>
-                        ),
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {listings.map((l) => (
-                      <tr
-                        key={l.platform}
-                        className="group border-b border-border/40 transition-colors duration-200 last:border-b-0 hover:bg-muted/20"
-                      >
-                        <td className="px-5 py-4 font-medium">
-                          {l.platform}
-                        </td>
-                        <td className="px-5 py-4 text-muted-foreground">
-                          <span className="inline-flex items-center gap-1.5">
-                            {l.url}
-                            <ArrowUpRight className="h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-muted-foreground">
-                          {l.m2}
-                        </td>
-                        <td className="px-5 py-4 font-medium">{l.price}</td>
-                        <td
-                          className={`px-5 py-4 font-medium ${l.positive ? "text-positive" : "text-risk"}`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <span className="status-dot" />
-                            {l.delta}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <div
+          style={{
+            maxWidth: 1560,
+            margin: "0 auto",
+            borderTop: "1px solid rgba(14,17,22,.16)",
+            paddingTop: "clamp(36px, 5vw, 68px)",
+          }}
+        >
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              gap: 30,
+              alignItems: "flex-end",
+              marginBottom: "clamp(26px, 4vw, 48px)",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  font: "400 11px 'Space Mono', monospace",
+                  letterSpacing: ".28em",
+                  color: "#1B4DFF",
+                  marginBottom: 18,
+                }}
+              >
+                02 · VERİ
               </div>
-            </MouseCard>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ===== SLIDER ===== */}
-      <section data-header="light">
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="blur">
-            <div className="text-center">
-              <p className="label-mono">Yakın Çevre Analizi</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-                Çevredeki arsa, konut ve dükkanlar
+              <h2
+                style={{
+                  margin: 0,
+                  font: "700 clamp(28px, 4.4vw, 70px) 'Space Grotesk', sans-serif",
+                  letterSpacing: "-0.055em",
+                  lineHeight: 0.96,
+                  maxWidth: "20ch",
+                }}
+              >
+                Tahmin{" "}
+                <span style={{ color: "#E23D28" }}>üretmiyoruz.</span> Veriyi
+                okuyup sayıya çeviriyoruz.
               </h2>
             </div>
-          </Reveal>
-          <Reveal delay={80}>
-            <div className="mt-10">
-              <AnalysisSlider slides={slides} />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ===== BARS ===== */}
-      <section
-        data-header="light"
-        style={{
-          background:
-            "linear-gradient(180deg, var(--surface-mint) 0%, var(--background) 100%)",
-        }}
-      >
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="blur">
-            <div className="text-center">
-              <p className="label-mono">Mahalle Kesiti</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-                Ataşehir — metrik dağılımı
-              </h2>
-            </div>
-          </Reveal>
-          <Reveal delay={80} variant="scale">
-            <MouseCard
-              className="glass mx-auto mt-10 max-w-3xl rounded-xl p-6"
-              glowColor="var(--primary)"
-              tiltMax={3}
+            <p
+              style={{
+                margin: "0 0 6px auto",
+                maxWidth: 340,
+                font: "400 12px 'Space Mono', monospace",
+                lineHeight: 1.85,
+                color: "rgba(14,17,22,.6)",
+              }}
             >
-              <Bars data={bars} />
-            </MouseCard>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ===== HOW IT WORKS ===== */}
-      <section data-header="light" id="nasil-calisir">
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-20">
-          <Reveal variant="blur">
-            <div className="text-center">
-              <p className="label-mono">Nasıl Çalışır?</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-                3 adımda yatırım kararı
-              </h2>
-            </div>
-          </Reveal>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
+              Her ilan aynı hattan geçer: toplama, normalizasyon, sayı. Rakamın
+              kaç ilandan çıktığı her zaman raporun üstünde yazar.
+            </p>
+          </div>
+          <div
+            className="em-col-1"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              borderTop: "1px solid rgba(14,17,22,.16)",
+            }}
+          >
             {[
               {
-                icon: Link2,
-                title: "İlan linkini yapıştır",
-                desc: "Sahibinden, Hepsiemlak veya Emlakjet'ten herhangi bir ilan linki.",
-                color: "var(--primary)",
-                step: "1",
+                num: "01",
+                title: "TOPLAMA",
+                h: "İlan ve konum",
+                p: "Sahibinden.com ilan sayfasındaki fiyat, net/brüt alan, oda sayısı, kat, bina yaşı ve konum alanları olduğu gibi okunur. İlan yoksa girdiğin adres koordinata çevrilir.",
+                lines: [
+                  "> fiyat · alan · oda · kat · yaş",
+                  "> mahalle · cadde · koordinat",
+                  "> 312 emsal ilan",
+                ],
               },
               {
-                icon: Cpu,
-                title: "AI analiz etsin",
-                desc: "Fiyat, kira getirisi, amortisman ve risk skoru saniyeler içinde.",
-                color: "var(--positive)",
-                step: "2",
+                num: "02",
+                title: "NORMALİZASYON",
+                h: "Aynı birime indir",
+                p: "Her ilan tek ortak birime, metrekareye indirilir. Tekrarlanan ilanlar, aykırı fiyatlar ve alan hataları ayıklanır; kalan set üzerinden mahalle medyanı kurulur.",
+                lines: [
+                  "> kopya ilan ayıklama",
+                  "> aykırı değer filtresi",
+                  "> mahalle · ilçe medyanı",
+                ],
+                redLine: 1,
               },
               {
-                icon: FileCheck,
-                title: "Karar raporunu al",
-                desc: "Al/satma/bekle kararı ve detaylı rapor oluşturulur.",
-                color: "var(--positive)",
-                step: "3",
+                num: "03",
+                title: "SAYI",
+                h: "Dört metrik, bir yön",
+                p: "Kira getirisi, amortisman süresi, medyana sapma ve likidite skoru hesaplanır. Yön yalnızca sayıdan çıkar: al, bekle veya riskli.",
+                lines: [
+                  "> kira getirisi %",
+                  "> amortisman yıl",
+                  "> likidite skoru /100",
+                ],
               },
-            ].map((s, i) => (
-              <Reveal key={s.step} delay={i * 120} variant="slide-right">
-                <MouseCard
-                  className="glass relative flex flex-col items-center rounded-xl p-8 text-center"
-                  glowColor={s.color}
-                  tiltMax={10}
-                  glowOpacity={0.1}
+            ].map((col, ci) => (
+              <div
+                key={col.num}
+                style={{
+                  padding: `clamp(24px, 3vw, 42px) ${ci === 2 ? "0" : "clamp(20px, 2.5vw, 36px)"} clamp(28px, 4vw, 52px) ${ci === 0 ? "0" : "clamp(20px, 2.5vw, 36px)"}`,
+                  borderRight:
+                    ci < 2 ? "1px solid rgba(14,17,22,.16)" : undefined,
+                }}
+              >
+                <div
+                  style={{
+                    font: "400 11px 'Space Mono', monospace",
+                    letterSpacing: ".2em",
+                    color: "#1B4DFF",
+                    marginBottom: 24,
+                  }}
                 >
-                  <span
-                    className="absolute -top-4 inline-grid h-8 w-8 place-items-center rounded-full text-sm font-bold text-white"
-                    style={{ backgroundColor: s.color }}
-                  >
-                    {s.step}
-                  </span>
-                  <div
-                    className="mt-2 flex h-14 w-14 items-center justify-center rounded-2xl"
-                    style={{
-                      backgroundColor: `color-mix(in oklab, ${s.color} 12%, transparent)`,
-                    }}
-                  >
-                    <s.icon
-                      className="h-6 w-6"
-                      style={{ color: s.color }}
-                    />
-                  </div>
-                  <h3 className="mt-5 text-base font-semibold">{s.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {s.desc}
-                  </p>
-                </MouseCard>
-              </Reveal>
+                  {col.num} — {col.title}
+                </div>
+                <h3
+                  style={{
+                    margin: "0 0 14px",
+                    font: "500 clamp(21px, 2.1vw, 30px) 'Space Grotesk', sans-serif",
+                    letterSpacing: "-0.05em",
+                  }}
+                >
+                  {col.h}
+                </h3>
+                <p
+                  style={{
+                    margin: "0 0 20px",
+                    font: "400 13px 'Space Mono', monospace",
+                    lineHeight: 1.8,
+                    color: "rgba(14,17,22,.62)",
+                  }}
+                >
+                  {col.p}
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    font: "400 11px 'Space Mono', monospace",
+                    color: "rgba(14,17,22,.45)",
+                  }}
+                >
+                  {col.lines.map((l, li) => (
+                    <span
+                      key={li}
+                      style={
+                        col.redLine === li
+                          ? { color: "#E23D28" }
+                          : undefined
+                      }
+                    >
+                      {l}
+                    </span>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
-          <Reveal delay={400} variant="fade">
-            <div className="mt-4 hidden items-center justify-center gap-2 text-muted-foreground md:flex">
-              <span className="h-px w-20 bg-border" />
-              <span className="text-xs">Link</span>
-              <span className="h-px w-16 bg-border" />
-              <span className="text-lg text-primary">•</span>
-              <span className="h-px w-16 bg-border" />
-              <span className="text-xs">Analiz</span>
-              <span className="h-px w-16 bg-border" />
-              <span className="text-lg text-primary">•</span>
-              <span className="h-px w-16 bg-border" />
-              <span className="text-xs">Karar</span>
-              <span className="h-px w-20 bg-border" />
-            </div>
-          </Reveal>
         </div>
       </section>
 
-      {/* ===== CTA ===== */}
+      {/* ═══ BÖLGE ═══ */}
       <section
-        data-header="light"
+        id="bolge"
+        data-bg="dark"
+        onMouseMove={onMapMove}
         style={{
-          background: "linear-gradient(180deg, var(--surface-cool) 0%, var(--background) 100%)",
+          background: "#0E1116",
+          color: "#fff",
+          padding: "clamp(64px, 8vw, 130px) clamp(16px, 4vw, 44px)",
         }}
       >
-        <div className="mx-auto max-w-3xl px-5 py-20 md:px-8 md:py-28">
-          <Reveal variant="blur">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                {t.cta.titleBefore}{" "}
-                <span className="text-primary">{t.cta.titleHighlight}</span>{" "}
-                {t.cta.titleAfter}
-              </h2>
-              <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-                {t.cta.subtitle}
-              </p>
-              <div className="mt-8 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() =>
-                    document
-                      .getElementById("analiz")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="btn-glow flex items-center gap-2 rounded-xl bg-primary px-8 py-4 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.03]"
-                >
-                  {t.cta.button}
-                  <ArrowUpRight className="h-4 w-4" />
-                </button>
+        <div style={{ maxWidth: 1560, margin: "0 auto" }}>
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              gap: 28,
+              alignItems: "flex-end",
+              marginBottom: "clamp(28px, 4vw, 52px)",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  font: "400 11px 'Space Mono', monospace",
+                  letterSpacing: ".28em",
+                  color: "#1B4DFF",
+                  marginBottom: 18,
+                }}
+              >
+                03 · BÖLGE
               </div>
+              <h2
+                style={{
+                  margin: 0,
+                  font: "700 clamp(28px, 4.4vw, 70px) 'Space Grotesk', sans-serif",
+                  letterSpacing: "-0.055em",
+                  lineHeight: 0.96,
+                  maxWidth: "18ch",
+                }}
+              >
+                Konumu seç, m² fiyatını{" "}
+                <span style={{ color: "#1B4DFF" }}>gör.</span>
+              </h2>
             </div>
-          </Reveal>
+            <p
+              style={{
+                margin: "0 0 6px auto",
+                maxWidth: 340,
+                font: "400 12px 'Space Mono', monospace",
+                lineHeight: 1.8,
+                color: "rgba(255,255,255,.55)",
+              }}
+            >
+              Mahalle bazlı m² medyanı, son 12 aylık değişim ve kira getirisi
+              bandı. İmleci gezdir; hücreler canlı veriyle açılır.
+            </p>
+          </div>
+          <div
+            ref={mapRef}
+            className="em-col-2"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              borderTop: "1px solid rgba(255,255,255,.14)",
+              borderLeft: "1px solid rgba(255,255,255,.14)",
+            }}
+          >
+            {REGIONS.map((r) => (
+              <div
+                key={r.name}
+                style={{
+                  padding: "clamp(18px, 2vw, 28px)",
+                  borderRight: "1px solid rgba(255,255,255,.14)",
+                  borderBottom: "1px solid rgba(255,255,255,.14)",
+                  transition: "background 260ms linear",
+                }}
+              >
+                <div
+                  style={{
+                    font: "400 10px 'Space Mono', monospace",
+                    letterSpacing: ".2em",
+                    color: "rgba(255,255,255,.42)",
+                  }}
+                >
+                  {r.city}
+                </div>
+                <div
+                  style={{
+                    font: "500 clamp(19px, 2vw, 27px) 'Space Grotesk', sans-serif",
+                    letterSpacing: "-0.05em",
+                    margin: "10px 0 14px",
+                  }}
+                >
+                  {r.name}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    font: "400 12px 'Space Mono', monospace",
+                  }}
+                >
+                  <span>{r.price}</span>
+                  <span style={{ color: r.up ? "#00875A" : "#E23D28" }}>
+                    {r.change}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              gap: 18,
+              marginTop: 16,
+              font: "400 10px 'Space Mono', monospace",
+              letterSpacing: ".16em",
+              color: "rgba(255,255,255,.4)",
+            }}
+          >
+            <span>MEDYAN M² SATIŞ FİYATI · SON 90 GÜN AKTİF İLAN</span>
+            <span className="em-hide" style={{ marginLeft: "auto" }}>
+              YEŞİL: ARTIŞ · KIRMIZI: DÜŞÜŞ
+            </span>
+          </div>
         </div>
       </section>
+
+      {/* ═══ ARAÇLAR ═══ */}
+      <section
+        id="araclar"
+        data-bg="light"
+        style={{
+          background: "#FFFFFF",
+          padding:
+            "clamp(64px, 8vw, 130px) clamp(16px, 4vw, 44px) clamp(40px, 5vw, 70px)",
+        }}
+      >
+        <div style={{ maxWidth: 1560, margin: "0 auto" }}>
+          <div
+            style={{
+              font: "400 11px 'Space Mono', monospace",
+              letterSpacing: ".28em",
+              color: "#1B4DFF",
+              marginBottom: 18,
+            }}
+          >
+            04 · ARAÇLAR
+          </div>
+          <h2
+            style={{
+              margin: "0 0 clamp(30px, 4vw, 56px)",
+              font: "700 clamp(28px, 4.4vw, 70px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.055em",
+              lineHeight: 0.96,
+              maxWidth: "18ch",
+            }}
+          >
+            Bir ilan, iki ilan, bütün{" "}
+            <span style={{ color: "#1B4DFF" }}>portföy.</span>
+          </h2>
+          <div
+            className="em-col-1"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 1,
+              background: "rgba(14,17,22,.16)",
+              border: "1px solid rgba(14,17,22,.16)",
+            }}
+          >
+            {[
+              {
+                tag: "KARŞILAŞTIR",
+                tagColor: "#1B4DFF",
+                h: "İki ilanı yan yana koy",
+                p: "Aynı bütçedeki iki konutu m² fiyatı, kira getirisi, amortisman ve likidite üzerinden karşılaştır. Fark tabloda tek satırda görünür.",
+              },
+              {
+                tag: "PORTFÖY",
+                tagColor: "#1B4DFF",
+                h: "Takip ettiğin ilanlar",
+                p: "İlanı kaydet; fiyat değişince, ilan kapanınca veya mahalle medyanı kayınca bildirim gelir. Pazarlık payı geçmişi saklanır.",
+              },
+              {
+                tag: "BÖLGE RAPORU",
+                tagColor: "#E23D28",
+                h: "Mahalle raporu indir",
+                p: "Seçtiğin mahalle için m² dağılımı, kira getirisi bandı, arsa emsali ve 24 aylık seri. Tek sayfa, yazdırılabilir.",
+              },
+            ].map((card) => (
+              <ToolCard key={card.tag} {...card} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ PAKETLER STRIP ═══ */}
+      <section
+        data-bg="dark"
+        style={{
+          background: "#E23D28",
+          color: "#FFFFFF",
+          padding:
+            "clamp(54px, 6vw, 96px) clamp(16px, 4vw, 44px) clamp(56px, 6vw, 100px)",
+        }}
+      >
+        <div
+          className="em-stack"
+          style={{
+            maxWidth: 1560,
+            margin: "0 auto",
+            display: "flex",
+            alignItems: "flex-end",
+            gap: 28,
+            paddingTop: "clamp(10px, 2vw, 20px)",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                font: "400 11px 'Space Mono', monospace",
+                letterSpacing: ".28em",
+                color: "rgba(255,255,255,.8)",
+                marginBottom: 16,
+              }}
+            >
+              05 · PAKETLER
+            </div>
+            <h2
+              style={{
+                margin: 0,
+                font: "700 clamp(26px, 3.6vw, 56px) 'Space Grotesk', sans-serif",
+                letterSpacing: "-0.055em",
+                lineHeight: 0.98,
+                maxWidth: "22ch",
+              }}
+            >
+              Ücretsiz başla. Analiz sayısı arttıkça yükselt.
+            </h2>
+          </div>
+          <Link
+            to="/paketler"
+            style={{
+              marginLeft: "auto",
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              background: "#0E1116",
+              color: "#fff",
+              border: "1px solid #0E1116",
+              padding: "20px 30px",
+              font: "700 12px 'Space Mono', monospace",
+              letterSpacing: ".24em",
+              whiteSpace: "nowrap",
+              textDecoration: "none",
+            }}
+          >
+            <span>PAKETLERİ GÖR</span>
+            <span
+              style={{
+                display: "inline-block",
+                animation: "em-arrow-loop 1.6s ease-in-out infinite",
+              }}
+            >
+              →
+            </span>
+          </Link>
+        </div>
+      </section>
+
+      {/* ═══ KULLANICILAR ═══ */}
+      <section
+        data-bg="light"
+        style={{
+          background: "#FFFFFF",
+          padding:
+            "0 clamp(16px, 4vw, 44px) clamp(56px, 7vw, 110px)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1560,
+            margin: "0 auto",
+            borderTop: "1px solid rgba(14,17,22,.16)",
+            paddingTop: "clamp(36px, 5vw, 68px)",
+          }}
+        >
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              gap: 28,
+              alignItems: "flex-end",
+              marginBottom: "clamp(28px, 4vw, 50px)",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  font: "400 11px 'Space Mono', monospace",
+                  letterSpacing: ".28em",
+                  color: "#E23D28",
+                  marginBottom: 18,
+                }}
+              >
+                06 · KULLANANLAR
+              </div>
+              <h2
+                style={{
+                  margin: 0,
+                  font: "700 clamp(28px, 4.4vw, 70px) 'Space Grotesk', sans-serif",
+                  letterSpacing: "-0.055em",
+                  lineHeight: 0.96,
+                  maxWidth: "20ch",
+                }}
+              >
+                Pazarlığı sayıyla{" "}
+                <span style={{ color: "#1B4DFF" }}>yapanlar.</span>
+              </h2>
+            </div>
+            <p
+              style={{
+                margin: "0 0 6px auto",
+                maxWidth: 330,
+                font: "400 12px 'Space Mono', monospace",
+                lineHeight: 1.85,
+                color: "rgba(14,17,22,.6)",
+              }}
+            >
+              Yatırımcı, danışman ve ilk evini alan kullanıcılar aynı ekranı
+              kullanıyor. Aşağıdaki cümleler kendi sorgularından çıktı.
+            </p>
+          </div>
+          <div
+            className="em-col-1"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 1,
+              background: "rgba(14,17,22,.16)",
+              border: "1px solid rgba(14,17,22,.16)",
+            }}
+          >
+            {[
+              {
+                num: "01",
+                type: "YATIRIMCI",
+                color: "#1B4DFF",
+                hoverBg: "#0E1116",
+                quote:
+                  "“Beğendiğim daire mahalle medyanının %14 üstündeydi. İlanı kapattım, iki sokak öteki 68.900’a aldım.”",
+                name: "Murat Ş. · 9 konut portföyü",
+                loc: "Kadıköy, İstanbul",
+              },
+              {
+                num: "02",
+                type: "DANIŞMAN",
+                color: "#E23D28",
+                hoverBg: "#E23D28",
+                quote:
+                  "“Müşteriye ‘bence uygun’ demeyi bıraktım. Amortisman 15,6 yıl diyorum, tartışma bitiyor.”",
+                name: "Elif D. · gayrimenkul danışmanı",
+                loc: "Çankaya, Ankara",
+              },
+              {
+                num: "03",
+                type: "İLK EV",
+                color: "#1B4DFF",
+                hoverBg: "#1B4DFF",
+                quote:
+                  "“Konumu yazdım, m² aralığını gördüm. İlk kez emlakçıyla eşit bilgiyle konuştum.”",
+                name: "Seda K. · ilk konut alıcısı",
+                loc: "Nilüfer, Bursa",
+              },
+            ].map((t) => (
+              <TestimonialCard key={t.num} {...t} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ SEO + SSS ═══ */}
+      <section
+        data-bg="light"
+        style={{
+          background: "#FFFFFF",
+          padding:
+            "0 clamp(16px, 4vw, 44px) clamp(56px, 7vw, 110px)",
+        }}
+      >
+        <div
+          className="em-col-1"
+          style={{
+            maxWidth: 1560,
+            margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+            gap: "clamp(26px, 5vw, 80px)",
+            borderTop: "1px solid rgba(14,17,22,.16)",
+            paddingTop: "clamp(36px, 5vw, 68px)",
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                margin: "0 0 20px",
+                font: "500 clamp(23px, 2.5vw, 38px) 'Space Grotesk', sans-serif",
+                letterSpacing: "-0.05em",
+                lineHeight: 1.06,
+              }}
+            >
+              Sahibinden ilan analizi ve konuma göre m² fiyat sorgulama
+            </h2>
+            <p
+              style={{
+                margin: "0 0 16px",
+                font: "400 13px 'Space Mono', monospace",
+                lineHeight: 1.9,
+                color: "rgba(14,17,22,.65)",
+              }}
+            >
+              Emlakmetric bir{" "}
+              <strong style={{ fontWeight: 700 }}>
+                gayrimenkul analiz terminali
+              </strong>
+              dir; ekspertiz ya da değerleme raporu üretmez. Sahibinden.com&apos;daki
+              satılık ve kiralık ilan verisini okur, aynı mahalledeki emsal
+              ilanlarla karşılaştırır ve sonucu tek birime —{" "}
+              <strong style={{ fontWeight: 700 }}>m² fiyatı</strong> — indirir.
+            </p>
+            <p
+              style={{
+                margin: "0 0 16px",
+                font: "400 13px 'Space Mono', monospace",
+                lineHeight: 1.9,
+                color: "rgba(14,17,22,.65)",
+              }}
+            >
+              İlan linkin yoksa{" "}
+              <strong style={{ fontWeight: 700 }}>
+                konuma göre ev değeri sorgulama
+              </strong>{" "}
+              yapabilirsin: il, ilçe, mahalle veya harita noktası girdiğinde o
+              noktadaki m² fiyat aralığı,{" "}
+              <strong style={{ fontWeight: 700 }}>
+                kira getirisi hesaplama
+              </strong>{" "}
+              sonucu ve{" "}
+              <strong style={{ fontWeight: 700 }}>amortisman süresi</strong>{" "}
+              aynı formatta gelir.
+            </p>
+            <p
+              style={{
+                margin: 0,
+                font: "400 13px 'Space Mono', monospace",
+                lineHeight: 1.9,
+                color: "rgba(14,17,22,.65)",
+              }}
+            >
+              Konut alıcısı, yatırımcı, emlak danışmanı ve portföy yöneticisi
+              aynı ekranı kullanır: dört metrik, bir yön. Rakam nereden
+              geldiğini söylemeden ekranda durmaz; her sayının altında kaç ilan
+              okunduğu ve hangi tarihte tarandığı yazar.
+            </p>
+          </div>
+          <div id="sss">
+            <div
+              style={{
+                font: "400 11px 'Space Mono', monospace",
+                letterSpacing: ".28em",
+                color: "#1B4DFF",
+                marginBottom: 22,
+              }}
+            >
+              06 · SIKÇA SORULANLAR
+            </div>
+            {[
+              {
+                q: "Emlakmetric değerleme yapıyor mu?",
+                a: "Hayır. Ekspertiz veya resmî değerleme raporu üretmiyoruz. İlan ve konum verisini okuyup metrekare bazında karşılaştırıyoruz; çıktı bir ölçüm raporudur.",
+              },
+              {
+                q: "İlan linki olmadan sorgulayabilir miyim?",
+                a: "Evet. KONUM sekmesine adres, mahalle veya harita noktası gir; o bölgedeki m² aralığı, kira getirisi bandı ve 12 aylık değişim gelir.",
+              },
+              {
+                q: "Ücretsiz paket neleri kapsıyor?",
+                a: "Başlangıç paketi ücretsizdir: ayda 5 ilan analizi, mahalle medyanı karşılaştırması ve 12 aylık m² trendi. Kart bilgisi istemiyoruz.",
+              },
+              {
+                q: "Veriler ne sıklıkla güncelleniyor?",
+                a: "Kaynaklar gün içinde taranır. Her raporun üstünde okunan ilan sayısı ve tarama zamanı yazar.",
+              },
+            ].map((faq, i) => (
+              <details
+                key={i}
+                style={{
+                  borderTop: "1px solid rgba(14,17,22,.16)",
+                  borderBottom:
+                    i === 3 ? "1px solid rgba(14,17,22,.16)" : undefined,
+                  padding: "16px 0",
+                }}
+              >
+                <summary
+                  style={{
+                    cursor: "pointer",
+                    font: "500 clamp(15px, 1.5vw, 19px) 'Space Grotesk', sans-serif",
+                    letterSpacing: "-0.03em",
+                    listStyle: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                  }}
+                >
+                  <span
+                    style={{
+                      flex: "none",
+                      width: 22,
+                      height: 22,
+                      border: "1px solid rgba(14,17,22,.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      font: "400 12px 'Space Mono', monospace",
+                      color: "#1B4DFF",
+                    }}
+                  >
+                    +
+                  </span>
+                  <span>{faq.q}</span>
+                </summary>
+                <p
+                  style={{
+                    margin: "12px 0 0",
+                    font: "400 12px 'Space Mono', monospace",
+                    lineHeight: 1.9,
+                    color: "rgba(14,17,22,.6)",
+                  }}
+                >
+                  {faq.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ CTA ═══ */}
+      <section
+        data-bg="blue"
+        style={{
+          background: "#1B4DFF",
+          color: "#fff",
+          padding: "clamp(64px, 9vw, 150px) clamp(16px, 4vw, 44px)",
+        }}
+      >
+        <div style={{ maxWidth: 1560, margin: "0 auto" }}>
+          <div
+            className="em-col-1"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.15fr .85fr",
+              gap: "clamp(24px, 4vw, 64px)",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  font: "400 11px 'Space Mono', monospace",
+                  letterSpacing: ".28em",
+                  opacity: 0.7,
+                  marginBottom: 24,
+                }}
+              >
+                &gt; BAŞLA
+              </div>
+              <h2
+                style={{
+                  margin: 0,
+                  font: "700 clamp(36px, 6.6vw, 112px) 'Space Grotesk', sans-serif",
+                  letterSpacing: "-0.06em",
+                  lineHeight: 0.88,
+                }}
+              >
+                Bir link.
+                <br />
+                Bir sayı.
+              </h2>
+            </div>
+            <div
+              style={{
+                position: "relative",
+                border: "1px solid rgba(255,255,255,.4)",
+                padding: "clamp(14px, 1.6vw, 22px)",
+                minWidth: 0,
+              }}
+            >
+              <div
+                className="em-hide"
+                style={{
+                  position: "absolute",
+                  top: -30,
+                  right: 14,
+                  width: 92,
+                  height: 92,
+                  animation: "em-spin-slow 22s linear infinite",
+                }}
+              >
+                <svg
+                  viewBox="0 0 92 92"
+                  width="92"
+                  height="92"
+                  style={{ display: "block", overflow: "visible" }}
+                >
+                  <defs>
+                    <path
+                      id="emring"
+                      d="M46,46 m-33,0 a33,33 0 1,1 66,0 a33,33 0 1,1 -66,0"
+                    />
+                  </defs>
+                  <circle
+                    cx="46"
+                    cy="46"
+                    r="33"
+                    fill="#0E1116"
+                    stroke="rgba(255,255,255,.35)"
+                    strokeWidth="1"
+                  />
+                  <text
+                    fill="#fff"
+                    style={{
+                      font: "400 8.5px 'Space Mono', monospace",
+                      letterSpacing: ".22em",
+                    }}
+                  >
+                    <textPath href="#emring" startOffset="2%">
+                      HER M² BİR SAYIDIR · em² ·
+                    </textPath>
+                  </text>
+                </svg>
+              </div>
+              <ParticleField
+                light
+                orbCount={64}
+                style={{
+                  width: "100%",
+                  height: "clamp(180px, 26vh, 280px)",
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  marginTop: "clamp(10px, 1.4vw, 18px)",
+                  font: "400 10px 'Space Mono', monospace",
+                  letterSpacing: ".2em",
+                  color: "rgba(255,255,255,.75)",
+                }}
+              >
+                <span>İMLECİ GEZDİR → m²</span>
+                <span>em² · CANLI</span>
+              </div>
+            </div>
+          </div>
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 18,
+              borderTop: "1px solid rgba(255,255,255,.35)",
+              paddingTop: 24,
+              marginTop: "clamp(26px, 4vw, 48px)",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                maxWidth: 420,
+                font: "400 12px 'Space Mono', monospace",
+                lineHeight: 1.85,
+                color: "rgba(255,255,255,.8)",
+              }}
+            >
+              Kayıt ücretsiz, kart istemiyoruz. İlanı yapıştır, raporu gör;
+              sonra portföyünü kur.
+            </p>
+            <Link
+              to="/kayit"
+              style={{
+                marginLeft: "auto",
+                background: "#0E1116",
+                color: "#fff",
+                border: "1px solid #0E1116",
+                padding: "22px 34px",
+                font: "700 12px 'Space Mono', monospace",
+                letterSpacing: ".24em",
+                whiteSpace: "nowrap",
+                textDecoration: "none",
+              }}
+            >
+              ÜCRETSİZ KAYIT OL
+            </Link>
+            <Link
+              to="/iletisim"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                color: "#fff",
+                borderBottom: "1px solid rgba(255,255,255,.5)",
+                paddingBottom: 4,
+                font: "400 12px 'Space Mono', monospace",
+                letterSpacing: ".2em",
+                whiteSpace: "nowrap",
+                textDecoration: "none",
+              }}
+            >
+              İLETİŞİM{" "}
+              <span
+                style={{
+                  display: "inline-block",
+                  animation: "em-arrow-loop 1.6s ease-in-out infinite",
+                }}
+              >
+                →
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* ═══ SUB-COMPONENTS ═══ */
+
+function StickyLayer({
+  bg,
+  color,
+  dataBg,
+  num,
+  label,
+  tag,
+  lineBorder,
+  lineColor,
+  labelColor,
+  scanline,
+  children,
+}: {
+  bg: string;
+  color: string;
+  dataBg: string;
+  num: string;
+  label: string;
+  tag: string;
+  lineBorder: string;
+  lineColor: string;
+  labelColor: string;
+  scanline?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      data-bg={dataBg}
+      style={{
+        position: "sticky",
+        top: 0,
+        height: "100vh",
+        overflow: "hidden",
+        background: bg,
+        color,
+        borderTop: `1px solid ${lineBorder}`,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        padding:
+          "clamp(70px, 9vw, 120px) clamp(16px, 4vw, 44px)",
+      }}
+    >
+      {scanline && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 2,
+            background:
+              "linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent)",
+            animation: "em-scanline-v 3.4s ease-in-out infinite",
+          }}
+        />
+      )}
+      <div style={{ maxWidth: 1560, width: "100%", margin: "0 auto" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            font: "400 11px 'Space Mono', monospace",
+            letterSpacing: ".26em",
+            color: labelColor,
+            marginBottom: "clamp(20px, 3vw, 40px)",
+          }}
+        >
+          {num} / {label}{" "}
+          <span
+            style={{
+              flex: 1,
+              height: 1,
+              background: lineColor,
+            }}
+          />
+          <span style={{ color: `color-mix(in srgb, ${color} 70%, transparent)` }}>
+            {tag}
+          </span>
+        </div>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function StickyTitle({
+  words,
+  blueFrom,
+  blueTo,
+  darkBlue,
+  redDot,
+}: {
+  words: string[];
+  blueFrom: number;
+  blueTo: number;
+  darkBlue?: boolean;
+  redDot?: boolean;
+}) {
+  return (
+    <h2
+      style={{
+        margin: "0 0 clamp(20px, 3vw, 38px)",
+        font: "700 clamp(30px, 6.4vw, 104px) 'Space Grotesk', sans-serif",
+        letterSpacing: "-0.06em",
+        lineHeight: 0.9,
+        maxWidth: "20ch",
+      }}
+    >
+      {words.map((w, i) => {
+        const isBlue = i >= blueFrom && i <= blueTo;
+        const isLast = i === words.length - 1;
+        const blueColor = darkBlue ? "#0E1116" : "#1B4DFF";
+        return (
+          <span
+            key={i}
+            style={{
+              display: "inline-block",
+              color: isBlue ? blueColor : undefined,
+              animationName: "em-word-in",
+              animationDuration: ".9s",
+              animationTimingFunction: "cubic-bezier(.2,.8,.2,1)",
+              animationFillMode: "both",
+              animationTimeline: "view()",
+              animationRange: `entry ${4 + i * 5}% cover ${26 + i * 5}%`,
+            }}
+          >
+            {isLast && redDot ? (
+              <>
+                {w.replace(/\.$/, "")}
+                <span style={{ color: "#E23D28" }}>.</span>
+              </>
+            ) : (
+              w
+            )}
+          </span>
+        );
+      })}
+    </h2>
+  );
+}
+
+function ToolCard({
+  tag,
+  tagColor,
+  h,
+  p,
+}: {
+  tag: string;
+  tagColor: string;
+  h: string;
+  p: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? "#0E1116" : "#fff",
+        color: hovered ? "#fff" : "#0E1116",
+        padding: "clamp(22px, 2.6vw, 38px)",
+        transition: "background 200ms linear, color 200ms linear",
+      }}
+    >
+      <div
+        style={{
+          font: "400 10px 'Space Mono', monospace",
+          letterSpacing: ".22em",
+          color: tagColor,
+          marginBottom: 40,
+        }}
+      >
+        {tag}
+      </div>
+      <h3
+        style={{
+          margin: "0 0 12px",
+          font: "500 clamp(20px, 2vw, 29px) 'Space Grotesk', sans-serif",
+          letterSpacing: "-0.05em",
+        }}
+      >
+        {h}
+      </h3>
+      <p
+        style={{
+          margin: 0,
+          font: "400 12px 'Space Mono', monospace",
+          lineHeight: 1.85,
+          opacity: 0.62,
+        }}
+      >
+        {p}
+      </p>
+    </div>
+  );
+}
+
+function TestimonialCard({
+  num,
+  type,
+  color,
+  hoverBg,
+  quote,
+  name,
+  loc,
+}: {
+  num: string;
+  type: string;
+  color: string;
+  hoverBg: string;
+  quote: string;
+  name: string;
+  loc: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? hoverBg : "#fff",
+        color: hovered ? "#fff" : "#0E1116",
+        padding: "clamp(24px, 3vw, 40px)",
+        display: "flex",
+        flexDirection: "column",
+        minWidth: 0,
+        transition:
+          "transform 280ms cubic-bezier(.2,.8,.2,1), background 240ms linear, color 240ms linear",
+        transform: hovered ? "translateY(-8px)" : undefined,
+      }}
+    >
+      <span
+        style={{
+          font: "400 11px 'Space Mono', monospace",
+          letterSpacing: ".2em",
+          color,
+          marginBottom: 26,
+        }}
+      >
+        {num} · {type}
+      </span>
+      <p
+        style={{
+          margin: "0 0 28px",
+          font: "500 clamp(18px, 1.8vw, 26px) 'Space Grotesk', sans-serif",
+          letterSpacing: "-0.04em",
+          lineHeight: 1.28,
+        }}
+      >
+        {quote}
+      </p>
+      <div
+        style={{
+          marginTop: "auto",
+          borderTop: hovered
+            ? "1px solid rgba(255,255,255,.3)"
+            : "1px solid rgba(14,17,22,.14)",
+          paddingTop: 16,
+          font: "400 11px 'Space Mono', monospace",
+          lineHeight: 1.7,
+          color: hovered ? "rgba(255,255,255,.7)" : "rgba(14,17,22,.5)",
+        }}
+      >
+        {name}
+        <br />
+        {loc}
+      </div>
+    </div>
+  );
+}
+
+function AnalysisResult({
+  kira,
+  amort,
+  sapma,
+  skor,
+  gaugeOffset,
+}: {
+  kira: number;
+  amort: number;
+  sapma: number;
+  skor: number;
+  gaugeOffset: string;
+}) {
+  return (
+    <div
+      style={{
+        borderTop: "1px solid rgba(14,17,22,.14)",
+        animation: "em-fade-in 400ms both",
+      }}
+    >
+      <div
+        className="em-stack"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: "clamp(14px, 3vw, 40px)",
+          padding:
+            "clamp(20px, 2.4vw, 32px) clamp(16px, 2vw, 28px)",
+          borderBottom: "1px solid rgba(14,17,22,.14)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 14,
+          }}
+        >
+          <span
+            style={{
+              font: "700 clamp(46px, 7vw, 104px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.06em",
+              lineHeight: 0.8,
+              color: "#00875A",
+            }}
+          >
+            AL
+          </span>
+          <span
+            style={{
+              font: "400 11px 'Space Mono', monospace",
+              letterSpacing: ".2em",
+              color: "rgba(14,17,22,.5)",
+            }}
+          >
+            5 YIL TUT
+          </span>
+        </div>
+        <div
+          style={{
+            position: "relative",
+            width: 84,
+            height: 84,
+            flex: "none",
+          }}
+        >
+          <svg
+            viewBox="0 0 84 84"
+            width="84"
+            height="84"
+            style={{ display: "block", transform: "rotate(-90deg)" }}
+          >
+            <circle
+              cx="42"
+              cy="42"
+              r="38"
+              fill="none"
+              stroke="rgba(14,17,22,.14)"
+              strokeWidth="3"
+            />
+            <circle
+              cx="42"
+              cy="42"
+              r="38"
+              fill="none"
+              stroke="#1B4DFF"
+              strokeWidth="3"
+              strokeDasharray="239"
+              strokeDashoffset={gaugeOffset}
+            />
+          </svg>
+          <span
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              font: "500 18px 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.04em",
+              color: "#0E1116",
+            }}
+          >
+            {skor}
+          </span>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            font: "400 10px 'Space Mono', monospace",
+            letterSpacing: ".18em",
+            color: "rgba(14,17,22,.5)",
+          }}
+        >
+          <span style={{ color: "#E23D28", whiteSpace: "nowrap" }}>
+            ▲ 1 RİSK NOTU · BİNA 1999 ÖNCESİ
+          </span>
+          <span>KADIKÖY / FİKİRTEPE · 3+1 · 128 m² · 9.139.200 ₺</span>
+        </div>
+        <span
+          className="em-hide"
+          style={{
+            marginLeft: "auto",
+            font: "400 10px 'Space Mono', monospace",
+            letterSpacing: ".18em",
+            color: "rgba(14,17,22,.42)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          312 EMSAL İLAN · 00:00,16
+        </span>
+      </div>
+
+      <div
+        className="em-col-1"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 380px) 1fr",
+        }}
+      >
+        <div style={{ borderRight: "1px solid rgba(14,17,22,.14)" }}>
+          {[
+            { label: "brüt kira getirisi", val: `%${fmt(kira)}`, color: "#00875A" },
+            { label: "amortisman süresi", val: `${fmt(amort)} yıl`, color: undefined },
+            { label: "mahalle medyanına sapma", val: `−%${fmt(sapma)}`, color: "#00875A" },
+            { label: "likidite skoru · 90 gün", val: `${skor}/100`, color: undefined },
+            { label: "bina yaşı riski", val: "1999 · yüksek", color: "#E23D28" },
+          ].map((row, i) => (
+            <div
+              key={row.label}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "20px clamp(16px, 2vw, 26px)",
+                borderBottom:
+                  i < 4
+                    ? "1px solid rgba(14,17,22,.08)"
+                    : undefined,
+                font: "400 12px 'Space Mono', monospace",
+                animation: `em-rise-in .6s ${(0.06 + i * 0.1).toFixed(2)}s cubic-bezier(.2,.8,.2,1) both`,
+              }}
+            >
+              <span style={{ color: "rgba(14,17,22,.5)" }}>
+                {row.label}
+              </span>
+              <span
+                style={{
+                  font: "500 20px 'Space Grotesk', sans-serif",
+                  letterSpacing: "-0.04em",
+                  color: row.color,
+                }}
+              >
+                {row.val}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            padding:
+              "clamp(20px, 2.4vw, 32px) clamp(16px, 2.4vw, 32px)",
+          }}
+        >
+          <div
+            style={{
+              font: "400 10px 'Space Mono', monospace",
+              letterSpacing: ".22em",
+              color: "rgba(14,17,22,.42)",
+              marginBottom: 22,
+            }}
+          >
+            M² FİYATI · ₺ · İLAN VS EMSAL
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+            }}
+          >
+            {[
+              { label: "bu ilan", val: "71.400", pct: 74, color: "#1B4DFF", delay: ".58s" },
+              { label: "mahalle medyanı", val: "78.500", pct: 81, color: "rgba(27,77,255,.14)", delay: ".72s" },
+              { label: "ilçe medyanı", val: "96.400", pct: 100, color: "rgba(27,77,255,.14)", delay: ".86s" },
+              { label: "12 ay önce · mahalle", val: "58.900", pct: 61, color: "rgba(226,61,40,.55)", delay: "1s" },
+            ].map((bar) => (
+              <div key={bar.label}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    font: "400 11px 'Space Mono', monospace",
+                    color: "rgba(14,17,22,.7)",
+                    marginBottom: 6,
+                  }}
+                >
+                  <span>{bar.label}</span>
+                  <span>{bar.val}</span>
+                </div>
+                <div
+                  style={{
+                    height: 12,
+                    width: `${bar.pct}%`,
+                    background: bar.color,
+                    transformOrigin: "left",
+                    animation: `em-grow-x 900ms ${bar.delay} cubic-bezier(.2,.8,.2,1) both`,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="em-stack"
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              gap: 20,
+              marginTop: 30,
+              paddingTop: 24,
+              borderTop: "1px solid rgba(14,17,22,.14)",
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  font: "400 10px 'Space Mono', monospace",
+                  letterSpacing: ".22em",
+                  color: "rgba(14,17,22,.42)",
+                  marginBottom: 12,
+                }}
+              >
+                MAHALLE M² TRENDİ · 12 AY
+              </div>
+              <svg
+                viewBox="0 0 320 72"
+                width="100%"
+                height="72"
+                preserveAspectRatio="none"
+                style={{
+                  display: "block",
+                  maxWidth: 420,
+                  overflow: "visible",
+                }}
+              >
+                <polyline
+                  points="0,62 29,58 58,55 87,49 116,50 145,42 174,36 203,33 232,26 261,20 290,14 319,6"
+                  fill="none"
+                  stroke="#1B4DFF"
+                  strokeWidth="2"
+                  strokeDasharray="900"
+                  style={{
+                    animation:
+                      "em-draw-line 1.6s 1.15s ease-out both",
+                  }}
+                />
+                <circle cx="319" cy="6" r="3.5" fill="#E23D28" />
+              </svg>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div
+                style={{
+                  font: "500 clamp(24px, 2.6vw, 38px) 'Space Grotesk', sans-serif",
+                  letterSpacing: "-0.05em",
+                  color: "#00875A",
+                }}
+              >
+                +%33,3
+              </div>
+              <div
+                style={{
+                  font: "400 10px 'Space Mono', monospace",
+                  letterSpacing: ".2em",
+                  color: "rgba(14,17,22,.42)",
+                  marginTop: 6,
+                }}
+              >
+                12 AYLIK DEĞİŞİM
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          padding: "16px clamp(16px, 2vw, 28px)",
+          borderTop: "1px solid rgba(14,17,22,.14)",
+          font: "400 11px 'Space Mono', monospace",
+          lineHeight: 1.9,
+          color: "rgba(14,17,22,.6)",
+        }}
+      >
+        Kadıköy Fikirtepe&apos;de 128 m² daire için m² fiyatı 71.400 ₺; mahalle
+        medyanı 78.500 ₺, ilçe medyanı 96.400 ₺. Brüt kira getirisi %6,4,
+        amortisman süresi 15,6 yıl, medyana sapma −%9. Son 90 günde satılan 41
+        dairenin medyan pazarlık payı %4,1.{" "}
+        <span style={{ color: "#E23D28" }}>Risk notu:</span> bina 1999 öncesi
+        yönetmelikle yapılmış; güçlendirme maliyeti ilan fiyatına yansımamış.
+      </div>
     </div>
   );
 }

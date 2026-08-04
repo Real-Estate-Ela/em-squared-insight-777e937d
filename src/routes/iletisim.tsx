@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Send, Mail, User, MessageCircle, CheckCircle2 } from "lucide-react";
-import { Reveal } from "@/components/Reveal";
 
 export const Route = createFileRoute("/iletisim")({
   head: () => ({
@@ -10,215 +8,438 @@ export const Route = createFileRoute("/iletisim")({
       {
         name: "description",
         content:
-          "emlakmetric ekibine ulaşın: veri entegrasyonu, kurumsal erişim ve API talepleri için iletişim formu.",
+          "emlakmetric ekibine ulaşın: kurumsal paket, API entegrasyonu ve özel bölge raporu için iletişim formu.",
       },
       { property: "og:title", content: "İletişim — emlakmetric" },
       {
         property: "og:description",
-        content: "Veri entegrasyonu ve kurumsal erişim talepleri için bize yazın.",
+        content:
+          "Kurumsal paket, API entegrasyonu, toplu ilan analizi veya özel bölge raporu talebi.",
       },
     ],
   }),
-  component: Contact,
+  component: Iletisim,
 });
 
-const subjects = [
-  "Genel bilgi",
-  "Veri entegrasyonu",
-  "Kurumsal erişim",
-  "API talebi",
-  "Hata bildirimi",
-] as const;
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  font: "400 10px 'Space Mono', monospace",
+  letterSpacing: ".2em",
+  color: "rgba(14,17,22,.45)",
+  marginBottom: 8,
+};
 
-function Contact() {
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "transparent",
+  border: 0,
+  borderBottom: "1px solid rgba(14,17,22,.28)",
+  outline: "none",
+  padding: "11px 0",
+  font: "400 14px 'Space Mono', monospace",
+  color: "#0E1116",
+};
+
+const infoLabelStyle: React.CSSProperties = {
+  font: "400 10px 'Space Mono', monospace",
+  letterSpacing: ".22em",
+  color: "rgba(14,17,22,.45)",
+  marginBottom: 10,
+};
+
+const subjects = [
+  "KURUMSAL PAKET",
+  "API ENTEGRASYONU",
+  "BÖLGE RAPORU",
+  "DESTEK",
+];
+
+function Iletisim() {
+  const [selected, setSelected] = useState<string[]>([]);
   const [sent, setSent] = useState(false);
-  const [subject, setSubject] = useState(subjects[0]);
+
+  const toggle = (s: string) =>
+    setSelected((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+    );
 
   if (sent) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center px-5">
-        <Reveal>
-          <div className="text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-positive/10">
-              <CheckCircle2 className="h-8 w-8 text-positive" />
-            </div>
-            <h2 className="mt-6 text-2xl font-semibold">Mesajınız alındı</h2>
-            <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-              En kısa sürede size dönüş yapacağız. Genellikle 1 iş günü
-              içinde yanıtlıyoruz.
-            </p>
+      <section
+        data-bg="light"
+        style={{
+          background: "#FFFFFF",
+          padding:
+            "clamp(120px, 14vw, 190px) clamp(16px, 4vw, 44px) clamp(80px, 10vw, 160px)",
+          minHeight: "70vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              font: "700 clamp(38px, 7.5vw, 80px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.06em",
+              lineHeight: 0.88,
+              marginBottom: 24,
+            }}
+          >
+            Mesaj iletildi<span style={{ color: "#00875A" }}>.</span>
           </div>
-        </Reveal>
-      </div>
+          <p
+            style={{
+              margin: 0,
+              font: "400 13px 'Space Mono', monospace",
+              lineHeight: 1.85,
+              color: "rgba(14,17,22,.62)",
+              maxWidth: 420,
+            }}
+          >
+            Aynı iş günü içinde dönüyoruz. İlk görüşmeye örnek raporla
+            geliyoruz.
+          </p>
+        </div>
+      </section>
     );
   }
 
   return (
-    <div style={{ background: "linear-gradient(180deg, var(--page-contact) 0%, var(--background) 40%)" }}>
+    <div>
+      <style>{`
+        .em-contact-input:focus { border-bottom-color: #1B4DFF; }
+        .em-contact-chip { transition: background 160ms linear, color 160ms linear; }
+        .em-contact-chip:hover { background: rgba(14,17,22,.08); }
+        .em-contact-send { transition: background 160ms linear, border-color 160ms linear; }
+        .em-contact-send:hover { background: #0E1116; border-color: #0E1116; }
+        .em-contact-link { transition: color 160ms linear; text-decoration: none; }
+        .em-contact-link:hover { color: #1B4DFF !important; }
+      `}</style>
+
       <section
+        data-bg="light"
         style={{
-          background:
-            "linear-gradient(180deg, var(--surface-cool) 0%, transparent 100%)",
+          background: "#FFFFFF",
+          padding:
+            "clamp(120px, 14vw, 190px) clamp(16px, 4vw, 44px) clamp(50px, 6vw, 90px)",
         }}
       >
-        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
-          <Reveal>
-            <p className="label-mono">İletişim</p>
-            <h1 className="mt-5 max-w-2xl text-4xl leading-[1.08] md:text-5xl">
-              Bize{" "}
-              <span className="text-primary font-bold">
-                ulaşın
-              </span>
-            </h1>
-            <p className="mt-4 max-w-lg text-muted-foreground">
-              Sorularınız, önerileriniz veya iş birliği talepleriniz için
-              formu doldurun.
-            </p>
-          </Reveal>
-        </div>
-      </section>
+        <div style={{ maxWidth: 1560, margin: "0 auto" }}>
+          <div
+            style={{
+              font: "400 11px 'Space Mono', monospace",
+              letterSpacing: ".28em",
+              color: "#1B4DFF",
+              marginBottom: 20,
+            }}
+          >
+            İLETİŞİM · İSTANBUL
+          </div>
+          <h1
+            style={{
+              margin: "0 0 clamp(26px, 4vw, 48px)",
+              font: "700 clamp(38px, 7.5vw, 128px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.06em",
+              lineHeight: 0.88,
+              animation: "em-rise-in 1s both",
+            }}
+          >
+            Sayıyı
+            <br />
+            konuşalım<span style={{ color: "#E23D28" }}>.</span>
+          </h1>
 
-      <section>
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[1fr_320px] md:px-8 md:py-20">
-          <Reveal>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSent(true);
-              }}
-              className="rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
-            >
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="ad"
-                    className="mb-2 block text-sm font-medium"
-                  >
-                    Ad Soyad
-                  </label>
-                  <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
-                    <User className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <input
-                      id="ad"
-                      type="text"
-                      required
-                      placeholder="Adınız Soyadınız"
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label
-                    htmlFor="eposta"
-                    className="mb-2 block text-sm font-medium"
-                  >
-                    E-posta
-                  </label>
-                  <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
-                    <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <input
-                      id="eposta"
-                      type="email"
-                      required
-                      placeholder="ornek@email.com"
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <label className="mb-2 block text-sm font-medium">Konu</label>
-                <div className="flex flex-wrap gap-2">
-                  {subjects.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setSubject(s)}
-                      className={`rounded-lg px-3.5 py-2 text-sm transition-all duration-200 ${
-                        subject === s
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <label
-                  htmlFor="mesaj"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Mesaj
-                </label>
-                <div className="rounded-lg border border-border bg-background px-4 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
-                  <div className="flex gap-3">
-                    <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                    <textarea
-                      id="mesaj"
-                      rows={5}
-                      required
-                      placeholder="Mesajınızı buraya yazın..."
-                      className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 sm:w-auto"
+          <div
+            className="em-col-1"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.25fr 1fr",
+              gap: "clamp(30px, 5vw, 80px)",
+              borderTop: "1px solid rgba(14,17,22,.16)",
+              paddingTop: "clamp(30px, 4vw, 54px)",
+            }}
+          >
+            {/* Form */}
+            <div>
+              <p
+                style={{
+                  margin: "0 0 clamp(26px, 3vw, 40px)",
+                  maxWidth: 520,
+                  font: "400 13px 'Space Mono', monospace",
+                  lineHeight: 1.85,
+                  color: "rgba(14,17,22,.62)",
+                }}
               >
-                <Send className="h-4 w-4" />
-                Gönder
-              </button>
-            </form>
-          </Reveal>
+                Kurumsal paket, API entegrasyonu, toplu ilan analizi veya
+                özel bölge raporu için formu doldur. Aynı iş günü içinde
+                dönüyoruz; ilk görüşmeye örnek raporla geliyoruz.
+              </p>
 
-          <Reveal delay={100}>
-            <div className="space-y-6">
-              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-                <h3 className="text-sm font-semibold">E-posta</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  destek@emlakmetric.com
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-                <h3 className="text-sm font-semibold">Entegrasyon Durumu</h3>
-                <div className="mt-4 space-y-3">
-                  {[
-                    { name: "sahibinden.com", active: true },
-                    { name: "hepsiemlak.com", active: true },
-                    { name: "emlakjet.com", active: true },
-                    { name: "TKGM parsel verisi", active: false },
-                  ].map((s) => (
-                    <div
-                      key={s.name}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="text-sm text-muted-foreground">
-                        {s.name}
-                      </span>
-                      <span
-                        className={`status-pill text-xs ${
-                          s.active
-                            ? "bg-positive/10 text-positive"
-                            : "bg-risk/10 text-risk"
-                        }`}
-                      >
-                        <span className="status-dot" />
-                        {s.active ? "Aktif" : "Kesintili"}
-                      </span>
-                    </div>
-                  ))}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setSent(true);
+                }}
+              >
+                <div
+                  className="em-col-1"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "22px 26px",
+                    marginBottom: 22,
+                  }}
+                >
+                  <label style={{ display: "block" }}>
+                    <span style={labelStyle}>AD SOYAD</span>
+                    <input
+                      placeholder="Ad Soyad"
+                      required
+                      className="em-contact-input"
+                      style={inputStyle}
+                    />
+                  </label>
+                  <label style={{ display: "block" }}>
+                    <span style={labelStyle}>ŞİRKET</span>
+                    <input
+                      placeholder="Şirket / bağımsız"
+                      className="em-contact-input"
+                      style={inputStyle}
+                    />
+                  </label>
+                  <label style={{ display: "block" }}>
+                    <span style={labelStyle}>E-POSTA</span>
+                    <input
+                      type="email"
+                      placeholder="ad@sirket.com"
+                      required
+                      className="em-contact-input"
+                      style={inputStyle}
+                    />
+                  </label>
+                  <label style={{ display: "block" }}>
+                    <span style={labelStyle}>TELEFON</span>
+                    <input
+                      placeholder="+90"
+                      className="em-contact-input"
+                      style={inputStyle}
+                    />
+                  </label>
                 </div>
+
+                <div style={{ marginBottom: 22 }}>
+                  <span
+                    style={{
+                      display: "block",
+                      font: "400 10px 'Space Mono', monospace",
+                      letterSpacing: ".2em",
+                      color: "rgba(14,17,22,.45)",
+                      marginBottom: 10,
+                    }}
+                  >
+                    KONU
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {subjects.map((s) => {
+                      const active = selected.includes(s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => toggle(s)}
+                          className="em-contact-chip"
+                          style={{
+                            background: active ? "#0E1116" : "transparent",
+                            color: active ? "#fff" : "#0E1116",
+                            border: "1px solid rgba(14,17,22,.28)",
+                            padding: "9px 14px",
+                            font: "400 11px 'Space Mono', monospace",
+                            letterSpacing: ".12em",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <label style={{ display: "block", marginBottom: 26 }}>
+                  <span style={labelStyle}>MESAJ</span>
+                  <textarea
+                    rows={4}
+                    required
+                    placeholder="Kaç ilan analiz etmek istiyorsun, hangi bölgede?"
+                    style={{
+                      width: "100%",
+                      background: "transparent",
+                      border: "1px solid rgba(14,17,22,.28)",
+                      outline: "none",
+                      padding: 14,
+                      font: "400 13px 'Space Mono', monospace",
+                      lineHeight: 1.7,
+                      color: "#0E1116",
+                      resize: "vertical",
+                    }}
+                  />
+                </label>
+
+                <div
+                  className="em-stack"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 18,
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="em-contact-send"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      background: "#1B4DFF",
+                      color: "#fff",
+                      border: "1px solid #1B4DFF",
+                      padding: "19px 30px",
+                      font: "700 12px 'Space Mono', monospace",
+                      letterSpacing: ".24em",
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span>GÖNDER</span>
+                    <span
+                      style={{
+                        display: "inline-block",
+                        animation:
+                          "em-arrow-loop 1.6s ease-in-out infinite",
+                      }}
+                    >
+                      →
+                    </span>
+                  </button>
+                  <span
+                    style={{
+                      font: "400 10px 'Space Mono', monospace",
+                      letterSpacing: ".14em",
+                      color: "rgba(14,17,22,.45)",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    KVKK kapsamında yalnızca bu talebi yanıtlamak için
+                    kullanılır.
+                  </span>
+                </div>
+              </form>
+            </div>
+
+            {/* Info panel */}
+            <div>
+              <div style={{ border: "1px solid rgba(14,17,22,.16)" }}>
+                <div
+                  style={{
+                    padding: 22,
+                    borderBottom: "1px solid rgba(14,17,22,.14)",
+                  }}
+                >
+                  <div style={infoLabelStyle}>E-POSTA</div>
+                  <a
+                    href="mailto:merhaba@emlakmetric.com"
+                    className="em-contact-link"
+                    style={{
+                      font: "500 clamp(16px, 1.6vw, 21px) 'Space Grotesk', sans-serif",
+                      letterSpacing: "-0.04em",
+                      color: "#1B4DFF",
+                    }}
+                  >
+                    merhaba@emlakmetric.com
+                  </a>
+                </div>
+                <div
+                  style={{
+                    padding: 22,
+                    borderBottom: "1px solid rgba(14,17,22,.14)",
+                  }}
+                >
+                  <div style={infoLabelStyle}>TELEFON</div>
+                  <a
+                    href="tel:+902125550142"
+                    className="em-contact-link"
+                    style={{
+                      font: "500 clamp(16px, 1.6vw, 21px) 'Space Grotesk', sans-serif",
+                      letterSpacing: "-0.04em",
+                      color: "#0E1116",
+                    }}
+                  >
+                    +90 212 555 01 42
+                  </a>
+                </div>
+                <div
+                  style={{
+                    padding: 22,
+                    borderBottom: "1px solid rgba(14,17,22,.14)",
+                  }}
+                >
+                  <div style={infoLabelStyle}>OFİS</div>
+                  <p
+                    style={{
+                      margin: 0,
+                      font: "400 12px 'Space Mono', monospace",
+                      lineHeight: 1.8,
+                      color: "rgba(14,17,22,.7)",
+                    }}
+                  >
+                    Kolektif House Levent
+                    <br />
+                    Esentepe, Şişli / İstanbul
+                  </p>
+                </div>
+                <div style={{ padding: 22 }}>
+                  <div style={infoLabelStyle}>ÇALIŞMA SAATLERİ</div>
+                  <p
+                    style={{
+                      margin: 0,
+                      font: "400 12px 'Space Mono', monospace",
+                      lineHeight: 1.8,
+                      color: "rgba(14,17,22,.7)",
+                    }}
+                  >
+                    Hafta içi 09:00 – 18:30
+                    <br />
+                    <span style={{ color: "#E23D28" }}>
+                      Hafta sonu yalnızca e-posta
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div
+                style={{
+                  position: "relative",
+                  aspectRatio: "4 / 3",
+                  border: "1px solid rgba(14,17,22,.16)",
+                  borderTop: 0,
+                  background: "rgba(14,17,22,.04)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span
+                  style={{
+                    font: "400 10px 'Space Mono', monospace",
+                    letterSpacing: ".18em",
+                    color: "rgba(14,17,22,.3)",
+                  }}
+                >
+                  HARİTA / OFİS
+                </span>
               </div>
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
     </div>
