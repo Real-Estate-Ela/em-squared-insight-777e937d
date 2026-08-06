@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
     meta: [
       {
         title:
-          "emlakmetric | sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
+          "emlakmetric | ilan analizi, m² fiyat karşılaştırma ve kira getirisi hesaplama",
       },
       {
         name: "description",
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:title",
         content:
-          "emlakmetric | sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
+          "emlakmetric | ilan analizi, m² fiyat karşılaştırma ve kira getirisi hesaplama",
       },
       {
         property: "og:description",
@@ -338,7 +338,7 @@ function Home() {
                   "em-line-in 1.15s .15s cubic-bezier(.2,.8,.2,1) both",
               }}
             >
-              MAHALLE KONUŞUR,
+              BİR İLAN. BİR BÖLGE.
             </span>
             <span
               style={{
@@ -348,7 +348,7 @@ function Home() {
                   "em-line-in 1.15s .38s cubic-bezier(.2,.8,.2,1) both",
               }}
             >
-              RAKAM KARAR VERİR
+              BİR KARŞILAŞTIRMA
               <span style={{ color: "#E23D28" }}>.</span>
             </span>
           </h1>
@@ -522,7 +522,7 @@ function Home() {
           labelColor="rgba(255,255,255,.8)"
           scanline
         >
-          <StickyTitle words={["312", "komşu", "ilan,", "tek", "medyan"]} blueFrom={3} blueTo={4} darkBlue redDot />
+          <StickyTitle words={["Aynı", "mahalle,", "yüzlerce", "emsal", "ilan"]} blueFrom={2} blueTo={4} darkBlue redDot />
           <p
             style={{
               margin: 0,
@@ -532,9 +532,9 @@ function Home() {
               color: "rgba(255,255,255,.85)",
             }}
           >
-            Kopya ilan ayıklanır, aykırı fiyat filtrelenir. Kalan set mahallenin
-            gerçek m² medyanını verir. İlanın o çizginin ne kadar altında
-            olduğunu tek satırda görürsün.
+            Seçtiğin ilanın mahallesindeki tüm satılık ve kiralık ilanlar
+            toplanır. Kopya ilanlar ayıklanır, uç fiyatlar filtrelenir.
+            Geriye kalan set m² başına gerçek medyan fiyatı verir.
           </p>
         </StickyLayer>
 
