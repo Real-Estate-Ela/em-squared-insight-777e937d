@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir. m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi 160 ms içinde.",
+          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir. m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi.",
       },
       {
         property: "og:title",
@@ -41,49 +41,6 @@ export const Route = createFileRoute("/")({
         name: "keywords",
         content:
           "sahibinden ilan analizi, m2 fiyat sorgulama, konuma göre ev değeri, kira getirisi hesaplama, amortisman süresi, gayrimenkul analiz, bölge m2 raporu, arsa emsal analizi, emlak paketleri",
-      },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: [
-            {
-              "@type": "Question",
-              name: "Emlakmetric gayrimenkul değerlemesi yapıyor mu?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Hayır. Emlakmetric değerleme yapmaz; sahibinden.com üzerindeki canlı ilan verisini ve konum verisini okur, m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi gibi ölçülebilir sayılara çevirir.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "İlan linki olmadan konuma göre sorgulama yapabilir miyim?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Evet. Adres, mahalle veya harita konumu girerek o noktadaki m² fiyat aralığını, kira getirisi bandını ve son 12 aylık değişimi görebilirsiniz.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Ücretsiz paket neleri kapsıyor?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Başlangıç paketi ücretsizdir: ayda 5 ilan analizi, mahalle medyanı karşılaştırması ve 12 aylık m² trendi içerir.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Kira getirisi ve amortisman süresi nasıl hesaplanıyor?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Aynı mahalledeki aktif kiralık ilanların m² medyanı, ilanın net alanıyla çarpılır; yıllık kira toplam fiyata bölünerek brüt kira getirisi, tersi alınarak amortisman süresi bulunur.",
-              },
-            },
-          ],
-        }),
       },
     ],
   }),
@@ -154,8 +111,6 @@ function Home() {
 
   const analizRef = useRef<HTMLElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
-  const readRef = useRef<HTMLSpanElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const rafRef = useRef<number>(0);
   const autoDoneRef = useRef(false);
@@ -322,24 +277,6 @@ function Home() {
     }
   }, []);
 
-  const onHeroMove = useCallback((e: React.MouseEvent) => {
-    const ring = ringRef.current;
-    const read = readRef.current;
-    if (!ring) return;
-    const target = (e.currentTarget as HTMLElement).querySelector("canvas");
-    if (!target) return;
-    const r = target.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-    ring.style.transform = `translate(${x}px,${y}px)`;
-    ring.style.opacity = "1";
-    if (read)
-      read.textContent = `E${String(((x / (r.width / 20)) | 0) + 1).padStart(2, "0")} · K${String(((y / (r.height / 12)) | 0) + 1).padStart(2, "0")} · m²`;
-  }, []);
-
-  const onHeroLeave = useCallback(() => {
-    if (ringRef.current) ringRef.current.style.opacity = "0";
-  }, []);
 
   const gaugeOffset = (239 * (1 - skor / 100)).toFixed(1);
   const sources = SRC_NAMES.map((name, i) => {
@@ -365,8 +302,6 @@ function Home() {
       <section
         id="top"
         data-bg="light"
-        onMouseMove={onHeroMove}
-        onMouseLeave={onHeroLeave}
         style={{
           position: "relative",
           minHeight: "100vh",
@@ -379,60 +314,6 @@ function Home() {
         }}
       >
         <HeroCity />
-        <div
-          ref={ringRef}
-          className="em-hide"
-          style={{
-            position: "absolute",
-            zIndex: 20,
-            top: 0,
-            left: 0,
-            width: 108,
-            height: 108,
-            margin: "-54px 0 0 -54px",
-            border: "1px solid rgba(27,77,255,.7)",
-            pointerEvents: "none",
-            opacity: 0,
-            transition: "opacity 220ms linear",
-          }}
-        >
-          <span
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: -16,
-              bottom: -16,
-              width: 1,
-              background: "rgba(226,61,40,.45)",
-            }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: -16,
-              right: -16,
-              height: 1,
-              background: "rgba(226,61,40,.45)",
-            }}
-          />
-          <span
-            ref={readRef}
-            style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              background: "#1B4DFF",
-              color: "#fff",
-              font: "400 9px 'Space Mono', monospace",
-              letterSpacing: ".12em",
-              padding: "3px 6px",
-              whiteSpace: "nowrap",
-            }}
-          >
-            E00 · K00
-          </span>
-        </div>
         <div
           style={{
             position: "relative",
@@ -571,18 +452,6 @@ function Home() {
               >
                 ▌
               </span>
-            </span>
-            <span
-              className="em-hide"
-              style={{
-                marginLeft: "auto",
-                font: "400 10px 'Space Mono', monospace",
-                letterSpacing: ".18em",
-                color: "rgba(14,17,22,.4)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              160 MS · 4 KAYNAK · ÜCRETSİZ
             </span>
           </div>
         </div>
@@ -1680,7 +1549,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ═══ SEO + SSS ═══ */}
+      {/* ═══ SEO ═══ */}
       <section
         data-bg="light"
         style={{
@@ -1690,31 +1559,34 @@ function Home() {
         }}
       >
         <div
-          className="em-col-1"
           style={{
             maxWidth: 1560,
             margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-            gap: "clamp(26px, 5vw, 80px)",
             borderTop: "1px solid rgba(14,17,22,.16)",
             paddingTop: "clamp(36px, 5vw, 68px)",
           }}
         >
-          <div>
-            <h2
-              style={{
-                margin: "0 0 20px",
-                font: "500 clamp(23px, 2.5vw, 38px) 'Space Grotesk', sans-serif",
-                letterSpacing: "-0.05em",
-                lineHeight: 1.06,
-              }}
-            >
-              Sahibinden ilan analizi ve konuma göre m² fiyat sorgulama
-            </h2>
+          <h2
+            style={{
+              margin: "0 0 20px",
+              font: "500 clamp(23px, 2.5vw, 38px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.05em",
+              lineHeight: 1.06,
+            }}
+          >
+            Sahibinden ilan analizi ve konuma göre m² fiyat sorgulama
+          </h2>
+          <div
+            className="em-col-1"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+              gap: "clamp(26px, 5vw, 80px)",
+            }}
+          >
             <p
               style={{
-                margin: "0 0 16px",
+                margin: 0,
                 font: "400 13px 'Space Mono', monospace",
                 lineHeight: 1.9,
                 color: "rgba(14,17,22,.65)",
@@ -1728,15 +1600,6 @@ function Home() {
               satılık ve kiralık ilan verisini okur, aynı mahalledeki emsal
               ilanlarla karşılaştırır ve sonucu tek birime —{" "}
               <strong style={{ fontWeight: 700 }}>m² fiyatı</strong> — indirir.
-            </p>
-            <p
-              style={{
-                margin: "0 0 16px",
-                font: "400 13px 'Space Mono', monospace",
-                lineHeight: 1.9,
-                color: "rgba(14,17,22,.65)",
-              }}
-            >
               İlan linkin yoksa{" "}
               <strong style={{ fontWeight: 700 }}>
                 konuma göre ev değeri sorgulama
@@ -1763,85 +1626,6 @@ function Home() {
               geldiğini söylemeden ekranda durmaz; her sayının altında kaç ilan
               okunduğu ve hangi tarihte tarandığı yazar.
             </p>
-          </div>
-          <div id="sss">
-            <div
-              style={{
-                font: "400 11px 'Space Mono', monospace",
-                letterSpacing: ".28em",
-                color: "#1B4DFF",
-                marginBottom: 22,
-              }}
-            >
-              06 · SIKÇA SORULANLAR
-            </div>
-            {[
-              {
-                q: "Emlakmetric değerleme yapıyor mu?",
-                a: "Hayır. Ekspertiz veya resmî değerleme raporu üretmiyoruz. İlan ve konum verisini okuyup metrekare bazında karşılaştırıyoruz; çıktı bir ölçüm raporudur.",
-              },
-              {
-                q: "İlan linki olmadan sorgulayabilir miyim?",
-                a: "Evet. KONUM sekmesine adres, mahalle veya harita noktası gir; o bölgedeki m² aralığı, kira getirisi bandı ve 12 aylık değişim gelir.",
-              },
-              {
-                q: "Ücretsiz paket neleri kapsıyor?",
-                a: "Başlangıç paketi ücretsizdir: ayda 5 ilan analizi, mahalle medyanı karşılaştırması ve 12 aylık m² trendi. Kart bilgisi istemiyoruz.",
-              },
-              {
-                q: "Veriler ne sıklıkla güncelleniyor?",
-                a: "Kaynaklar gün içinde taranır. Her raporun üstünde okunan ilan sayısı ve tarama zamanı yazar.",
-              },
-            ].map((faq, i) => (
-              <details
-                key={i}
-                style={{
-                  borderTop: "1px solid rgba(14,17,22,.16)",
-                  borderBottom:
-                    i === 3 ? "1px solid rgba(14,17,22,.16)" : undefined,
-                  padding: "16px 0",
-                }}
-              >
-                <summary
-                  style={{
-                    cursor: "pointer",
-                    font: "500 clamp(15px, 1.5vw, 19px) 'Space Grotesk', sans-serif",
-                    letterSpacing: "-0.03em",
-                    listStyle: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 14,
-                  }}
-                >
-                  <span
-                    style={{
-                      flex: "none",
-                      width: 22,
-                      height: 22,
-                      border: "1px solid rgba(14,17,22,.3)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      font: "400 12px 'Space Mono', monospace",
-                      color: "#1B4DFF",
-                    }}
-                  >
-                    +
-                  </span>
-                  <span>{faq.q}</span>
-                </summary>
-                <p
-                  style={{
-                    margin: "12px 0 0",
-                    font: "400 12px 'Space Mono', monospace",
-                    lineHeight: 1.9,
-                    color: "rgba(14,17,22,.6)",
-                  }}
-                >
-                  {faq.a}
-                </p>
-              </details>
-            ))}
           </div>
         </div>
       </section>
