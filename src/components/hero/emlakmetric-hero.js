@@ -423,7 +423,7 @@ export function mount(canvas, opts) {
       for (const [p0, p1] of [[[-ez2, -ey2], [ez2, -ey2]], [[ez2, -ey2], [ez2, ey2]], [[ez2, ey2], [-ez2, ey2]], [[-ez2, ey2], [-ez2, -ey2]]])
         seg(k, [x + p0[0], y + p0[1], z0], [x + p1[0], y + p1[1], z0], 'rgba(' + INK + ',' + (0.3 * alpha).toFixed(3) + ')', 0.7);
     };
-    /* --- YAKIN PLAN: cephede kapı, ROI plakası ve dört metrik penceresi --- */
+    /* --- YAKIN PLAN: cephede kapı, metrikler ve CTA (hepsi ön yüzde) --- */
     const closeUp = (k, q, tc, rp) => {
       const base = q.mass[0];
       if (!base) return;
@@ -434,7 +434,6 @@ export function mount(canvas, opts) {
       const order = WALLS.map(w => { const v = nrm(k, w.n[0], w.n[1]); return { w, u: v[0], v: v[1] }; })
         .filter(o => o.v > 0).sort((p, r) => r.v - p.v);
       const frontW = order[0] && order[0].w;
-      const sideW = order[1] && order[1].w;
       if (frontW) {
         const a0 = [x + frontW.a[0] * ax, y + frontW.a[1] * ay];
         const b0 = [x + frontW.b[0] * ax, y + frontW.b[1] * ay];
@@ -443,8 +442,8 @@ export function mount(canvas, opts) {
         const wallH = h * s;
         ctx.save();
         ctx.beginPath(); ctx.rect(0, -wallH, span, wallH); ctx.clip();
-        const dw = Math.min(span * 0.18, 28), dh = Math.min(wallH * 0.32, 48);
-        const dx0 = span * 0.1, dOpen = cl(rp / 0.4, 0, 1);
+        const dw = Math.min(span * 0.14, 22), dh = Math.min(wallH * 0.22, 36);
+        const dx0 = span * 0.06, dOpen = cl(rp / 0.4, 0, 1);
         ctx.fillStyle = '#0E1116';
         ctx.fillRect(dx0, -dh, dw, dh);
         ctx.fillStyle = 'rgba(255,255,255,' + (0.22 * dOpen).toFixed(2) + ')';
@@ -453,65 +452,56 @@ export function mount(canvas, opts) {
         ctx.fillRect(dx0 + dw * (1 - dOpen * 0.72), -dh, dw * dOpen * 0.72, dh);
         ctx.fillStyle = 'rgba(14,17,22,.1)';
         ctx.fillRect(dx0 - 3, 0, dw + 6, 3);
-        const pl = cl((rp - 0.06) / 0.3, 0, 1);
-        if (pl > 0.02) {
-          ctx.globalAlpha = pl;
-          const px0 = dx0 + dw + 10, maxW = Math.max(30, span - (dx0 + dw + 18));
-          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-          let fs = Math.min(20, dh * 0.5);
-          ctx.font = gro(fs);
-          if (ctx.measureText(lot.karar).width > maxW) { fs = Math.max(9, fs * (maxW / ctx.measureText(lot.karar).width)); ctx.font = gro(fs); }
-          ctx.fillStyle = '#0E1116';
-          ctx.fillText(lot.karar, px0, -dh * 0.5);
-          ctx.fillStyle = 'rgba(' + lot.bar + ',1)';
-          ctx.fillRect(px0, -dh * 0.42, Math.min(maxW, ctx.measureText(lot.karar).width) * pl, 2.4);
-          ctx.font = mono(Math.max(7, fs * 0.42));
-          ctx.fillStyle = 'rgba(14,17,22,.72)';
-          ctx.fillText('ROI %' + tr(lot.roi), px0, -dh * 0.2);
-          ctx.fillStyle = 'rgba(14,17,22,.45)';
-          ctx.fillText(lot.not, px0, -dh * 0.02);
-          ctx.globalAlpha = 1;
-        }
-        ctx.restore();
-        reset();
-      }
-      if (sideW) {
-        const a0 = [x + sideW.a[0] * ax, y + sideW.a[1] * ay];
-        const b0 = [x + sideW.b[0] * ax, y + sideW.b[1] * ay];
-        const span = Math.hypot(b0[0] - a0[0], b0[1] - a0[1]) * s;
-        faceT(k, b0[0] - a0[0], b0[1] - a0[1], [a0[0], a0[1], 0]);
         const wins = [
           ['%' + tr(lot.roi * cl((rp - 0.08) / 0.5, 0, 1)), 'GETİRİ', '0,135,90'],
           [tr(lot.am * cl((rp - 0.16) / 0.5, 0, 1)) + 'Y', 'AMORTİSMAN', INK],
           [(lot.sap < 0 ? '−' : '+') + '%' + tr(Math.abs(lot.sap) * cl((rp - 0.24) / 0.5, 0, 1)), 'SAPMA', lot.sap < 0 ? '0,135,90' : RED],
           [Math.round(lot.lik * cl((rp - 0.32) / 0.5, 0, 1)) + '', 'LİKİDİTE', BLUE]
         ];
-        const wallH2 = h * s;
-        ctx.save();
-        ctx.beginPath(); ctx.rect(0, -wallH2, span, wallH2); ctx.clip();
-        const gap = Math.max(3, Math.min(6, span * 0.03));
-        const cwv = (span - gap * 3) / 2;
-        const chv = Math.min(54, (wallH2 - gap * 3) / 2);
+        const gap = Math.max(3, Math.min(5, span * 0.025));
+        const metricX0 = dx0 + dw + gap * 2;
+        const metricW = Math.max(40, span - metricX0 - gap);
+        const cwv = (metricW - gap) / 2;
+        const chv = Math.min(42, (wallH * 0.65 - gap * 3) / 2);
+        const metricY0 = -wallH + gap * 2;
         for (let i = 0; i < 4; i++) {
           const al = cl((rp - (0.04 + i * 0.09)) / 0.2, 0, 1);
-          if (al < 0.02 || cwv < 24 || chv < 16) continue;
-          const col = i % 2, row = i < 2 ? 1 : 0;
-          const wx = gap + col * (cwv + gap), wz = -(gap + row * (chv + gap)) - chv;
+          if (al < 0.02 || cwv < 20 || chv < 12) continue;
+          const col = i % 2, row = i < 2 ? 0 : 1;
+          const wx = metricX0 + col * (cwv + gap), wz = metricY0 + row * (chv + gap);
           ctx.globalAlpha = al;
-          ctx.fillStyle = '#FFFFFF'; ctx.fillRect(wx, wz, cwv, chv);
-          ctx.strokeStyle = 'rgba(14,17,22,.5)'; ctx.lineWidth = 1;
+          ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillRect(wx, wz, cwv, chv);
+          ctx.strokeStyle = 'rgba(14,17,22,.4)'; ctx.lineWidth = 0.8;
           ctx.strokeRect(wx + 0.5, wz + 0.5, cwv - 1, chv - 1);
-          ctx.strokeStyle = 'rgba(14,17,22,.14)';
+          ctx.strokeStyle = 'rgba(14,17,22,.1)';
           ctx.beginPath(); ctx.moveTo(wx, wz + chv * 0.58); ctx.lineTo(wx + cwv, wz + chv * 0.58); ctx.stroke();
           ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-          let fs = Math.min(18, chv * 0.4);
+          let fs = Math.min(15, chv * 0.38);
           ctx.font = gro(fs);
-          if (ctx.measureText(wins[i][0]).width > cwv - 10) { fs = Math.max(8, fs * ((cwv - 10) / ctx.measureText(wins[i][0]).width)); ctx.font = gro(fs); }
+          if (ctx.measureText(wins[i][0]).width > cwv - 8) { fs = Math.max(7, fs * ((cwv - 8) / ctx.measureText(wins[i][0]).width)); ctx.font = gro(fs); }
           ctx.fillStyle = 'rgba(' + wins[i][2] + ',1)';
-          ctx.fillText(wins[i][0], wx + 5, wz + chv * 0.46);
-          ctx.font = mono(Math.max(6, chv * 0.15));
+          ctx.fillText(wins[i][0], wx + 4, wz + chv * 0.44);
+          ctx.font = mono(Math.max(5, chv * 0.14));
           ctx.fillStyle = 'rgba(14,17,22,.5)';
-          ctx.fillText(wins[i][1], wx + 5, wz + chv * 0.86);
+          ctx.fillText(wins[i][1], wx + 4, wz + chv * 0.82);
+          ctx.globalAlpha = 1;
+        }
+        const ctaAl = cl((rp - 0.3) / 0.3, 0, 1);
+        if (ctaAl > 0.02 && span > 60) {
+          ctx.globalAlpha = ctaAl;
+          const ctaH = Math.min(22, wallH * 0.14);
+          const ctaY = -ctaH - gap;
+          const ctaX = gap;
+          const ctaW = span - gap * 2;
+          ctx.fillStyle = 'rgba(27,77,255,.94)';
+          ctx.fillRect(ctaX, ctaY, ctaW, ctaH);
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          let ctaFs = Math.min(8.5, ctaH * 0.48);
+          ctx.font = mono(ctaFs);
+          const ctaTxt = 'İLAN LİNKİNİ YAPIŞTIR → ANALİZE BAŞLA';
+          if (ctx.measureText(ctaTxt).width > ctaW - 12) { ctaFs = Math.max(5, ctaFs * ((ctaW - 12) / ctx.measureText(ctaTxt).width)); ctx.font = mono(ctaFs); }
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(ctaTxt, ctaX + ctaW / 2, ctaY + ctaH / 2 + 0.5);
           ctx.globalAlpha = 1;
         }
         ctx.restore();
@@ -782,7 +772,7 @@ export function mount(canvas, opts) {
       try { ctx.letterSpacing = '2.4px'; } catch (e) {}
       ctx.font = mono(10);
       ctx.fillStyle = 'rgba(' + BLUE + ',.9)';
-      ctx.fillText(zoomTo > 0.5 ? 'TIKLA → HARİTAYA DÖN' : hov ? 'PARSEL ' + hov.id + ' · TIKLA VE YAKINDAN BAK' : 'PARSEL SEÇ · KAPIDA ROI HESAPLANSIN', capX, W < 900 ? 16 : 30);
+      ctx.fillText(zoomTo > 0.5 ? 'TIKLA → HARİTAYA DÖN' : hov ? 'PARSEL ' + hov.id + ' · TIKLA VE ANALİZ ET' : 'PARSEL SEÇ · ANALİZ SONUCUNU GÖR', capX, W < 900 ? 16 : 30);
       ctx.textAlign = 'right';
       ctx.fillStyle = 'rgba(' + INK + ',.34)';
       ctx.fillText('SÜRÜKLE → 360°', W - 16, 16);
