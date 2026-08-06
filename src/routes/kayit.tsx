@@ -38,6 +38,7 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,8 +64,13 @@ function SignupPage() {
       return;
     }
 
+    if (!termsAccepted) {
+      setError("Kullanım koşullarını ve gizlilik politikasını kabul etmeniz gerekiyor.");
+      return;
+    }
+
     setLoading(true);
-    const { error: err } = await signUpWithEmail(email, password, fullName);
+    const { error: err } = await signUpWithEmail(email, password, fullName, termsAccepted);
     if (err) {
       if (err.message.includes("already registered")) {
         setError("Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.");
@@ -234,6 +240,36 @@ function SignupPage() {
               )}
             </div>
 
+            <label className="flex items-start gap-3 cursor-pointer" style={{ minHeight: 44 }}>
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 accent-primary"
+                style={{ minWidth: 16, minHeight: 16 }}
+              />
+              <span className="text-xs leading-relaxed text-muted-foreground">
+                <a
+                  href="/kullanim-kosullari"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary hover:text-primary/80 underline"
+                >
+                  Kullanım Koşulları
+                </a>
+                {" ve "}
+                <a
+                  href="/gizlilik-politikasi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary hover:text-primary/80 underline"
+                >
+                  Gizlilik Politikası
+                </a>
+                &apos;nı okudum, kabul ediyorum.
+              </span>
+            </label>
+
             {error && (
               <div className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -243,7 +279,7 @@ function SignupPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !termsAccepted}
               className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 disabled:opacity-60 disabled:pointer-events-none"
             >
               {loading ? "Kayıt oluşturuluyor..." : "Kayıt Ol"}

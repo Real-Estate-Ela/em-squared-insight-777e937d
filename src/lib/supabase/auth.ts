@@ -2,13 +2,19 @@ import type { User } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "./client";
 import type { UserProfile } from "./types";
 
-export async function signUpWithEmail(email: string, password: string, fullName: string) {
+export async function signUpWithEmail(email: string, password: string, fullName: string, termsAccepted: boolean) {
+  if (!termsAccepted) {
+    return { data: null, error: { message: "Kullanım koşullarını kabul etmeniz gerekiyor." } };
+  }
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { full_name: fullName },
+      data: {
+        full_name: fullName,
+        terms_accepted_at: new Date().toISOString(),
+      },
     },
   });
   return { data, error };
