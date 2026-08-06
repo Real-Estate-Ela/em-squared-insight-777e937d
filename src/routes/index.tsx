@@ -1863,27 +1863,29 @@ function StickyTitle({
         const isLast = i === words.length - 1;
         const blueColor = darkBlue ? "#0E1116" : "#1B4DFF";
         return (
-          <span
-            key={i}
-            style={{
-              display: "inline-block",
-              color: isBlue ? blueColor : undefined,
-              animationName: "em-word-in",
-              animationDuration: ".9s",
-              animationTimingFunction: "cubic-bezier(.2,.8,.2,1)",
-              animationFillMode: "both",
-              animationTimeline: "view()",
-              animationRange: `entry ${4 + i * 5}% cover ${26 + i * 5}%`,
-            }}
-          >
-            {isLast && redDot ? (
-              <>
-                {w.replace(/\.$/, "")}
-                <span style={{ color: "#E23D28" }}>.</span>
-              </>
-            ) : (
-              w
-            )}
+          <span key={i}>
+            <span
+              style={{
+                display: "inline-block",
+                color: isBlue ? blueColor : undefined,
+                animationName: "em-word-in",
+                animationDuration: ".9s",
+                animationTimingFunction: "cubic-bezier(.2,.8,.2,1)",
+                animationFillMode: "both",
+                animationTimeline: "view()",
+                animationRange: `entry ${4 + i * 5}% cover ${26 + i * 5}%`,
+              }}
+            >
+              {isLast && redDot ? (
+                <>
+                  {w.replace(/\.$/, "")}
+                  <span style={{ color: "#E23D28" }}>.</span>
+                </>
+              ) : (
+                w
+              )}
+            </span>
+            {!isLast && " "}
           </span>
         );
       })}

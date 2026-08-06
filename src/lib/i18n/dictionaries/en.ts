@@ -29,7 +29,7 @@ export const en: Dictionary = {
     monthlyAnalysisCount: "monthly analyses",
     monthlyReportCount: "monthly report downloads",
     heroTitle: "No per-analysis\ncharges",
-    heroSubtitle: "Three plans based on monthly analysis quota. Two months free on annual billing.",
+    heroSubtitle: "Three plans based on monthly analysis quota. Cancel anytime, no card stored.",
     scaleLabel: "ANALYSIS VOLUME",
     scaleAnalyses: "analyses / mo",
     unlimited: "unlimited",
@@ -41,7 +41,7 @@ export const en: Dictionary = {
     requestQuote: "Request Quote",
     comparisonTitle: "Feature by feature",
     feature: "Feature",
-    annualNote: "Two months free on annual billing",
+    annualNote: "Cancel anytime",
     cancelNote: "Cancel anytime · no card stored",
     planDescriptions: {
       free: "Explore the platform. Start making data-driven real estate investment decisions today.",
@@ -64,7 +64,7 @@ export const en: Dictionary = {
     faq: {
       title: "About plans",
       cancelQ: "Can I cancel anytime?",
-      cancelA: "Yes. Monthly plans keep access until the end of the billing period with no further charges. Annual plans use the remaining time.",
+      cancelA: "Yes. Access continues until the end of the billing period with no further charges.",
       quotaQ: "When does my quota reset?",
       quotaA: "Analysis and report quotas reset at the start of each billing period. Unused quota does not roll over.",
       changeQ: "Can I change plans?",

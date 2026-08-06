@@ -27,7 +27,7 @@ export const tr = {
     monthlyAnalysisCount: "adet aylık analiz",
     monthlyReportCount: "adet aylık rapor indirme",
     heroTitle: "Analiz başına\nödeme yok",
-    heroSubtitle: "Aylık analiz hakkına göre üç paket. Yıllık ödemede iki ay ücretsiz.",
+    heroSubtitle: "Aylık analiz hakkına göre üç paket. İstediğin zaman iptal et, kart bilgisi saklanmaz.",
     scaleLabel: "ANALİZ HACMİ",
     scaleAnalyses: "analiz / ay",
     unlimited: "sınırsız",
@@ -39,7 +39,7 @@ export const tr = {
     requestQuote: "Teklif İste",
     comparisonTitle: "Satır satır fark",
     feature: "Özellik",
-    annualNote: "Yıllık ödemede iki ay ücretsiz",
+    annualNote: "İstediğin zaman iptal et",
     cancelNote: "İstediğin zaman iptal · kart saklanmaz",
     planDescriptions: {
       free: "Platformu keşfedin. Gayrimenkul yatırım kararlarınızı veriye dayandırmaya bugün başlayın.",
@@ -62,7 +62,7 @@ export const tr = {
     faq: {
       title: "Paketler hakkında",
       cancelQ: "İstediğim zaman iptal edebilir miyim?",
-      cancelA: "Evet. Aylık planlarda dönem sonuna kadar erişiminiz devam eder, sonraki ay faturalanmaz. Yıllık planlarda kalan süre kullanılır.",
+      cancelA: "Evet. Dönem sonuna kadar erişiminiz devam eder, sonraki ay faturalanmaz.",
       quotaQ: "Kota ne zaman yenilenir?",
       quotaA: "Her faturalandırma döneminin başında analiz ve rapor hakları sıfırdan başlar. Kullanılmayan hak sonraki aya devretmez.",
       changeQ: "Plan değiştirebilir miyim?",
