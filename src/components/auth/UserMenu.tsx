@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { LogOut, User, Crown, Shield } from "lucide-react";
+import { LogOut, User, Crown, Shield, LayoutDashboard } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { signOut } from "@/lib/supabase/auth";
 import { useI18n } from "@/lib/i18n";
@@ -154,6 +154,14 @@ export function UserMenu() {
           </div>
 
           <div className="py-1">
+            <Link
+              to="/panel"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
+            >
+              <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+              Panelim
+            </Link>
             <Link
               to="/profil"
               onClick={() => setOpen(false)}

@@ -348,7 +348,7 @@ function Iletisim() {
                 >
                   <div style={infoLabelStyle}>E-POSTA</div>
                   <a
-                    href="mailto:merhaba@emlakmetric.com"
+                    href="mailto:info@emlakmetric.com"
                     className="em-contact-link"
                     style={{
                       font: "500 clamp(16px, 1.6vw, 21px) 'Space Grotesk', sans-serif",
@@ -356,7 +356,7 @@ function Iletisim() {
                       color: "#1B4DFF",
                     }}
                   >
-                    merhaba@emlakmetric.com
+                    info@emlakmetric.com
                   </a>
                 </div>
                 <div
@@ -415,28 +415,6 @@ function Iletisim() {
                     </span>
                   </p>
                 </div>
-              </div>
-              <div
-                style={{
-                  position: "relative",
-                  aspectRatio: "4 / 3",
-                  border: "1px solid rgba(14,17,22,.16)",
-                  borderTop: 0,
-                  background: "rgba(14,17,22,.04)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  style={{
-                    font: "400 10px 'Space Mono', monospace",
-                    letterSpacing: ".18em",
-                    color: "rgba(14,17,22,.3)",
-                  }}
-                >
-                  HARİTA / OFİS
-                </span>
               </div>
             </div>
           </div>

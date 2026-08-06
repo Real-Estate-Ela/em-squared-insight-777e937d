@@ -10,9 +10,9 @@ import {
 import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import heroPreload from "../assets/hero/hero-city-1920.webp?url";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import { CookieConsent } from "../components/CookieConsent";
 import { AuthProvider } from "../components/auth/AuthProvider";
 import { I18nProvider } from "../lib/i18n";
 
@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir. m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi 160 ms içinde.",
+          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir. m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi.",
       },
       { name: "author", content: "emlakmetric" },
       { property: "og:title", content: "emlakmetric" },
@@ -92,7 +92,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:image", content: "/og-hero.jpg" },
       { property: "og:locale", content: "tr_TR" },
       { property: "og:locale:alternate", content: "en_US" },
     ],
@@ -108,13 +107,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         hrefLang: "en",
         href: "https://emlakmetric.com?lang=en",
       },
-      {
-        rel: "preload",
-        as: "image",
-        type: "image/webp",
-        href: heroPreload,
-      },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+{ rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
@@ -161,6 +154,7 @@ function RootComponent() {
               <Outlet />
             </main>
             <Footer />
+            <CookieConsent />
           </div>
         </I18nProvider>
       </AuthProvider>

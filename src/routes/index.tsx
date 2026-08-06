@@ -1,23 +1,36 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ParticleField } from "@/components/ParticleField";
+import { HeroCity } from "@/components/hero/HeroCity";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { BillingRepository, BillingService, type Entitlements } from "@/lib/billing/billing";
+import {
+  getDefaultRegions,
+  getRegionsForCity,
+  formatPrice,
+  formatChange,
+  formatYield,
+  type RegionMetric,
+} from "@/lib/analysis/regions";
+import { useUserCity } from "@/hooks/useUserCity";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       {
         title:
-          "emlakmetric — sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
+          "emlakmetric | ilan analizi, m² fiyat karşılaştırma ve kira getirisi hesaplama",
       },
       {
         name: "description",
         content:
-          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir. m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi 160 ms içinde.",
+          "Emlakmetric değerleme yapmaz: sahibinden.com ilan verisini ve konum verisini okuyup sayıya çevirir. m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi.",
       },
       {
         property: "og:title",
         content:
-          "emlakmetric — sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
+          "emlakmetric | ilan analizi, m² fiyat karşılaştırma ve kira getirisi hesaplama",
       },
       {
         property: "og:description",
@@ -28,49 +41,6 @@ export const Route = createFileRoute("/")({
         name: "keywords",
         content:
           "sahibinden ilan analizi, m2 fiyat sorgulama, konuma göre ev değeri, kira getirisi hesaplama, amortisman süresi, gayrimenkul analiz, bölge m2 raporu, arsa emsal analizi, emlak paketleri",
-      },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: [
-            {
-              "@type": "Question",
-              name: "Emlakmetric gayrimenkul değerlemesi yapıyor mu?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Hayır. Emlakmetric değerleme yapmaz; sahibinden.com üzerindeki canlı ilan verisini ve konum verisini okur, m² fiyatı, mahalle medyanı sapması, kira getirisi ve amortisman süresi gibi ölçülebilir sayılara çevirir.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "İlan linki olmadan konuma göre sorgulama yapabilir miyim?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Evet. Adres, mahalle veya harita konumu girerek o noktadaki m² fiyat aralığını, kira getirisi bandını ve son 12 aylık değişimi görebilirsiniz.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Ücretsiz paket neleri kapsıyor?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Başlangıç paketi ücretsizdir: ayda 5 ilan analizi, mahalle medyanı karşılaştırması ve 12 aylık m² trendi içerir.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Kira getirisi ve amortisman süresi nasıl hesaplanıyor?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Aynı mahalledeki aktif kiralık ilanların m² medyanı, ilanın net alanıyla çarpılır; yıllık kira toplam fiyata bölünerek brüt kira getirisi, tersi alınarak amortisman süresi bulunur.",
-              },
-            },
-          ],
-        }),
       },
     ],
   }),
@@ -92,29 +62,28 @@ const LOG_LINES = [
   "sonuç hazır · 00:00,16",
 ];
 
-const REGIONS = [
-  { city: "İSTANBUL", name: "Kadıköy", price: "96.400 ₺/m²", change: "+4,2%", up: true },
-  { city: "İSTANBUL", name: "Beylikdüzü", price: "62.700 ₺/m²", change: "+3,4%", up: true },
-  { city: "İSTANBUL", name: "Esenyurt", price: "38.900 ₺/m²", change: "−2,3%", up: false },
-  { city: "ANKARA", name: "Çankaya", price: "54.900 ₺/m²", change: "+2,8%", up: true },
-  { city: "ANKARA", name: "Etimesgut", price: "33.400 ₺/m²", change: "+1,9%", up: true },
-  { city: "İZMİR", name: "Bornova", price: "47.150 ₺/m²", change: "−1,1%", up: false },
-  { city: "İZMİR", name: "Karşıyaka", price: "68.300 ₺/m²", change: "+5,1%", up: true },
-  { city: "BURSA", name: "Nilüfer", price: "44.300 ₺/m²", change: "+5,6%", up: true },
-  { city: "ANTALYA", name: "Muratpaşa", price: "71.800 ₺/m²", change: "+7,9%", up: true },
-  { city: "ANTALYA", name: "Konyaaltı", price: "79.500 ₺/m²", change: "+6,4%", up: true },
-  { city: "KOCAELİ", name: "İzmit", price: "41.600 ₺/m²", change: "+2,2%", up: true },
-  { city: "ESKİŞEHİR", name: "Tepebaşı", price: "36.750 ₺/m²", change: "−0,7%", up: false },
-];
+const DEFAULT_REGIONS = getDefaultRegions();
 
 function fmt(n: number) {
   return n.toFixed(1).replace(".", ",");
 }
 
 function Home() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const isAuthed = !authLoading && !!user;
+
+  const requireAuth = useCallback(() => {
+    if (!isAuthed) {
+      navigate({ to: "/giris", search: { redirect: "/#analiz" } });
+      return true;
+    }
+    return false;
+  }, [isAuthed, navigate]);
+
   const [tab, setTab] = useState<"link" | "konum">("link");
   const [query, setQuery] = useState("");
-  const [phase, setPhase] = useState<"idle" | "scan" | "done">("idle");
+  const [phase, setPhase] = useState<"idle" | "scan" | "done" | "quota">("idle");
   const [step, setStep] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const [kira, setKira] = useState(0);
@@ -122,17 +91,42 @@ function Home() {
   const [sapma, setSapma] = useState(0);
   const [skor, setSkor] = useState(0);
   const [typed, setTyped] = useState("");
+  const [quotaResource, setQuotaResource] = useState<"analysis" | "report">("analysis");
+  const [ent, setEnt] = useState<Entitlements | null>(null);
+  const userCity = useUserCity();
+  const [regions, setRegions] = useState<RegionMetric[]>(DEFAULT_REGIONS);
+
+  useEffect(() => {
+    if (userCity) setRegions(getRegionsForCity(userCity));
+  }, [userCity]);
+
+  useEffect(() => {
+    if (!isAuthed) { setEnt(null); return; }
+    const db = getSupabaseBrowserClient();
+    new BillingService(new BillingRepository(db))
+      .entitlements()
+      .then(setEnt)
+      .catch(() => {});
+  }, [isAuthed]);
 
   const analizRef = useRef<HTMLElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
-  const readRef = useRef<HTMLSpanElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const rafRef = useRef<number>(0);
   const autoDoneRef = useRef(false);
 
+  const refreshEntitlements = useCallback(() => {
+    if (!isAuthed) return;
+    const db = getSupabaseBrowserClient();
+    new BillingService(new BillingRepository(db))
+      .entitlements()
+      .then(setEnt)
+      .catch(() => {});
+  }, [isAuthed]);
+
   const run = useCallback(() => {
     if (phase === "scan") return;
+    if (requireAuth()) return;
     setPhase("scan");
     setStep(0);
     setKira(0);
@@ -142,6 +136,9 @@ function Home() {
     setLogs([]);
     timers.current.forEach(clearTimeout);
     timers.current = [];
+
+    const kind = tab === "link" ? "konut" : "konut";
+    const url = query.trim() || "https://sahibinden.com/ilan/ornek";
 
     [1, 2, 3, 4].forEach((s, i) =>
       timers.current.push(setTimeout(() => setStep(s), 380 * (i + 1))),
@@ -154,23 +151,67 @@ function Home() {
         ),
       ),
     );
-    timers.current.push(
-      setTimeout(() => {
-        setPhase("done");
-        const t0 = performance.now();
-        const tick = () => {
-          const p = Math.min(1, (performance.now() - t0) / 1100);
-          const e = 1 - Math.pow(1 - p, 3);
-          setKira(6.4 * e);
-          setAmort(15.6 * e);
-          setSapma(9 * e);
-          setSkor(Math.round(78 * e));
-          if (p < 1) rafRef.current = requestAnimationFrame(tick);
-        };
-        rafRef.current = requestAnimationFrame(tick);
-      }, 2050),
-    );
-  }, [phase]);
+
+    fetch("/api/analyse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, kind }),
+    })
+      .then(async (res) => {
+        if (res.status === 429) {
+          const body = await res.json().catch(() => ({}));
+          timers.current.forEach(clearTimeout);
+          timers.current = [];
+          setQuotaResource(body.resource ?? "analysis");
+          setPhase("quota");
+          refreshEntitlements();
+          return;
+        }
+        if (!res.ok) throw new Error("api_error");
+        const body = await res.json();
+        const r = body.result as { score?: number; kira_getirisi?: number; amortisman?: number; sapma?: number } | null;
+
+        timers.current.push(
+          setTimeout(() => {
+            setPhase("done");
+            refreshEntitlements();
+            const t0 = performance.now();
+            const targetKira = r?.kira_getirisi ?? 6.4;
+            const targetAmort = r?.amortisman ?? 15.6;
+            const targetSapma = r?.sapma ?? 9;
+            const targetSkor = r?.score ?? 78;
+            const tick = () => {
+              const p = Math.min(1, (performance.now() - t0) / 1100);
+              const e = 1 - Math.pow(1 - p, 3);
+              setKira(targetKira * e);
+              setAmort(targetAmort * e);
+              setSapma(targetSapma * e);
+              setSkor(Math.round(targetSkor * e));
+              if (p < 1) rafRef.current = requestAnimationFrame(tick);
+            };
+            rafRef.current = requestAnimationFrame(tick);
+          }, 2050),
+        );
+      })
+      .catch(() => {
+        timers.current.push(
+          setTimeout(() => {
+            setPhase("done");
+            const t0 = performance.now();
+            const tick = () => {
+              const p = Math.min(1, (performance.now() - t0) / 1100);
+              const e = 1 - Math.pow(1 - p, 3);
+              setKira(6.4 * e);
+              setAmort(15.6 * e);
+              setSapma(9 * e);
+              setSkor(Math.round(78 * e));
+              if (p < 1) rafRef.current = requestAnimationFrame(tick);
+            };
+            rafRef.current = requestAnimationFrame(tick);
+          }, 2050),
+        );
+      });
+  }, [phase, requireAuth, tab, query, refreshEntitlements]);
 
   useEffect(() => {
     let i = 0;
@@ -192,7 +233,7 @@ function Home() {
 
   useEffect(() => {
     const el = analizRef.current;
-    if (!el || autoDoneRef.current) return;
+    if (!el || autoDoneRef.current || !isAuthed) return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !autoDoneRef.current) {
@@ -205,7 +246,7 @@ function Home() {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [run]);
+  }, [run, isAuthed]);
 
   useEffect(() => {
     return () => {
@@ -236,24 +277,6 @@ function Home() {
     }
   }, []);
 
-  const onHeroMove = useCallback((e: React.MouseEvent) => {
-    const ring = ringRef.current;
-    const read = readRef.current;
-    if (!ring) return;
-    const target = (e.currentTarget as HTMLElement).querySelector("canvas");
-    if (!target) return;
-    const r = target.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-    ring.style.transform = `translate(${x}px,${y}px)`;
-    ring.style.opacity = "1";
-    if (read)
-      read.textContent = `E${String(((x / (r.width / 20)) | 0) + 1).padStart(2, "0")} · K${String(((y / (r.height / 12)) | 0) + 1).padStart(2, "0")} · m²`;
-  }, []);
-
-  const onHeroLeave = useCallback(() => {
-    if (ringRef.current) ringRef.current.style.opacity = "0";
-  }, []);
 
   const gaugeOffset = (239 * (1 - skor / 100)).toFixed(1);
   const sources = SRC_NAMES.map((name, i) => {
@@ -279,8 +302,6 @@ function Home() {
       <section
         id="top"
         data-bg="light"
-        onMouseMove={onHeroMove}
-        onMouseLeave={onHeroLeave}
         style={{
           position: "relative",
           minHeight: "100vh",
@@ -292,70 +313,11 @@ function Home() {
           padding: "104px clamp(16px, 4vw, 44px) 0",
         }}
       >
-        <ParticleField
-          style={{
-            position: "relative",
-            width: "100%",
-            height: "clamp(250px, 46vh, 520px)",
-            margin: "0 0 clamp(10px, 2.5vw, 34px)",
-          }}
-        />
-        <div
-          ref={ringRef}
-          className="em-hide"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 108,
-            height: 108,
-            margin: "-54px 0 0 -54px",
-            border: "1px solid rgba(27,77,255,.7)",
-            pointerEvents: "none",
-            opacity: 0,
-            transition: "opacity 220ms linear",
-          }}
-        >
-          <span
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: -16,
-              bottom: -16,
-              width: 1,
-              background: "rgba(226,61,40,.45)",
-            }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: -16,
-              right: -16,
-              height: 1,
-              background: "rgba(226,61,40,.45)",
-            }}
-          />
-          <span
-            ref={readRef}
-            style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              background: "#1B4DFF",
-              color: "#fff",
-              font: "400 9px 'Space Mono', monospace",
-              letterSpacing: ".12em",
-              padding: "3px 6px",
-              whiteSpace: "nowrap",
-            }}
-          >
-            E00 · K00
-          </span>
-        </div>
+        <HeroCity />
         <div
           style={{
             position: "relative",
+            zIndex: 10,
             maxWidth: 1560,
             width: "100%",
             margin: "0 auto",
@@ -376,7 +338,7 @@ function Home() {
                   "em-line-in 1.15s .15s cubic-bezier(.2,.8,.2,1) both",
               }}
             >
-              FİYAT BİR İDDİA.
+              BİR İLAN. BİR BÖLGE.
             </span>
             <span
               style={{
@@ -386,7 +348,7 @@ function Home() {
                   "em-line-in 1.15s .38s cubic-bezier(.2,.8,.2,1) both",
               }}
             >
-              M² BİR KANIT
+              BİR KARŞILAŞTIRMA
               <span style={{ color: "#E23D28" }}>.</span>
             </span>
           </h1>
@@ -411,10 +373,10 @@ function Home() {
                   "em-line-in 1.1s .95s cubic-bezier(.2,.8,.2,1) both",
               }}
             >
-              İlanın hikâyesini değil{" "}
-              <span style={{ color: "#0E1116" }}>medyanını</span> okuyoruz.
-              Sahibinden.com&apos;daki canlı veriyi ve girdiğin konumu dört
-              sayıya indiriyoruz — gerisi pazarlık.
+              Her ilanın gerçek değerini{" "}
+              <span style={{ color: "#0E1116" }}>mahallesinin verileri</span>{" "}
+              belirler. m² fiyatı, kira getirisi, amortisman ve likiditeyi tek
+              ekranda karşılaştır.
             </p>
             <a
               href="#analiz"
@@ -491,23 +453,12 @@ function Home() {
                 ▌
               </span>
             </span>
-            <span
-              className="em-hide"
-              style={{
-                marginLeft: "auto",
-                font: "400 10px 'Space Mono', monospace",
-                letterSpacing: ".18em",
-                color: "rgba(14,17,22,.4)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              160 MS · 4 KAYNAK · ÜCRETSİZ
-            </span>
           </div>
         </div>
         <div
           style={{
             position: "relative",
+            zIndex: 10,
             display: "flex",
             alignItems: "center",
             gap: 12,
@@ -543,7 +494,7 @@ function Home() {
           lineColor="rgba(14,17,22,.16)"
           labelColor="#1B4DFF"
         >
-          <StickyTitle words={["Emlakçının", "cümlesi", "var;", "bizde", "metrekare", "var"]} blueFrom={3} blueTo={4} redDot />
+          <StickyTitle words={["İlan", "metnini", "değil,", "verisini", "oku"]} blueFrom={3} blueTo={4} redDot />
           <p
             style={{
               margin: 0,
@@ -555,7 +506,7 @@ function Home() {
           >
             &ldquo;Ferah, yatırıma uygun, emsalsiz&rdquo; bir cümledir. 71.400
             ₺/m² bir ölçüdür. Terminal ilan metnine bakmaz; fiyatı, alanı, katı
-            ve yaşı okur.
+            ve yaşı okur, mahalledeki emsal ilanlarla karşılaştırır.
           </p>
         </StickyLayer>
 
@@ -571,7 +522,7 @@ function Home() {
           labelColor="rgba(255,255,255,.8)"
           scanline
         >
-          <StickyTitle words={["312", "komşu", "ilan,", "tek", "medyan"]} blueFrom={3} blueTo={4} darkBlue redDot />
+          <StickyTitle words={["Aynı", "mahalle,", "yüzlerce", "emsal", "ilan"]} blueFrom={2} blueTo={4} darkBlue redDot />
           <p
             style={{
               margin: 0,
@@ -581,9 +532,9 @@ function Home() {
               color: "rgba(255,255,255,.85)",
             }}
           >
-            Kopya ilan ayıklanır, aykırı fiyat filtrelenir. Kalan set mahallenin
-            gerçek m² medyanını verir — ilanın o çizginin ne kadar altında
-            olduğunu tek satırda görürsün.
+            Seçtiğin ilanın mahallesindeki tüm satılık ve kiralık ilanlar
+            toplanır. Kopya ilanlar ayıklanır, uç fiyatlar filtrelenir.
+            Geriye kalan set m² başına gerçek medyan fiyatı verir.
           </p>
         </StickyLayer>
 
@@ -698,8 +649,8 @@ function Home() {
                 }}
               >
                 Yapıştır.{" "}
-                <span style={{ color: "#0E1116" }}>Üç saniye.</span> Kararın
-                hazır
+                <span style={{ color: "#0E1116" }}>Üç saniye.</span> Sonuç
+                ekranda
                 <span style={{ color: "#0E1116" }}>.</span>
               </h2>
             </div>
@@ -712,9 +663,9 @@ function Home() {
                 color: "rgba(255,255,255,.8)",
               }}
             >
-              İlan linki, mahalle ya da harita noktası — hangisini verirsen
-              terminal aynı formatta yanıt verir. Ekranı izle: kaynaklar tek tek
-              açılır, sayılar yerine oturur.
+              İlan linki, mahalle ya da harita noktası ver. Terminal aynı
+              formatta yanıt verir. Kaynaklar tek tek açılır, sayılar yerine
+              oturur.
             </p>
           </div>
 
@@ -790,6 +741,20 @@ function Home() {
                 />
                 KAYNAKLAR CANLI · SON TARAMA 00:04
               </div>
+              {isAuthed && ent && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "0 20px",
+                    font: "400 10px 'Space Mono', monospace",
+                    letterSpacing: ".16em",
+                    color: ent.analysesLeft > 0 ? "#00875A" : "#E23D28",
+                  }}
+                >
+                  {ent.analysesUsed}/{ent.analysisQuota} ANALİZ
+                </div>
+              )}
             </div>
 
             <div
@@ -816,7 +781,7 @@ function Home() {
                 placeholder={
                   tab === "link"
                     ? "sahibinden.com/ilan/9931-daire"
-                    : "Kadıköy, Fikirtepe — cadde veya mahalle"
+                    : "Kadıköy, Fikirtepe veya mahalle adı"
                 }
                 style={{
                   flex: 1,
@@ -845,13 +810,61 @@ function Home() {
               >
                 {phase === "scan"
                   ? "TARANIYOR…"
-                  : phase === "done"
+                  : phase === "done" || phase === "quota"
                     ? "TEKRAR ÇALIŞTIR"
                     : "ANALİZ ET"}
               </button>
             </div>
 
-            {phase !== "idle" && (
+            {phase === "quota" && (
+              <div
+                style={{
+                  borderTop: "1px solid rgba(14,17,22,.14)",
+                  padding: "clamp(30px, 4vw, 50px) clamp(16px, 2vw, 28px)",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    font: "700 clamp(20px, 2.5vw, 30px) 'Space Grotesk', sans-serif",
+                    letterSpacing: "-0.04em",
+                    marginBottom: 12,
+                    color: "#E23D28",
+                  }}
+                >
+                  Bu dönemki {quotaResource === "report" ? "rapor" : "analiz"} hakkınız doldu<span style={{ color: "#1B4DFF" }}>.</span>
+                </div>
+                <p
+                  style={{
+                    margin: "0 0 24px",
+                    font: "400 13px 'Space Mono', monospace",
+                    lineHeight: 1.85,
+                    color: "rgba(14,17,22,.55)",
+                  }}
+                >
+                  Paketinizi yükselterek daha fazla {quotaResource === "report" ? "rapor" : "analiz"} hakkı kazanabilirsiniz.
+                </p>
+                <Link
+                  to="/paketler"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 10,
+                    background: "#1B4DFF",
+                    color: "#fff",
+                    border: "1px solid #1B4DFF",
+                    padding: "15px 28px",
+                    font: "700 12px 'Space Mono', monospace",
+                    letterSpacing: ".2em",
+                    textDecoration: "none",
+                  }}
+                >
+                  PAKETLERİ GÖR →
+                </Link>
+              </div>
+            )}
+
+            {phase !== "idle" && phase !== "quota" && (
               <>
                 <div
                   className="em-col-2"
@@ -1079,7 +1092,7 @@ function Home() {
                     marginBottom: 24,
                   }}
                 >
-                  {col.num} — {col.title}
+                  {col.num} · {col.title}
                 </div>
                 <h3
                   style={{
@@ -1173,18 +1186,32 @@ function Home() {
                 <span style={{ color: "#1B4DFF" }}>gör.</span>
               </h2>
             </div>
-            <p
-              style={{
-                margin: "0 0 6px auto",
-                maxWidth: 340,
-                font: "400 12px 'Space Mono', monospace",
-                lineHeight: 1.8,
-                color: "rgba(255,255,255,.55)",
-              }}
-            >
-              Mahalle bazlı m² medyanı, son 12 aylık değişim ve kira getirisi
-              bandı. İmleci gezdir; hücreler canlı veriyle açılır.
-            </p>
+            <div style={{ margin: "0 0 6px auto", maxWidth: 340 }}>
+              {userCity && (
+                <div
+                  style={{
+                    font: "700 10px 'Space Mono', monospace",
+                    letterSpacing: ".18em",
+                    color: "#1B4DFF",
+                    marginBottom: 10,
+                  }}
+                >
+                  📍 {userCity.toLocaleUpperCase("tr")} BÖLGESİ
+                </div>
+              )}
+              <p
+                style={{
+                  margin: 0,
+                  font: "400 12px 'Space Mono', monospace",
+                  lineHeight: 1.8,
+                  color: "rgba(255,255,255,.55)",
+                }}
+              >
+                {userCity
+                  ? `${userCity} ve çevresi için bölge bazlı medyan m² fiyatı, son 12 aylık değişim ve kira getirisi.`
+                  : "Mahalle bazlı m² medyanı, son 12 aylık değişim ve kira getirisi bandı. Konum izni verirsen bölgen öne çıkar."}
+              </p>
+            </div>
           </div>
           <div
             ref={mapRef}
@@ -1196,9 +1223,9 @@ function Home() {
               borderLeft: "1px solid rgba(255,255,255,.14)",
             }}
           >
-            {REGIONS.map((r) => (
+            {regions.map((r) => (
               <div
-                key={r.name}
+                key={`${r.city}-${r.district}`}
                 style={{
                   padding: "clamp(18px, 2vw, 28px)",
                   borderRight: "1px solid rgba(255,255,255,.14)",
@@ -1213,7 +1240,7 @@ function Home() {
                     color: "rgba(255,255,255,.42)",
                   }}
                 >
-                  {r.city}
+                  {r.city.toLocaleUpperCase("tr")}
                 </div>
                 <div
                   style={{
@@ -1222,18 +1249,28 @@ function Home() {
                     margin: "10px 0 14px",
                   }}
                 >
-                  {r.name}
+                  {r.district}
+                </div>
+                <div
+                  style={{
+                    font: "400 12px 'Space Mono', monospace",
+                    marginBottom: 6,
+                  }}
+                >
+                  {formatPrice(r.medianM2)}
                 </div>
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    font: "400 12px 'Space Mono', monospace",
+                    font: "400 11px 'Space Mono', monospace",
                   }}
                 >
-                  <span>{r.price}</span>
-                  <span style={{ color: r.up ? "#00875A" : "#E23D28" }}>
-                    {r.change}
+                  <span style={{ color: r.change12m >= 0 ? "#00875A" : "#E23D28" }}>
+                    {formatChange(r.change12m)}
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,.55)" }}>
+                    {formatYield(r.yieldPct)} getiri
                   </span>
                 </div>
               </div>
@@ -1250,7 +1287,7 @@ function Home() {
               color: "rgba(255,255,255,.4)",
             }}
           >
-            <span>MEDYAN M² SATIŞ FİYATI · SON 90 GÜN AKTİF İLAN</span>
+            <span>MEDYAN M² SATIŞ FİYATI · KİRA GETİRİSİ</span>
             <span className="em-hide" style={{ marginLeft: "auto" }}>
               YEŞİL: ARTIŞ · KIRMIZI: DÜŞÜŞ
             </span>
@@ -1324,80 +1361,6 @@ function Home() {
               <ToolCard key={card.tag} {...card} />
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ═══ PAKETLER STRIP ═══ */}
-      <section
-        data-bg="dark"
-        style={{
-          background: "#E23D28",
-          color: "#FFFFFF",
-          padding:
-            "clamp(54px, 6vw, 96px) clamp(16px, 4vw, 44px) clamp(56px, 6vw, 100px)",
-        }}
-      >
-        <div
-          className="em-stack"
-          style={{
-            maxWidth: 1560,
-            margin: "0 auto",
-            display: "flex",
-            alignItems: "flex-end",
-            gap: 28,
-            paddingTop: "clamp(10px, 2vw, 20px)",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                font: "400 11px 'Space Mono', monospace",
-                letterSpacing: ".28em",
-                color: "rgba(255,255,255,.8)",
-                marginBottom: 16,
-              }}
-            >
-              05 · PAKETLER
-            </div>
-            <h2
-              style={{
-                margin: 0,
-                font: "700 clamp(26px, 3.6vw, 56px) 'Space Grotesk', sans-serif",
-                letterSpacing: "-0.055em",
-                lineHeight: 0.98,
-                maxWidth: "22ch",
-              }}
-            >
-              Ücretsiz başla. Analiz sayısı arttıkça yükselt.
-            </h2>
-          </div>
-          <Link
-            to="/paketler"
-            style={{
-              marginLeft: "auto",
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              background: "#0E1116",
-              color: "#fff",
-              border: "1px solid #0E1116",
-              padding: "20px 30px",
-              font: "700 12px 'Space Mono', monospace",
-              letterSpacing: ".24em",
-              whiteSpace: "nowrap",
-              textDecoration: "none",
-            }}
-          >
-            <span>PAKETLERİ GÖR</span>
-            <span
-              style={{
-                display: "inline-block",
-                animation: "em-arrow-loop 1.6s ease-in-out infinite",
-              }}
-            >
-              →
-            </span>
-          </Link>
         </div>
       </section>
 
@@ -1512,7 +1475,7 @@ function Home() {
         </div>
       </section>
 
-      {/* ═══ SEO + SSS ═══ */}
+      {/* ═══ SEO ═══ */}
       <section
         data-bg="light"
         style={{
@@ -1522,31 +1485,34 @@ function Home() {
         }}
       >
         <div
-          className="em-col-1"
           style={{
             maxWidth: 1560,
             margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-            gap: "clamp(26px, 5vw, 80px)",
             borderTop: "1px solid rgba(14,17,22,.16)",
             paddingTop: "clamp(36px, 5vw, 68px)",
           }}
         >
-          <div>
-            <h2
-              style={{
-                margin: "0 0 20px",
-                font: "500 clamp(23px, 2.5vw, 38px) 'Space Grotesk', sans-serif",
-                letterSpacing: "-0.05em",
-                lineHeight: 1.06,
-              }}
-            >
-              Sahibinden ilan analizi ve konuma göre m² fiyat sorgulama
-            </h2>
+          <h2
+            style={{
+              margin: "0 0 20px",
+              font: "500 clamp(23px, 2.5vw, 38px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.05em",
+              lineHeight: 1.06,
+            }}
+          >
+            Sahibinden ilan analizi ve konuma göre m² fiyat sorgulama
+          </h2>
+          <div
+            className="em-col-1"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+              gap: "clamp(26px, 5vw, 80px)",
+            }}
+          >
             <p
               style={{
-                margin: "0 0 16px",
+                margin: 0,
                 font: "400 13px 'Space Mono', monospace",
                 lineHeight: 1.9,
                 color: "rgba(14,17,22,.65)",
@@ -1558,17 +1524,8 @@ function Home() {
               </strong>
               dir; ekspertiz ya da değerleme raporu üretmez. Sahibinden.com&apos;daki
               satılık ve kiralık ilan verisini okur, aynı mahalledeki emsal
-              ilanlarla karşılaştırır ve sonucu tek birime —{" "}
-              <strong style={{ fontWeight: 700 }}>m² fiyatı</strong> — indirir.
-            </p>
-            <p
-              style={{
-                margin: "0 0 16px",
-                font: "400 13px 'Space Mono', monospace",
-                lineHeight: 1.9,
-                color: "rgba(14,17,22,.65)",
-              }}
-            >
+              ilanlarla karşılaştırır ve sonucu tek birime,{" "}
+              <strong style={{ fontWeight: 700 }}>m² fiyatına</strong>, indirir.
               İlan linkin yoksa{" "}
               <strong style={{ fontWeight: 700 }}>
                 konuma göre ev değeri sorgulama
@@ -1595,85 +1552,6 @@ function Home() {
               geldiğini söylemeden ekranda durmaz; her sayının altında kaç ilan
               okunduğu ve hangi tarihte tarandığı yazar.
             </p>
-          </div>
-          <div id="sss">
-            <div
-              style={{
-                font: "400 11px 'Space Mono', monospace",
-                letterSpacing: ".28em",
-                color: "#1B4DFF",
-                marginBottom: 22,
-              }}
-            >
-              06 · SIKÇA SORULANLAR
-            </div>
-            {[
-              {
-                q: "Emlakmetric değerleme yapıyor mu?",
-                a: "Hayır. Ekspertiz veya resmî değerleme raporu üretmiyoruz. İlan ve konum verisini okuyup metrekare bazında karşılaştırıyoruz; çıktı bir ölçüm raporudur.",
-              },
-              {
-                q: "İlan linki olmadan sorgulayabilir miyim?",
-                a: "Evet. KONUM sekmesine adres, mahalle veya harita noktası gir; o bölgedeki m² aralığı, kira getirisi bandı ve 12 aylık değişim gelir.",
-              },
-              {
-                q: "Ücretsiz paket neleri kapsıyor?",
-                a: "Başlangıç paketi ücretsizdir: ayda 5 ilan analizi, mahalle medyanı karşılaştırması ve 12 aylık m² trendi. Kart bilgisi istemiyoruz.",
-              },
-              {
-                q: "Veriler ne sıklıkla güncelleniyor?",
-                a: "Kaynaklar gün içinde taranır. Her raporun üstünde okunan ilan sayısı ve tarama zamanı yazar.",
-              },
-            ].map((faq, i) => (
-              <details
-                key={i}
-                style={{
-                  borderTop: "1px solid rgba(14,17,22,.16)",
-                  borderBottom:
-                    i === 3 ? "1px solid rgba(14,17,22,.16)" : undefined,
-                  padding: "16px 0",
-                }}
-              >
-                <summary
-                  style={{
-                    cursor: "pointer",
-                    font: "500 clamp(15px, 1.5vw, 19px) 'Space Grotesk', sans-serif",
-                    letterSpacing: "-0.03em",
-                    listStyle: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 14,
-                  }}
-                >
-                  <span
-                    style={{
-                      flex: "none",
-                      width: 22,
-                      height: 22,
-                      border: "1px solid rgba(14,17,22,.3)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      font: "400 12px 'Space Mono', monospace",
-                      color: "#1B4DFF",
-                    }}
-                  >
-                    +
-                  </span>
-                  <span>{faq.q}</span>
-                </summary>
-                <p
-                  style={{
-                    margin: "12px 0 0",
-                    font: "400 12px 'Space Mono', monospace",
-                    lineHeight: 1.9,
-                    color: "rgba(14,17,22,.6)",
-                  }}
-                >
-                  {faq.a}
-                </p>
-              </details>
-            ))}
           </div>
         </div>
       </section>

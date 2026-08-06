@@ -9,21 +9,31 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SssRouteImport } from './routes/sss'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SifreYenileRouteImport } from './routes/sifre-yenile'
 import { Route as SifreSifirlaRouteImport } from './routes/sifre-sifirla'
 import { Route as ProfilRouteImport } from './routes/profil'
+import { Route as PanelRouteImport } from './routes/panel'
 import { Route as PaketlerRouteImport } from './routes/paketler'
+import { Route as KullanimKosullariRouteImport } from './routes/kullanim-kosullari'
 import { Route as KayitRouteImport } from './routes/kayit'
 import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
 import { Route as GorsellerRouteImport } from './routes/gorseller'
+import { Route as GizlilikPolitikasiRouteImport } from './routes/gizlilik-politikasi'
 import { Route as GirisRouteImport } from './routes/giris'
+import { Route as CerezPolitikasiRouteImport } from './routes/cerez-politikasi'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ApiReportRouteImport } from './routes/api/report'
 import { Route as ApiAnalyseRouteImport } from './routes/api/analyse'
 
+const SssRoute = SssRouteImport.update({
+  id: '/sss',
+  path: '/sss',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -44,9 +54,19 @@ const ProfilRoute = ProfilRouteImport.update({
   path: '/profil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PanelRoute = PanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PaketlerRoute = PaketlerRouteImport.update({
   id: '/paketler',
   path: '/paketler',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KullanimKosullariRoute = KullanimKosullariRouteImport.update({
+  id: '/kullanim-kosullari',
+  path: '/kullanim-kosullari',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KayitRoute = KayitRouteImport.update({
@@ -69,9 +89,19 @@ const GorsellerRoute = GorsellerRouteImport.update({
   path: '/gorseller',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GizlilikPolitikasiRoute = GizlilikPolitikasiRouteImport.update({
+  id: '/gizlilik-politikasi',
+  path: '/gizlilik-politikasi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GirisRoute = GirisRouteImport.update({
   id: '/giris',
   path: '/giris',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CerezPolitikasiRoute = CerezPolitikasiRouteImport.update({
+  id: '/cerez-politikasi',
+  path: '/cerez-politikasi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -97,32 +127,42 @@ const ApiAnalyseRoute = ApiAnalyseRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cerez-politikasi': typeof CerezPolitikasiRoute
   '/giris': typeof GirisRoute
+  '/gizlilik-politikasi': typeof GizlilikPolitikasiRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
+  '/kullanim-kosullari': typeof KullanimKosullariRoute
   '/paketler': typeof PaketlerRoute
+  '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sss': typeof SssRoute
   '/api/analyse': typeof ApiAnalyseRoute
   '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cerez-politikasi': typeof CerezPolitikasiRoute
   '/giris': typeof GirisRoute
+  '/gizlilik-politikasi': typeof GizlilikPolitikasiRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
+  '/kullanim-kosullari': typeof KullanimKosullariRoute
   '/paketler': typeof PaketlerRoute
+  '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sss': typeof SssRoute
   '/api/analyse': typeof ApiAnalyseRoute
   '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -130,16 +170,21 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cerez-politikasi': typeof CerezPolitikasiRoute
   '/giris': typeof GirisRoute
+  '/gizlilik-politikasi': typeof GizlilikPolitikasiRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
+  '/kullanim-kosullari': typeof KullanimKosullariRoute
   '/paketler': typeof PaketlerRoute
+  '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sss': typeof SssRoute
   '/api/analyse': typeof ApiAnalyseRoute
   '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -148,48 +193,63 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cerez-politikasi'
     | '/giris'
+    | '/gizlilik-politikasi'
     | '/gorseller'
     | '/hakkimizda'
     | '/iletisim'
     | '/kayit'
+    | '/kullanim-kosullari'
     | '/paketler'
+    | '/panel'
     | '/profil'
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/sss'
     | '/api/analyse'
     | '/api/report'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cerez-politikasi'
     | '/giris'
+    | '/gizlilik-politikasi'
     | '/gorseller'
     | '/hakkimizda'
     | '/iletisim'
     | '/kayit'
+    | '/kullanim-kosullari'
     | '/paketler'
+    | '/panel'
     | '/profil'
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/sss'
     | '/api/analyse'
     | '/api/report'
     | '/auth/callback'
   id:
     | '__root__'
     | '/'
+    | '/cerez-politikasi'
     | '/giris'
+    | '/gizlilik-politikasi'
     | '/gorseller'
     | '/hakkimizda'
     | '/iletisim'
     | '/kayit'
+    | '/kullanim-kosullari'
     | '/paketler'
+    | '/panel'
     | '/profil'
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/sss'
     | '/api/analyse'
     | '/api/report'
     | '/auth/callback'
@@ -197,16 +257,21 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CerezPolitikasiRoute: typeof CerezPolitikasiRoute
   GirisRoute: typeof GirisRoute
+  GizlilikPolitikasiRoute: typeof GizlilikPolitikasiRoute
   GorsellerRoute: typeof GorsellerRoute
   HakkimizdaRoute: typeof HakkimizdaRoute
   IletisimRoute: typeof IletisimRoute
   KayitRoute: typeof KayitRoute
+  KullanimKosullariRoute: typeof KullanimKosullariRoute
   PaketlerRoute: typeof PaketlerRoute
+  PanelRoute: typeof PanelRoute
   ProfilRoute: typeof ProfilRoute
   SifreSifirlaRoute: typeof SifreSifirlaRoute
   SifreYenileRoute: typeof SifreYenileRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SssRoute: typeof SssRoute
   ApiAnalyseRoute: typeof ApiAnalyseRoute
   ApiReportRoute: typeof ApiReportRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -214,6 +279,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sss': {
+      id: '/sss'
+      path: '/sss'
+      fullPath: '/sss'
+      preLoaderRoute: typeof SssRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -242,11 +314,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfilRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/panel': {
+      id: '/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof PanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/paketler': {
       id: '/paketler'
       path: '/paketler'
       fullPath: '/paketler'
       preLoaderRoute: typeof PaketlerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kullanim-kosullari': {
+      id: '/kullanim-kosullari'
+      path: '/kullanim-kosullari'
+      fullPath: '/kullanim-kosullari'
+      preLoaderRoute: typeof KullanimKosullariRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kayit': {
@@ -277,11 +363,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GorsellerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gizlilik-politikasi': {
+      id: '/gizlilik-politikasi'
+      path: '/gizlilik-politikasi'
+      fullPath: '/gizlilik-politikasi'
+      preLoaderRoute: typeof GizlilikPolitikasiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/giris': {
       id: '/giris'
       path: '/giris'
       fullPath: '/giris'
       preLoaderRoute: typeof GirisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cerez-politikasi': {
+      id: '/cerez-politikasi'
+      path: '/cerez-politikasi'
+      fullPath: '/cerez-politikasi'
+      preLoaderRoute: typeof CerezPolitikasiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -317,16 +417,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CerezPolitikasiRoute: CerezPolitikasiRoute,
   GirisRoute: GirisRoute,
+  GizlilikPolitikasiRoute: GizlilikPolitikasiRoute,
   GorsellerRoute: GorsellerRoute,
   HakkimizdaRoute: HakkimizdaRoute,
   IletisimRoute: IletisimRoute,
   KayitRoute: KayitRoute,
+  KullanimKosullariRoute: KullanimKosullariRoute,
   PaketlerRoute: PaketlerRoute,
+  PanelRoute: PanelRoute,
   ProfilRoute: ProfilRoute,
   SifreSifirlaRoute: SifreSifirlaRoute,
   SifreYenileRoute: SifreYenileRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SssRoute: SssRoute,
   ApiAnalyseRoute: ApiAnalyseRoute,
   ApiReportRoute: ApiReportRoute,
   AuthCallbackRoute: AuthCallbackRoute,

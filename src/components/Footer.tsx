@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "./auth/AuthProvider";
+import { useI18n } from "@/lib/i18n";
+import { openCookieSettings } from "./CookieConsent";
 import { signOut } from "@/lib/supabase/auth";
 
 const linkStyle: React.CSSProperties = {
@@ -22,6 +24,7 @@ const headingStyle: React.CSSProperties = {
 
 export function Footer() {
   const { user, profile, loading } = useAuth();
+  const { t } = useI18n();
   const isAuthed = !loading && !!user;
 
   const handleSignOut = async () => {
@@ -52,7 +55,7 @@ export function Footer() {
           className="em-col-1"
           style={{
             display: "grid",
-            gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
+            gridTemplateColumns: "1.6fr 1fr 1fr 1fr 1fr",
             gap: "clamp(26px, 4vw, 56px)",
             paddingBottom: "clamp(36px, 5vw, 68px)",
             borderBottom: "1px solid rgba(255,255,255,.14)",
@@ -214,7 +217,7 @@ export function Footer() {
             <Link to="/" hash="veri" className="em-footer-link" style={linkStyle}>
               Metodoloji
             </Link>
-            <Link to="/" hash="sss" className="em-footer-link" style={linkStyle}>
+            <Link to="/sss" className="em-footer-link" style={linkStyle}>
               Sıkça sorulanlar
             </Link>
             <Link
@@ -224,9 +227,40 @@ export function Footer() {
             >
               İletişim
             </Link>
-            <a href="mailto:merhaba@emlakmetric.com" className="em-footer-link" style={linkStyle}>
-              merhaba@emlakmetric.com
+            <a href="mailto:info@emlakmetric.com" className="em-footer-link" style={linkStyle}>
+              info@emlakmetric.com
             </a>
+          </div>
+
+          {/* YASAL column */}
+          <div style={columnStyle}>
+            <span style={headingStyle}>YASAL</span>
+            <Link to="/gizlilik-politikasi" className="em-footer-link" style={linkStyle}>
+              {t.legal.privacy}
+            </Link>
+            <Link to="/kullanim-kosullari" className="em-footer-link" style={linkStyle}>
+              {t.legal.terms}
+            </Link>
+            <Link to="/cerez-politikasi" className="em-footer-link" style={linkStyle}>
+              {t.legal.cookies}
+            </Link>
+            <button
+              type="button"
+              onClick={openCookieSettings}
+              className="em-footer-link"
+              style={{
+                ...linkStyle,
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                font: "inherit",
+                letterSpacing: "inherit",
+                textAlign: "left",
+              }}
+            >
+              {t.cookie.footerSettings}
+            </button>
           </div>
         </div>
 
