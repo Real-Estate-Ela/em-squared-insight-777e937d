@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -30,12 +30,22 @@ export const Route = createFileRoute("/paketler")({
     ],
     links: [
       { rel: "canonical", href: "https://emlakmetric.com/paketler" },
-      { rel: "alternate", hrefLang: "tr", href: "https://emlakmetric.com/paketler" },
-      { rel: "alternate", hrefLang: "en", href: "https://emlakmetric.com/paketler?lang=en" },
+      {
+        rel: "alternate",
+        hrefLang: "tr",
+        href: "https://emlakmetric.com/paketler",
+      },
+      {
+        rel: "alternate",
+        hrefLang: "en",
+        href: "https://emlakmetric.com/paketler?lang=en",
+      },
     ],
   }),
   component: Paketler,
 });
+
+/* ── hooks ─────────────────────────────────────────────── */
 
 function useReveal(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -49,7 +59,12 @@ function useReveal(threshold = 0.15) {
       return;
     }
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      ([e]) => {
+        if (e.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
       { threshold },
     );
     obs.observe(el);
@@ -57,6 +72,20 @@ function useReveal(threshold = 0.15) {
   }, [threshold]);
   return { ref, visible };
 }
+
+function useCanTilt() {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    setOk(!coarse && !reduced);
+  }, []);
+  return ok;
+}
+
+/* ── constants ─────────────────────────────────────────── */
 
 const PLAN_ORDER: PlanCode[] = ["free", "pro", "enterprise"];
 
@@ -71,472 +100,104 @@ const COMPARISON_KEYS = [
 
 type CompKey = (typeof COMPARISON_KEYS)[number];
 
-const COMPARISON_DATA: Record<CompKey, Record<PlanCode, string | { text: string; color: string }>> = {
-  monthlyAnalysis: { free: "5", pro: "250", enterprise: "∞" },
+const COMPARISON_DATA: Record<
+  CompKey,
+  Record<PlanCode, string | { text: string; color: string }>
+> = {
+  monthlyAnalysis: { free: "3", pro: "250", enterprise: "∞" },
   locationQuery: { free: "10", pro: "∞", enterprise: "∞" },
   portfolioTracking: {
-    free: { text: "—", color: "rgba(14,17,22,.25)" },
+    free: { text: "✕", color: "#E23D28" },
     pro: "50",
     enterprise: "∞",
   },
   pdfReport: {
-    free: { text: "—", color: "rgba(14,17,22,.25)" },
+    free: { text: "✕", color: "#E23D28" },
     pro: { text: "✓", color: "#00875A" },
     enterprise: { text: "✓", color: "#00875A" },
   },
   apiAccess: {
-    free: { text: "—", color: "rgba(14,17,22,.25)" },
-    pro: { text: "—", color: "rgba(14,17,22,.25)" },
+    free: { text: "✕", color: "#E23D28" },
+    pro: { text: "✕", color: "#E23D28" },
     enterprise: { text: "10.000 / ay", color: "#00875A" },
   },
   userCount: { free: "1", pro: "3", enterprise: "10+" },
 };
 
-function ScaleAxis({ plans }: { plans: Plan[] }) {
-  const { t } = useI18n();
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [hoverX, setHoverX] = useState<number | null>(null);
-  const [springX, setSpringX] = useState<number | null>(null);
-  const springRef = useRef<number | null>(null);
-  const rafRef = useRef(0);
+/* ── calculator logic ──────────────────────────────────── */
+
+function calcFromSlider(v: number, plans: Plan[]) {
+  const raw = 3 * Math.pow(1000 / 3, v / 100);
+  const count =
+    raw < 20
+      ? Math.round(raw)
+      : raw < 200
+        ? Math.round(raw / 5) * 5
+        : Math.round(raw / 25) * 25;
 
   const sorted = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
+  const free = sorted.find((p) => p.code === "free");
+  const pro = sorted.find((p) => p.code === "pro");
 
-  const maxQ = 1000;
-  const logScale = (v: number) => Math.log(v + 1) / Math.log(maxQ + 1);
+  const freeQuota = free?.analysisQuota ?? 3;
+  const proQuota = pro?.analysisQuota ?? 100;
 
-  const markers = sorted.map((p) => ({
-    plan: p,
-    pos: p.analysisQuota === 0 ? 1 : logScale(Math.min(p.analysisQuota, maxQ)),
-  }));
+  const tier: 0 | 1 | 2 =
+    count <= freeQuota ? 0 : count <= proQuota ? 1 : 2;
+  const plan = sorted[tier] ?? sorted[0];
 
-  useEffect(() => {
-    const animate = () => {
-      const target = hoverX;
-      const cur = springRef.current;
-      if (target !== null && cur !== null) {
-        const next = cur + (target - cur) * 0.15;
-        springRef.current = next;
-        setSpringX(next);
-      } else if (target !== null) {
-        springRef.current = target;
-        setSpringX(target);
-      }
-      rafRef.current = requestAnimationFrame(animate);
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [hoverX]);
+  const price = plan.priceMonthly / 100;
+  const perAnalysis = price > 0 ? price / count : 0;
 
-  const handleMove = useCallback((clientX: number) => {
-    const track = trackRef.current;
-    if (!track) return;
-    const rect = track.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    setHoverX(pct);
-  }, []);
+  const limit = tier === 0 ? freeQuota : tier === 1 ? proQuota : count;
+  const fill = Math.round(Math.min(100, (count / limit) * 100));
 
-  const handleLeave = useCallback(() => {
-    setHoverX(null);
-    springRef.current = null;
-    setSpringX(null);
-  }, []);
+  return { count, tier, plan, price, perAnalysis, fill };
+}
 
-  const closestPlan = springX !== null
-    ? markers.reduce((best, m) =>
-        Math.abs(m.pos - springX) < Math.abs(best.pos - springX) ? m : best,
-      ).plan
-    : null;
+/* ── mouse interaction helpers ─────────────────────────── */
 
-  const logValue = springX !== null
-    ? Math.round(Math.pow(maxQ + 1, springX) - 1)
-    : null;
+function cardMove(e: React.MouseEvent<HTMLElement>, tilt: boolean) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const nx = (e.clientX - r.left) / r.width;
+  const ny = (e.clientY - r.top) / r.height;
+  el.style.setProperty("--mx", (nx * 100).toFixed(1) + "%");
+  el.style.setProperty("--my", (ny * 100).toFixed(1) + "%");
+  if (tilt) {
+    el.style.setProperty(
+      "--rx",
+      ((0.5 - ny) * 3.4).toFixed(2) + "deg",
+    );
+    el.style.setProperty(
+      "--ry",
+      ((nx - 0.5) * 4.2).toFixed(2) + "deg",
+    );
+  }
+  el.style.setProperty("--spot", "1");
+}
 
-  return (
-    <div style={{ padding: "0 0 16px" }}>
-      <div
-        style={{
-          font: "400 10px 'Space Mono', monospace",
-          letterSpacing: ".22em",
-          color: "rgba(14,17,22,.45)",
-          marginBottom: 18,
-        }}
-      >
-        {t.pricing.scaleLabel}
-      </div>
-      <div
-        ref={trackRef}
-        onMouseMove={(e) => handleMove(e.clientX)}
-        onTouchMove={(e) => handleMove(e.touches[0].clientX)}
-        onMouseLeave={handleLeave}
-        onTouchEnd={handleLeave}
-        style={{
-          position: "relative",
-          height: 64,
-          cursor: "crosshair",
-          touchAction: "none",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 30,
-            left: 0,
-            right: 0,
-            height: 1,
-            background: "rgba(14,17,22,.2)",
-          }}
-        />
+function cardLeave(e: React.MouseEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  el.style.setProperty("--rx", "0deg");
+  el.style.setProperty("--ry", "0deg");
+  el.style.setProperty("--spot", "0");
+}
 
-        {markers.map((m) => (
-          <div
-            key={m.plan.code}
-            style={{
-              position: "absolute",
-              left: `${m.pos * 100}%`,
-              top: 18,
-              transform: "translateX(-50%)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 6,
-              transition: closestPlan?.code === m.plan.code
-                ? "transform 200ms ease-out"
-                : "none",
-            }}
-          >
-            <span
-              style={{
-                font: "700 10px 'Space Mono', monospace",
-                letterSpacing: ".14em",
-                color: closestPlan?.code === m.plan.code ? "#1B4DFF" : "rgba(14,17,22,.5)",
-                transition: "color 200ms ease-out",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {m.plan.name.toUpperCase()}
-            </span>
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                border: "1.5px solid",
-                borderColor: closestPlan?.code === m.plan.code ? "#1B4DFF" : "rgba(14,17,22,.35)",
-                background: closestPlan?.code === m.plan.code ? "#1B4DFF" : "#fff",
-                transition: "border-color 200ms ease-out, background 200ms ease-out",
-              }}
-            />
-            <span
-              style={{
-                font: "400 10px 'Space Mono', monospace",
-                color: "rgba(14,17,22,.4)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {m.plan.analysisQuota === 0
-                ? `${m.plan.analysisQuota}`
-                : m.plan.analysisQuota >= 9999
-                  ? "∞"
-                  : m.plan.analysisQuota.toLocaleString()}
-            </span>
-          </div>
-        ))}
-
-        {springX !== null && (
-          <div
-            style={{
-              position: "absolute",
-              left: `${springX * 100}%`,
-              top: 0,
-              height: "100%",
-              width: 1,
-              background: "#1B4DFF",
-              opacity: 0.4,
-              pointerEvents: "none",
-            }}
-          />
-        )}
-
-        {springX !== null && logValue !== null && (
-          <div
-            style={{
-              position: "absolute",
-              left: `${springX * 100}%`,
-              bottom: -6,
-              transform: "translateX(-50%)",
-              background: "#0E1116",
-              color: "#fff",
-              padding: "3px 8px",
-              font: "700 10px 'Space Mono', monospace",
-              letterSpacing: ".08em",
-              whiteSpace: "nowrap",
-              pointerEvents: "none",
-            }}
-          >
-            {logValue >= 999 ? "∞" : logValue} {t.pricing.scaleAnalyses}
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          font: "400 9px 'Space Mono', monospace",
-          color: "rgba(14,17,22,.3)",
-          letterSpacing: ".12em",
-          marginTop: 4,
-        }}
-      >
-        <span>3</span>
-        <span>1000+</span>
-      </div>
-    </div>
+function sectionMove(e: React.MouseEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty(
+    "--px",
+    (((e.clientX - r.left) / r.width) * 100).toFixed(1) + "%",
+  );
+  el.style.setProperty(
+    "--py",
+    (((e.clientY - r.top) / r.height) * 100).toFixed(1) + "%",
   );
 }
 
-function PlanCard({
-  plan,
-  index,
-  currentPlanCode,
-  t,
-  visible,
-}: {
-  plan: Plan;
-  index: number;
-  currentPlanCode: PlanCode | null;
-  t: ReturnType<typeof useI18n>["t"];
-  visible: boolean;
-}) {
-  const isCurrent = currentPlanCode === plan.code;
-  const isFeatured = plan.isFeatured;
-  const code = plan.code as PlanCode;
-
-  const cta = code === "free"
-    ? { label: t.pricing.tryFree, to: "/kayit" as const }
-    : code === "pro"
-      ? { label: t.pricing.tryDays, to: "/kayit" as const }
-      : { label: t.pricing.requestQuote, to: "/iletisim" as const };
-
-  const features = t.pricing.planFeatures[code];
-
-  return (
-    <div
-      style={{
-        background: isFeatured ? "#0E1116" : "#FFFFFF",
-        border: isFeatured ? "none" : "1px solid rgba(14,17,22,.14)",
-        padding: "clamp(28px, 3vw, 40px)",
-        display: "flex",
-        flexDirection: "column",
-        position: "relative",
-        opacity: visible ? 1 : 0,
-        transform: visible ? "none" : "translateY(24px)",
-        transition: `opacity 300ms ease-out ${index * 120}ms, transform 300ms ease-out ${index * 120}ms`,
-      }}
-    >
-      {isFeatured && (
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 24,
-            transform: "translateY(-50%)",
-            background: "#1B4DFF",
-            color: "#fff",
-            padding: "5px 12px",
-            font: "700 9px 'Space Mono', monospace",
-            letterSpacing: ".18em",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {t.pricing.badge.toUpperCase()}
-        </div>
-      )}
-
-      <div
-        style={{
-          font: "400 10px 'Space Mono', monospace",
-          letterSpacing: ".22em",
-          color: isFeatured ? "rgba(255,255,255,.5)" : "rgba(14,17,22,.4)",
-          marginBottom: 24,
-        }}
-      >
-        {String(index + 1).padStart(2, "0")} · {plan.name.toUpperCase()}
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: 6,
-          marginBottom: 4,
-        }}
-      >
-        <span
-          style={{
-            font: "700 clamp(40px, 4.5vw, 64px) 'Space Grotesk', sans-serif",
-            letterSpacing: "-0.06em",
-            color: isFeatured ? "#FFFFFF" : "#0E1116",
-          }}
-        >
-          {plan.formatPrice()}
-        </span>
-        {!plan.isFree && (
-          <span
-            style={{
-              font: "400 12px 'Space Mono', monospace",
-              color: isFeatured ? "rgba(255,255,255,.45)" : "rgba(14,17,22,.4)",
-            }}
-          >
-            {t.pricing.perMonth}
-          </span>
-        )}
-      </div>
-
-      <div
-        style={{
-          font: "400 11px 'Space Mono', monospace",
-          letterSpacing: ".1em",
-          color: isFeatured ? "rgba(255,255,255,.4)" : "rgba(14,17,22,.4)",
-          marginBottom: 28,
-        }}
-      >
-        {plan.isFree
-          ? t.pricing.forever.toUpperCase()
-          : code === "enterprise"
-            ? `10 ${t.pricing.users.toUpperCase()} · ${t.pricing.vatIncluded.toUpperCase()}`
-            : t.pricing.vatIncluded.toUpperCase()}
-      </div>
-
-      <div
-        style={{
-          borderTop: `1px solid ${isFeatured ? "rgba(255,255,255,.12)" : "rgba(14,17,22,.1)"}`,
-          paddingTop: 20,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          marginBottom: 20,
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span
-            style={{
-              font: "400 11px 'Space Mono', monospace",
-              color: isFeatured ? "rgba(255,255,255,.5)" : "rgba(14,17,22,.5)",
-            }}
-          >
-            {t.pricing.analysisQuota}
-          </span>
-          <span
-            style={{
-              font: "700 12px 'Space Mono', monospace",
-              color: isFeatured ? "#FFFFFF" : "#0E1116",
-            }}
-          >
-            {plan.analysisQuota >= 9999 ? t.pricing.unlimited : plan.analysisQuota}
-          </span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span
-            style={{
-              font: "400 11px 'Space Mono', monospace",
-              color: isFeatured ? "rgba(255,255,255,.5)" : "rgba(14,17,22,.5)",
-            }}
-          >
-            {t.pricing.reportQuota}
-          </span>
-          <span
-            style={{
-              font: "700 12px 'Space Mono', monospace",
-              color: isFeatured ? "#FFFFFF" : "#0E1116",
-            }}
-          >
-            {plan.reportQuota >= 9999 ? t.pricing.unlimited : plan.reportQuota}
-          </span>
-        </div>
-      </div>
-
-      <div
-        style={{
-          borderTop: `1px solid ${isFeatured ? "rgba(255,255,255,.12)" : "rgba(14,17,22,.1)"}`,
-          paddingTop: 20,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          flex: 1,
-        }}
-      >
-        {features.map((f) => (
-          <div
-            key={f}
-            style={{
-              display: "flex",
-              gap: 10,
-              alignItems: "flex-start",
-              font: "400 12px 'Space Mono', monospace",
-              lineHeight: 1.5,
-              color: isFeatured ? "rgba(255,255,255,.72)" : "rgba(14,17,22,.65)",
-            }}
-          >
-            <span
-              style={{
-                color: isFeatured ? "#1B4DFF" : "#1B4DFF",
-                flexShrink: 0,
-                marginTop: 1,
-                font: "700 12px 'Space Mono', monospace",
-              }}
-            >
-              +
-            </span>
-            <span>{f}</span>
-          </div>
-        ))}
-      </div>
-
-      {isCurrent ? (
-        <div
-          style={{
-            marginTop: 32,
-            width: "100%",
-            padding: 16,
-            font: "700 11px 'Space Mono', monospace",
-            letterSpacing: ".18em",
-            textAlign: "center",
-            border: `1px solid ${isFeatured ? "rgba(255,255,255,.2)" : "rgba(14,17,22,.2)"}`,
-            color: isFeatured ? "rgba(255,255,255,.4)" : "rgba(14,17,22,.4)",
-          }}
-        >
-          {t.pricing.currentPlan.toUpperCase()}
-        </div>
-      ) : (
-        <Link
-          to={cta.to}
-          className="em-plan-btn"
-          data-featured={isFeatured ? "" : undefined}
-          style={{
-            marginTop: 32,
-            width: "100%",
-            padding: 16,
-            font: "700 11px 'Space Mono', monospace",
-            letterSpacing: ".18em",
-            textAlign: "center",
-            textDecoration: "none",
-            border: isFeatured ? "1px solid #1B4DFF" : "1px solid #0E1116",
-            background: isFeatured ? "#1B4DFF" : "transparent",
-            color: isFeatured ? "#fff" : "#0E1116",
-            cursor: "pointer",
-            minHeight: 44,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {cta.label.toUpperCase()}
-        </Link>
-      )}
-    </div>
-  );
-}
+/* ── ComparisonTable ───────────────────────────────────── */
 
 function ComparisonTable({
   plans,
@@ -549,14 +210,24 @@ function ComparisonTable({
 }) {
   const sorted = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
 
+  const data: Record<
+    CompKey,
+    Record<PlanCode, string | { text: string; color: string }>
+  > = {
+    ...COMPARISON_DATA,
+    monthlyAnalysis: Object.fromEntries(
+      sorted.map((p) => [
+        p.code,
+        p.analysisQuota >= 9999
+          ? t.pricing.unlimited
+          : String(p.analysisQuota),
+      ]),
+    ) as Record<PlanCode, string>,
+  };
+
   return (
-    <div
-      style={{
-        overflowX: "auto",
-        WebkitOverflowScrolling: "touch",
-      }}
-    >
-      <div style={{ minWidth: 600, border: "1px solid rgba(14,17,22,.14)" }}>
+    <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+      <div style={{ minWidth: 600, border: "1px solid rgba(14,17,22,.16)" }}>
         <div
           style={{
             display: "grid",
@@ -582,32 +253,28 @@ function ComparisonTable({
             </span>
           ))}
         </div>
+
         {COMPARISON_KEYS.map((key, i) => (
           <div
             key={key}
+            className="comp-row"
             style={{
               display: "grid",
               gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
-              borderBottom:
-                i < COMPARISON_KEYS.length - 1
-                  ? "1px solid rgba(14,17,22,.08)"
-                  : "none",
+              borderTop: "1px solid rgba(14,17,22,.1)",
               font: "400 12px 'Space Mono', monospace",
               opacity: visible ? 1 : 0,
               transform: visible ? "none" : "translateY(8px)",
-              transition: `opacity 200ms ease-out ${i * 60}ms, transform 200ms ease-out ${i * 60}ms`,
+              transition: `opacity 200ms ease-out ${i * 60}ms, transform 200ms ease-out ${i * 60}ms, background 180ms linear`,
             }}
           >
             <span
-              style={{
-                padding: "15px 16px",
-                color: "rgba(14,17,22,.6)",
-              }}
+              style={{ padding: "15px 16px", color: "rgba(14,17,22,.65)" }}
             >
               {t.pricing.comparisonRows[key]}
             </span>
             {sorted.map((p) => {
-              const cell = COMPARISON_DATA[key][p.code as PlanCode];
+              const cell = data[key][p.code as PlanCode];
               const isObj = typeof cell === "object";
               return (
                 <span
@@ -615,7 +282,7 @@ function ComparisonTable({
                   style={{
                     padding: "15px 16px",
                     color: isObj ? cell.color : undefined,
-                    font: isObj ? undefined : "700 12px 'Space Mono', monospace",
+                    fontWeight: isObj ? undefined : 700,
                   }}
                 >
                   {isObj ? cell.text : cell}
@@ -629,118 +296,103 @@ function ComparisonTable({
   );
 }
 
+/* ── PricingFaq ────────────────────────────────────────── */
+
 function PricingFaq({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
   const faqs = [
-    { q: t.pricing.faq.cancelQ, a: t.pricing.faq.cancelA },
-    { q: t.pricing.faq.quotaQ, a: t.pricing.faq.quotaA },
     { q: t.pricing.faq.changeQ, a: t.pricing.faq.changeA },
+    { q: t.pricing.faq.quotaQ, a: t.pricing.faq.quotaA },
+    { q: t.pricing.faq.cardQ, a: t.pricing.faq.cardA },
+    { q: t.pricing.faq.invoiceQ, a: t.pricing.faq.invoiceA },
+    { q: t.pricing.faq.cancelQ, a: t.pricing.faq.cancelA },
     { q: t.pricing.faq.refundQ, a: t.pricing.faq.refundA },
   ];
 
   return (
     <div>
-      <div style={{ borderTop: "1px solid rgba(14,17,22,.14)" }}>
-        {faqs.map((faq, i) => {
-          const isOpen = openIndex === i;
-          return (
-            <div
-              key={i}
-              style={{ borderBottom: "1px solid rgba(14,17,22,.14)" }}
-            >
-              <button
-                type="button"
-                onClick={() => setOpenIndex(isOpen ? null : i)}
-                style={{
-                  width: "100%",
-                  background: "transparent",
-                  border: 0,
-                  padding: "20px 0",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  minHeight: 44,
-                }}
-              >
-                <span
-                  style={{
-                    font: "500 clamp(14px, 1.6vw, 18px) 'Space Grotesk', sans-serif",
-                    letterSpacing: "-0.03em",
-                    color: "#0E1116",
-                  }}
-                >
-                  {faq.q}
-                </span>
-                <span
-                  style={{
-                    font: "400 18px 'Space Mono', monospace",
-                    color: "rgba(14,17,22,.4)",
-                    flexShrink: 0,
-                    transition: "transform 200ms ease-out",
-                    transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
-                  }}
-                >
-                  +
-                </span>
-              </button>
-              <div
-                style={{
-                  overflow: "hidden",
-                  maxHeight: isOpen ? 300 : 0,
-                  transition: "max-height 250ms ease-out",
-                }}
-              >
-                <div
-                  style={{
-                    padding: "0 0 20px",
-                    font: "400 13px 'Space Mono', monospace",
-                    lineHeight: 1.85,
-                    color: "rgba(14,17,22,.58)",
-                    maxWidth: 620,
-                  }}
-                >
-                  {faq.a}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ marginTop: 20 }}>
-        <Link
-          to="/sss"
+      {faqs.map((faq, i) => (
+        <details
+          key={i}
           style={{
-            font: "400 11px 'Space Mono', monospace",
-            letterSpacing: ".14em",
-            color: "#1B4DFF",
-            textDecoration: "none",
+            borderTop: "1px solid rgba(14,17,22,.14)",
+            padding: "18px 0",
           }}
+          {...(i === 0 ? { open: true } : {})}
         >
-          {t.pricing.faq.generalLink.toUpperCase()} →
-        </Link>
-      </div>
+          <summary
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              cursor: "pointer",
+              listStyle: "none",
+              font: "500 clamp(15px, 1.5vw, 19px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.02em",
+              color: "#0E1116",
+            }}
+          >
+            <span
+              style={{
+                flex: "none",
+                font: "400 10px 'Space Mono', monospace",
+                letterSpacing: ".18em",
+                color: "#1B4DFF",
+              }}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span>{faq.q}</span>
+            <span
+              aria-hidden="true"
+              style={{
+                marginLeft: "auto",
+                flex: "none",
+                font: "400 16px 'Space Mono', monospace",
+                color: "rgba(14,17,22,.35)",
+              }}
+            >
+              +
+            </span>
+          </summary>
+          <p
+            style={{
+              margin: "12px 0 0 34px",
+              maxWidth: "62ch",
+              font: "400 12px 'Space Mono', monospace",
+              lineHeight: 1.85,
+              color: "rgba(14,17,22,.62)",
+            }}
+          >
+            {faq.a}
+          </p>
+        </details>
+      ))}
     </div>
   );
 }
 
+/* ── Paketler (main) ───────────────────────────────────── */
+
 function Paketler() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [sliderValue, setSliderValue] = useState(46);
+  const canTilt = useCanTilt();
 
   useEffect(() => {
     const svc = new BillingService(
       new BillingRepository(getSupabaseBrowserClient()),
     );
-    svc.listPlans().then((p) => {
-      setPlans(p.sort((a, b) => a.sortOrder - b.sortOrder));
-      setLoaded(true);
-    }).catch(() => setLoaded(true));
+    svc
+      .listPlans()
+      .then((p) => {
+        setPlans(p.sort((a, b) => a.sortOrder - b.sortOrder));
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
 
     if (!authLoading && user) {
       svc.entitlements().then(setEntitlements).catch(() => {});
@@ -749,255 +401,999 @@ function Paketler() {
 
   const currentPlanCode = entitlements?.planCode ?? null;
 
+  const sortedPlans = PLAN_ORDER.map((code) =>
+    plans.find((p) => p.code === code),
+  ).filter(Boolean) as Plan[];
+
+  const calc = useMemo(
+    () =>
+      loaded && sortedPlans.length > 0
+        ? calcFromSlider(sliderValue, sortedPlans)
+        : null,
+    [sliderValue, sortedPlans, loaded],
+  );
+
+  const heroLines = t.pricing.heroTitle.split("\n");
+
   const cardsReveal = useReveal(0.1);
   const tableReveal = useReveal(0.1);
   const faqReveal = useReveal(0.1);
 
-  const sortedPlans = PLAN_ORDER
-    .map((code) => plans.find((p) => p.code === code))
-    .filter(Boolean) as Plan[];
+  const fmtLocale = locale === "tr" ? "tr-TR" : "en-US";
 
-  const heroLines = t.pricing.heroTitle.split("\n");
+  const formatCount = (n: number) =>
+    n >= 1000 ? "1000+" : n.toLocaleString(fmtLocale);
 
-  const jsonLd = sortedPlans.length > 0
-    ? JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        itemListElement: sortedPlans.map((p, i) => ({
-          "@type": "ListItem",
-          position: i + 1,
-          item: {
-            "@type": "Product",
-            name: `emlakmetric ${p.name}`,
-            description: t.pricing.planDescriptions[p.code as PlanCode],
-            offers: {
-              "@type": "Offer",
-              price: (p.priceMonthly / 100).toFixed(2),
-              priceCurrency: p.currency,
-              availability: "https://schema.org/InStock",
+  const formatTL = (n: number) =>
+    n === 0
+      ? locale === "tr"
+        ? "ÜCRETSİZ"
+        : "FREE"
+      : "₺" + n.toLocaleString(fmtLocale);
+
+  const formatPerAnalysis = (n: number) =>
+    "₺" +
+    n.toLocaleString(fmtLocale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  /* schema.org */
+  const productJsonLd =
+    sortedPlans.length > 0
+      ? JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: sortedPlans.map((p, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            item: {
+              "@type": "Product",
+              name: `emlakmetric ${p.name}`,
+              description:
+                t.pricing.planDescriptions[p.code as PlanCode],
+              offers: {
+                "@type": "Offer",
+                price: (p.priceMonthly / 100).toFixed(2),
+                priceCurrency: p.currency,
+                availability: "https://schema.org/InStock",
+              },
             },
-          },
-        })),
-      })
-    : null;
+          })),
+        })
+      : null;
+
+  const faqJsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      { q: t.pricing.faq.changeQ, a: t.pricing.faq.changeA },
+      { q: t.pricing.faq.quotaQ, a: t.pricing.faq.quotaA },
+      { q: t.pricing.faq.cardQ, a: t.pricing.faq.cardA },
+      { q: t.pricing.faq.invoiceQ, a: t.pricing.faq.invoiceA },
+    ].map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  });
 
   return (
     <div>
-      {jsonLd && (
+      {productJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: jsonLd }}
+          dangerouslySetInnerHTML={{ __html: productJsonLd }}
         />
       )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: faqJsonLd }}
+      />
 
       <style>{`
-        .em-plan-btn {
-          transition: background 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out;
+        .comp-row:hover { background: #F5F7FF; }
+        summary::-webkit-details-marker { display: none; }
+        .pk-card-btn {
+          transition: background 160ms linear, color 160ms linear, border-color 160ms linear;
         }
-        .em-plan-btn:hover {
-          background: #1B4DFF !important;
+        .pk-card-btn:hover {
+          background: #0E1116 !important;
           color: #fff !important;
-          border-color: #1B4DFF !important;
         }
-        .em-plan-btn[data-featured]:hover {
-          background: #fff !important;
-          color: #0E1116 !important;
+        .pk-card-btn[data-featured]:hover {
+          background: #E23D28 !important;
+          border-color: #E23D28 !important;
+        }
+        .pk-cta-primary:hover {
+          background: #E23D28 !important;
+          border-color: #E23D28 !important;
+        }
+        .pk-cta-ghost:hover {
           border-color: #fff !important;
+        }
+        .pk-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 44px;
+          background: transparent;
+          cursor: grab;
+        }
+        .pk-slider:active { cursor: grabbing; }
+        .pk-slider::-webkit-slider-runnable-track {
+          height: 4px;
+          background: rgba(255,255,255,.2);
+          border-radius: 2px;
+        }
+        .pk-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: #1B4DFF;
+          border: 3px solid #0E1116;
+          box-shadow: 0 0 0 2px rgba(27,77,255,.35);
+          margin-top: -9px;
+          cursor: grab;
+        }
+        .pk-slider::-moz-range-track {
+          height: 4px;
+          background: rgba(255,255,255,.2);
+          border: none;
+          border-radius: 2px;
+        }
+        .pk-slider::-moz-range-thumb {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: #1B4DFF;
+          border: 3px solid #0E1116;
+          box-shadow: 0 0 0 2px rgba(27,77,255,.35);
+          cursor: grab;
+        }
+        @media (pointer: coarse) {
+          .pk-slider::-webkit-slider-thumb {
+            width: 32px;
+            height: 32px;
+            margin-top: -14px;
+          }
+          .pk-slider::-moz-range-thumb {
+            width: 32px;
+            height: 32px;
+          }
+          .pk-slider { height: 52px; }
+        }
+        @media (max-width: 900px) {
+          .pk-cards[data-tier="0"] > [data-plan="free"]       { order: -1; }
+          .pk-cards[data-tier="1"] > [data-plan="pro"]        { order: -1; }
+          .pk-cards[data-tier="2"] > [data-plan="enterprise"] { order: -1; }
         }
       `}</style>
 
-      {/* HERO */}
+      {/* ═══ HERO ═══ */}
+      <section
+        data-bg="light"
+        onMouseMove={sectionMove}
+        style={{
+          position: "relative",
+          background: "#FFFFFF",
+          overflow: "hidden",
+          padding:
+            "clamp(116px, 13vw, 176px) clamp(16px, 4vw, 44px) clamp(30px, 4vw, 56px)",
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: "-20%",
+            pointerEvents: "none",
+            background:
+              "radial-gradient(620px circle at var(--px, 70%) var(--py, 20%), rgba(27,77,255,.09), transparent 62%)",
+            transition: "background 220ms linear",
+          }}
+        />
+        <div style={{ position: "relative", maxWidth: 1560, margin: "0 auto" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              font: "400 11px 'Space Mono', monospace",
+              letterSpacing: ".28em",
+              color: "#1B4DFF",
+              marginBottom: 18,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 7,
+                height: 7,
+                background: "#1B4DFF",
+                animation: "em-pulse-dot 1.9s infinite",
+              }}
+            />
+            {t.pricing.pricingLabel.toUpperCase()}
+          </div>
+
+          <h1
+            style={{
+              margin: "0 0 clamp(18px, 2.6vw, 32px)",
+              font: "700 clamp(38px, 7.6vw, 128px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.06em",
+              lineHeight: 0.88,
+            }}
+          >
+            {heroLines.map((line, i) => (
+              <span
+                key={i}
+                style={{
+                  display: "block",
+                  animation: `em-line-in .9s ${i * 0.1}s cubic-bezier(.2,.75,.2,1) both`,
+                }}
+              >
+                {line}
+                {i === heroLines.length - 1 && (
+                  <span style={{ color: "#E23D28" }}>.</span>
+                )}
+              </span>
+            ))}
+          </h1>
+
+          <p
+            style={{
+              margin: 0,
+              maxWidth: 560,
+              font: "400 13px 'Space Mono', monospace",
+              lineHeight: 1.85,
+              color: "rgba(14,17,22,.62)",
+              animation: "em-rise-in .9s .18s both",
+            }}
+          >
+            {t.pricing.heroSubtitle}
+          </p>
+        </div>
+      </section>
+
+      {/* ═══ CALCULATOR ═══ */}
+      {loaded && calc && (
+        <section
+          data-bg="light"
+          style={{
+            background: "#FFFFFF",
+            padding: "0 clamp(16px, 4vw, 44px) clamp(30px, 4vw, 52px)",
+          }}
+        >
+          <div
+            onMouseMove={(e) => {
+              const el = e.currentTarget;
+              const r = el.getBoundingClientRect();
+              const nx = (e.clientX - r.left) / r.width;
+              const ny = (e.clientY - r.top) / r.height;
+              el.style.setProperty(
+                "--mx",
+                (nx * 100).toFixed(1) + "%",
+              );
+              el.style.setProperty(
+                "--my",
+                (ny * 100).toFixed(1) + "%",
+              );
+              el.style.setProperty("--spot", "1");
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.setProperty("--spot", "0");
+            }}
+            style={{
+              position: "relative",
+              maxWidth: 1560,
+              margin: "0 auto",
+              overflow: "hidden",
+              background: "#0E1116",
+              color: "#fff",
+              padding: "clamp(26px, 3.4vw, 46px)",
+              animation:
+                "em-flip-in 1s .3s cubic-bezier(.2,.75,.2,1) both",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                background:
+                  "radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(27,77,255,.34), transparent 72%)",
+                opacity: "var(--spot, 0)",
+                transition: "opacity 300ms linear",
+              }}
+            />
+
+            <div
+              className="em-col-1"
+              style={{
+                position: "relative",
+                display: "grid",
+                gridTemplateColumns: "1.35fr .95fr",
+                gap: "clamp(26px, 4vw, 62px)",
+                alignItems: "end",
+              }}
+            >
+              {/* slider side */}
+              <div>
+                <div
+                  style={{
+                    font: "400 10px 'Space Mono', monospace",
+                    letterSpacing: ".24em",
+                    color: "rgba(255,255,255,.5)",
+                    marginBottom: 20,
+                  }}
+                >
+                  {t.pricing.calcLabel.toUpperCase()}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 14,
+                    marginBottom: 22,
+                  }}
+                >
+                  <strong
+                    style={{
+                      font: "700 clamp(46px, 7vw, 96px) 'Space Grotesk', sans-serif",
+                      letterSpacing: "-0.06em",
+                      lineHeight: 0.9,
+                    }}
+                  >
+                    {formatCount(calc.count)}
+                  </strong>
+                  <span
+                    style={{
+                      font: "400 12px 'Space Mono', monospace",
+                      letterSpacing: ".2em",
+                      color: "rgba(255,255,255,.5)",
+                    }}
+                  >
+                    {t.pricing.scaleAnalyses.toUpperCase()}
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  className="pk-slider"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={sliderValue}
+                  onChange={(e) => setSliderValue(+e.target.value)}
+                  aria-label={t.pricing.calcLabel}
+                />
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    font: "400 10px 'Space Mono', monospace",
+                    letterSpacing: ".18em",
+                    color: "rgba(255,255,255,.35)",
+                    marginTop: -4,
+                  }}
+                >
+                  <span>3</span>
+                  <span>50</span>
+                  <span>250</span>
+                  <span>1000+</span>
+                </div>
+              </div>
+
+              {/* summary side */}
+              <div style={{ display: "grid", gap: 14 }}>
+                <div
+                  style={{
+                    borderTop: "1px solid rgba(255,255,255,.2)",
+                    paddingTop: 14,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "block",
+                      font: "400 10px 'Space Mono', monospace",
+                      letterSpacing: ".22em",
+                      color: "rgba(255,255,255,.45)",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {t.pricing.recommendedPlan.toUpperCase()}
+                  </span>
+                  <strong
+                    style={{
+                      display: "block",
+                      font: "700 clamp(24px, 3vw, 38px) 'Space Grotesk', sans-serif",
+                      letterSpacing: "-0.04em",
+                      color: "#1B4DFF",
+                    }}
+                  >
+                    {calc.plan.name.toUpperCase()}
+                  </strong>
+                </div>
+
+                <div
+                  className="em-col-2"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 14,
+                    borderTop: "1px solid rgba(255,255,255,.2)",
+                    paddingTop: 14,
+                  }}
+                >
+                  <div>
+                    <span
+                      style={{
+                        display: "block",
+                        font: "400 10px 'Space Mono', monospace",
+                        letterSpacing: ".22em",
+                        color: "rgba(255,255,255,.45)",
+                        marginBottom: 8,
+                      }}
+                    >
+                      {t.pricing.monthlyLabel.toUpperCase()}
+                    </span>
+                    <strong
+                      style={{
+                        font: "700 20px 'Space Mono', monospace",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      {formatTL(calc.price)}
+                    </strong>
+                  </div>
+                  <div>
+                    <span
+                      style={{
+                        display: "block",
+                        font: "400 10px 'Space Mono', monospace",
+                        letterSpacing: ".22em",
+                        color: "rgba(255,255,255,.45)",
+                        marginBottom: 8,
+                      }}
+                    >
+                      {t.pricing.perAnalysis.toUpperCase()}
+                    </span>
+                    <strong
+                      style={{
+                        font: "700 20px 'Space Mono', monospace",
+                        letterSpacing: "-0.02em",
+                        color: "#00875A",
+                      }}
+                    >
+                      {formatPerAnalysis(calc.perAnalysis)}
+                    </strong>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    height: 4,
+                    background: "rgba(255,255,255,.14)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "block",
+                      height: "100%",
+                      width: `${calc.fill}%`,
+                      background: "#1B4DFF",
+                      transition:
+                        "width 320ms cubic-bezier(.2,.75,.2,1)",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══ PLAN CARDS ═══ */}
+      {loaded && sortedPlans.length > 0 && (
+        <section
+          data-bg="light"
+          style={{
+            background: "#FFFFFF",
+            padding:
+              "clamp(20px, 3vw, 40px) clamp(16px, 4vw, 44px) clamp(30px, 4vw, 50px)",
+          }}
+        >
+          <div
+            ref={cardsReveal.ref}
+            className="em-col-1 pk-cards"
+            data-tier={calc?.tier}
+            style={{
+              maxWidth: 1560,
+              margin: "0 auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 1,
+              background: "rgba(14,17,22,.16)",
+              border: "1px solid rgba(14,17,22,.16)",
+            }}
+          >
+            {sortedPlans.map((plan, i) => {
+              const code = plan.code as PlanCode;
+              const isFeatured = plan.isFeatured;
+              const isCurrent = currentPlanCode === code;
+              const isRecommended = calc?.tier === i;
+              const features = t.pricing.planFeatures[code];
+
+              const cta =
+                code === "free"
+                  ? { label: t.pricing.tryFree, to: "/kayit" as const }
+                  : code === "pro"
+                    ? {
+                        label: t.pricing.tryDays,
+                        to: "/kayit" as const,
+                      }
+                    : {
+                        label: t.pricing.buyPlan,
+                        to: "/iletisim" as const,
+                      };
+
+              const spotlightColor = isFeatured
+                ? "rgba(27,77,255,.4)"
+                : code === "enterprise"
+                  ? "rgba(226,61,40,.12)"
+                  : "rgba(27,77,255,.13)";
+
+              return (
+                <article
+                  key={code}
+                  data-plan={code}
+                  onMouseMove={(e) => cardMove(e, canTilt)}
+                  onMouseLeave={cardLeave}
+                  style={{
+                    position: "relative",
+                    overflow: "hidden",
+                    background: isFeatured ? "#0E1116" : "#fff",
+                    color: isFeatured ? "#fff" : "#0E1116",
+                    padding: "clamp(24px, 3vw, 40px)",
+                    display: "flex",
+                    flexDirection: "column",
+                    transform: canTilt
+                      ? "perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0)"
+                      : undefined,
+                    transition: canTilt
+                      ? "transform 320ms cubic-bezier(.2,.75,.2,1)"
+                      : undefined,
+                    opacity: cardsReveal.visible ? 1 : 0,
+                  }}
+                >
+                  {/* spotlight */}
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      pointerEvents: "none",
+                      background: `radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), ${spotlightColor}, transparent 72%)`,
+                      opacity: "var(--spot, 0)",
+                      transition: "opacity 300ms linear",
+                    }}
+                  />
+
+                  {/* header */}
+                  <div
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      minHeight: 22,
+                    }}
+                  >
+                    <span
+                      style={{
+                        font: "400 10px 'Space Mono', monospace",
+                        letterSpacing: ".22em",
+                        color: isFeatured
+                          ? "rgba(255,255,255,.5)"
+                          : "rgba(14,17,22,.45)",
+                      }}
+                    >
+                      {String(i + 1).padStart(2, "0")} ·{" "}
+                      {plan.name.toUpperCase()}
+                    </span>
+
+                    {!isFeatured && isRecommended && (
+                      <span
+                        style={{
+                          marginLeft: "auto",
+                          background: "#00875A",
+                          color: "#fff",
+                          font: "700 9px 'Space Mono', monospace",
+                          letterSpacing: ".18em",
+                          padding: "5px 8px",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {t.pricing.suitableForYou.toUpperCase()}
+                      </span>
+                    )}
+
+                    {isFeatured && (
+                      <span
+                        style={{
+                          marginLeft: "auto",
+                          background: isRecommended
+                            ? "#00875A"
+                            : "#1B4DFF",
+                          color: "#fff",
+                          font: "700 9px 'Space Mono', monospace",
+                          letterSpacing: ".18em",
+                          padding: "5px 8px",
+                          whiteSpace: "nowrap",
+                          transition: "background 240ms linear",
+                        }}
+                      >
+                        {isRecommended
+                          ? t.pricing.suitableForYou.toUpperCase()
+                          : t.pricing.badge.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* price */}
+                  <div
+                    style={{
+                      position: "relative",
+                      margin: "24px 0 6px",
+                      font: "700 clamp(38px, 4vw, 62px) 'Space Grotesk', sans-serif",
+                      letterSpacing: "-0.06em",
+                    }}
+                  >
+                    {plan.formatPrice(fmtLocale)}
+                  </div>
+
+                  {/* term note */}
+                  <div
+                    style={{
+                      position: "relative",
+                      font: "400 11px 'Space Mono', monospace",
+                      letterSpacing: ".16em",
+                      color: isFeatured
+                        ? "rgba(255,255,255,.5)"
+                        : "rgba(14,17,22,.45)",
+                      marginBottom: 26,
+                    }}
+                  >
+                    {plan.isFree
+                      ? t.pricing.freeMonthly.toUpperCase()
+                      : code === "enterprise"
+                        ? `10 ${t.pricing.users.toUpperCase()} · ${t.pricing.vatIncluded.toUpperCase()}`
+                        : `${t.pricing.perMonth.toUpperCase()} · ${t.pricing.vatIncluded.toUpperCase()}`}
+                  </div>
+
+                  {/* features */}
+                  <div
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 12,
+                      font: "400 12px 'Space Mono', monospace",
+                      lineHeight: 1.6,
+                      color: isFeatured
+                        ? "rgba(255,255,255,.78)"
+                        : "rgba(14,17,22,.7)",
+                      borderTop: `1px solid ${isFeatured ? "rgba(255,255,255,.16)" : "rgba(14,17,22,.14)"}`,
+                      paddingTop: 22,
+                      flex: 1,
+                    }}
+                  >
+                    {features.map((f) => {
+                      const isNeg = f.startsWith("−");
+                      const text = isNeg ? f.slice(1) : f;
+                      return (
+                        <span
+                          key={f}
+                          style={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            gap: 9,
+                            ...(isNeg
+                              ? { color: "rgba(226,61,40,.9)" }
+                              : {}),
+                          }}
+                        >
+                          <span
+                            style={{
+                              flex: "none",
+                              font: "700 11px 'Space Mono', monospace",
+                            }}
+                          >
+                            {isNeg ? "−" : "+"}
+                          </span>
+                          <span>{text}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  {/* CTA */}
+                  {isCurrent ? (
+                    <div
+                      style={{
+                        position: "relative",
+                        marginTop: 34,
+                        width: "100%",
+                        padding: 17,
+                        font: "700 11px 'Space Mono', monospace",
+                        letterSpacing: ".2em",
+                        textAlign: "center",
+                        border: `1px solid ${isFeatured ? "rgba(255,255,255,.2)" : "rgba(14,17,22,.2)"}`,
+                        color: isFeatured
+                          ? "rgba(255,255,255,.4)"
+                          : "rgba(14,17,22,.4)",
+                      }}
+                    >
+                      {t.pricing.currentPlan.toUpperCase()}
+                    </div>
+                  ) : (
+                    <Link
+                      to={cta.to}
+                      className="pk-card-btn"
+                      data-featured={isFeatured ? "" : undefined}
+                      style={{
+                        position: "relative",
+                        marginTop: 34,
+                        width: "100%",
+                        padding: 17,
+                        font: "700 11px 'Space Mono', monospace",
+                        letterSpacing: ".2em",
+                        textAlign: "center",
+                        textDecoration: "none",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 44,
+                        border: isFeatured
+                          ? "1px solid #1B4DFF"
+                          : "1px solid #0E1116",
+                        background: isFeatured
+                          ? "#1B4DFF"
+                          : "transparent",
+                        color: isFeatured ? "#fff" : "#0E1116",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {cta.label.toUpperCase()}
+                    </Link>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+
+          <div
+            className="em-stack"
+            style={{
+              maxWidth: 1560,
+              margin: "16px auto 0",
+              display: "flex",
+              gap: 16,
+              font: "400 10px 'Space Mono', monospace",
+              letterSpacing: ".16em",
+              color: "rgba(14,17,22,.45)",
+            }}
+          >
+            <span>{t.pricing.cancelNote.toUpperCase()}</span>
+          </div>
+        </section>
+      )}
+
+      {/* ═══ COMPARISON TABLE ═══ */}
+      {loaded && sortedPlans.length > 0 && (
+        <section
+          data-bg="light"
+          style={{
+            background: "#FFFFFF",
+            padding:
+              "clamp(46px, 6vw, 88px) clamp(16px, 4vw, 44px) clamp(30px, 4vw, 50px)",
+          }}
+        >
+          <div
+            ref={tableReveal.ref}
+            style={{ maxWidth: 1560, margin: "0 auto" }}
+          >
+            <h2
+              style={{
+                margin: "0 0 clamp(22px, 3vw, 38px)",
+                font: "700 clamp(24px, 3.2vw, 48px) 'Space Grotesk', sans-serif",
+                letterSpacing: "-0.055em",
+              }}
+            >
+              {t.pricing.comparisonTitle}
+              <span style={{ color: "#E23D28" }}>.</span>
+            </h2>
+            <ComparisonTable
+              plans={sortedPlans}
+              t={t}
+              visible={tableReveal.visible}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* ═══ FAQ ═══ */}
       <section
         data-bg="light"
         style={{
           background: "#FFFFFF",
           padding:
-            "clamp(120px, 14vw, 190px) clamp(16px, 4vw, 44px) clamp(40px, 5vw, 70px)",
+            "clamp(30px, 4vw, 54px) clamp(16px, 4vw, 44px) clamp(64px, 8vw, 120px)",
         }}
       >
-        <div style={{ maxWidth: 1560, margin: "0 auto" }}>
-          <div
-            style={{
-              font: "400 11px 'Space Mono', monospace",
-              letterSpacing: ".28em",
-              color: "#1B4DFF",
-              marginBottom: 20,
-            }}
-          >
-            01 · {t.pricing.title.toUpperCase()}
+        <div
+          ref={faqReveal.ref}
+          className="em-col-1"
+          style={{
+            maxWidth: 1560,
+            margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: ".9fr 1.4fr",
+            gap: "clamp(24px, 4vw, 64px)",
+            borderTop: "1px solid rgba(14,17,22,.16)",
+            paddingTop: "clamp(28px, 4vw, 50px)",
+            opacity: faqReveal.visible ? 1 : 0,
+            transition: "opacity 400ms ease-out",
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                margin: "0 0 12px",
+                font: "700 clamp(22px, 2.8vw, 40px) 'Space Grotesk', sans-serif",
+                letterSpacing: "-0.05em",
+              }}
+            >
+              {t.pricing.faq.sideTitle.split("\n").map((line, i) => (
+                <span key={i}>
+                  {i > 0 && <br />}
+                  {line}
+                </span>
+              ))}
+              <span style={{ color: "#E23D28" }}>.</span>
+            </h2>
+            <p
+              style={{
+                margin: 0,
+                maxWidth: "34ch",
+                font: "400 12px 'Space Mono', monospace",
+                lineHeight: 1.8,
+                color: "rgba(14,17,22,.55)",
+              }}
+            >
+              {t.pricing.faq.sideSubtitle}
+            </p>
           </div>
-          <h1
+
+          <PricingFaq t={t} />
+        </div>
+      </section>
+
+      {/* ═══ CLOSING CTA ═══ */}
+      <section
+        data-bg="dark"
+        onMouseMove={sectionMove}
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          background: "#0E1116",
+          color: "#fff",
+          padding: "clamp(60px, 8vw, 120px) clamp(16px, 4vw, 44px)",
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: "-20%",
+            pointerEvents: "none",
+            background:
+              "radial-gradient(560px circle at var(--px, 50%) var(--py, 50%), rgba(27,77,255,.3), transparent 62%)",
+            transition: "background 220ms linear",
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            maxWidth: 1560,
+            margin: "0 auto",
+          }}
+        >
+          <h2
             style={{
-              margin: "0 0 clamp(20px, 3vw, 36px)",
-              font: "700 clamp(38px, 7.5vw, 128px) 'Space Grotesk', sans-serif",
+              margin: "0 0 clamp(18px, 2.4vw, 30px)",
+              maxWidth: "18ch",
+              font: "700 clamp(30px, 5.4vw, 86px) 'Space Grotesk', sans-serif",
               letterSpacing: "-0.06em",
-              lineHeight: 0.88,
-              animation: "em-rise-in 1s both",
+              lineHeight: 0.92,
             }}
           >
-            {heroLines.map((line, i) => (
+            {t.pricing.closingTitle.split("\n").map((line, i) => (
               <span key={i}>
                 {i > 0 && <br />}
                 {line}
               </span>
             ))}
             <span style={{ color: "#E23D28" }}>.</span>
-          </h1>
+          </h2>
+
           <p
             style={{
-              margin: "0 0 clamp(36px, 5vw, 64px)",
-              maxWidth: 620,
+              margin: "0 0 clamp(24px, 3vw, 40px)",
+              maxWidth: "54ch",
               font: "400 13px 'Space Mono', monospace",
               lineHeight: 1.85,
-              color: "rgba(14,17,22,.58)",
+              color: "rgba(255,255,255,.6)",
             }}
           >
-            {t.pricing.heroSubtitle}
+            {t.pricing.closingSubtitle}
           </p>
 
-          {loaded && sortedPlans.length > 0 && (
-            <div className="em-hide">
-              <ScaleAxis plans={sortedPlans} />
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* CARDS */}
-      <section
-        data-bg="light"
-        style={{
-          background: "#FFFFFF",
-          padding:
-            "clamp(30px, 4vw, 56px) clamp(16px, 4vw, 44px) clamp(40px, 5vw, 70px)",
-        }}
-      >
-        <div
-          ref={cardsReveal.ref}
-          className="em-col-1"
-          style={{
-            maxWidth: 1560,
-            margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "clamp(12px, 2vw, 24px)",
-          }}
-        >
-          {sortedPlans.map((plan, i) => (
-            <PlanCard
-              key={plan.code}
-              plan={plan}
-              index={i}
-              currentPlanCode={currentPlanCode}
-              t={t}
-              visible={cardsReveal.visible}
-            />
-          ))}
-        </div>
-        <div
-          className="em-stack"
-          style={{
-            maxWidth: 1560,
-            margin: "16px auto 0",
-            display: "flex",
-            gap: 16,
-            font: "400 10px 'Space Mono', monospace",
-            letterSpacing: ".16em",
-            color: "rgba(14,17,22,.4)",
-          }}
-        >
-          <span>{t.pricing.cancelNote.toUpperCase()}</span>
-        </div>
-      </section>
-
-      {/* COMPARISON TABLE */}
-      <section
-        data-bg="light"
-        style={{
-          background: "#FFFFFF",
-          padding:
-            "clamp(40px, 5vw, 70px) clamp(16px, 4vw, 44px) clamp(64px, 8vw, 120px)",
-        }}
-      >
-        <div
-          ref={tableReveal.ref}
-          style={{
-            maxWidth: 1560,
-            margin: "0 auto",
-            borderTop: "1px solid rgba(14,17,22,.14)",
-            paddingTop: "clamp(30px, 4vw, 52px)",
-          }}
-        >
           <div
-            style={{
-              font: "400 11px 'Space Mono', monospace",
-              letterSpacing: ".28em",
-              color: "#1B4DFF",
-              marginBottom: 20,
-            }}
+            className="em-stack"
+            style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
           >
-            02 · {t.pricing.comparisonTitle.toUpperCase()}
+            <Link
+              to="/kayit"
+              className="pk-cta-primary"
+              style={{
+                background: "#1B4DFF",
+                color: "#fff",
+                border: "1px solid #1B4DFF",
+                minHeight: 52,
+                padding: "0 30px",
+                font: "700 12px 'Space Mono', monospace",
+                letterSpacing: ".2em",
+                cursor: "pointer",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition:
+                  "background 160ms linear, border-color 160ms linear",
+              }}
+            >
+              {t.pricing.tryFree.toUpperCase()}
+            </Link>
+            <Link
+              to="/iletisim"
+              className="pk-cta-ghost"
+              style={{
+                background: "transparent",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,.4)",
+                minHeight: 52,
+                padding: "0 30px",
+                font: "700 12px 'Space Mono', monospace",
+                letterSpacing: ".2em",
+                cursor: "pointer",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "border-color 160ms linear",
+              }}
+            >
+              {t.pricing.buyPlan.toUpperCase()}
+            </Link>
           </div>
-          <h2
-            style={{
-              margin: "0 0 clamp(24px, 3vw, 40px)",
-              font: "700 clamp(24px, 3.2vw, 48px) 'Space Grotesk', sans-serif",
-              letterSpacing: "-0.055em",
-            }}
-          >
-            {t.pricing.comparisonTitle}
-            <span style={{ color: "#E23D28" }}>.</span>
-          </h2>
-          <ComparisonTable
-            plans={sortedPlans}
-            t={t}
-            visible={tableReveal.visible}
-          />
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section
-        data-bg="light"
-        style={{
-          background: "#FFFFFF",
-          padding:
-            "0 clamp(16px, 4vw, 44px) clamp(80px, 10vw, 140px)",
-        }}
-      >
-        <div
-          ref={faqReveal.ref}
-          style={{
-            maxWidth: 800,
-            margin: "0 auto",
-            borderTop: "1px solid rgba(14,17,22,.14)",
-            paddingTop: "clamp(30px, 4vw, 52px)",
-            opacity: faqReveal.visible ? 1 : 0,
-            transform: faqReveal.visible ? "none" : "translateY(16px)",
-            transition: "opacity 250ms ease-out, transform 250ms ease-out",
-          }}
-        >
-          <div
-            style={{
-              font: "400 11px 'Space Mono', monospace",
-              letterSpacing: ".28em",
-              color: "#1B4DFF",
-              marginBottom: 20,
-            }}
-          >
-            03 · {t.pricing.faq.title.toUpperCase()}
-          </div>
-          <h2
-            style={{
-              margin: "0 0 clamp(20px, 3vw, 36px)",
-              font: "700 clamp(24px, 3.2vw, 48px) 'Space Grotesk', sans-serif",
-              letterSpacing: "-0.055em",
-            }}
-          >
-            {t.pricing.faq.title}
-            <span style={{ color: "#E23D28" }}>.</span>
-          </h2>
-          <PricingFaq t={t} />
         </div>
       </section>
     </div>

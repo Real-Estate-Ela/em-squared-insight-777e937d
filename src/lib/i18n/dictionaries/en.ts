@@ -28,8 +28,9 @@ export const en: Dictionary = {
     perMonth: "/ mo",
     monthlyAnalysisCount: "monthly analyses",
     monthlyReportCount: "monthly report downloads",
-    heroTitle: "No per-analysis\ncharges",
-    heroSubtitle: "Three plans based on monthly analysis quota. Cancel anytime, no card stored.",
+    heroTitle: "Right plan,\nright price",
+    heroSubtitle:
+      "emlakmetric plans are split by monthly analysis quota. Drag the slider to pick how many listings you analyse per month; see your recommended plan and per-analysis cost instantly.",
     scaleLabel: "ANALYSIS VOLUME",
     scaleAnalyses: "analyses / mo",
     unlimited: "unlimited",
@@ -43,15 +44,46 @@ export const en: Dictionary = {
     feature: "Feature",
     annualNote: "Cancel anytime",
     cancelNote: "Cancel anytime · no card stored",
+    pricingLabel: "Pricing & plans",
+    calcLabel: "Plan calculator: How many listings do you analyse per month?",
+    recommendedPlan: "Recommended plan",
+    monthlyLabel: "Monthly",
+    perAnalysis: "Per analysis",
+    suitableForYou: "Best fit",
+    freeMonthly: "Free every month",
+    buyPlan: "Buy plan",
+    closingTitle: "Three analyses free.\nThe rest is in your plan",
+    closingSubtitle:
+      "We don't ask for card details. Run your first three listing analyses for free, compare the m² price with the neighborhood median. For more, pick your plan and start using it immediately.",
     planDescriptions: {
       free: "Explore the platform. Start making data-driven real estate investment decisions today.",
       pro: "Built for active investors. Never miss an opportunity with extensive analysis capacity and detailed reports.",
-      enterprise: "For real estate agencies and portfolio managers. Unlimited analysis capacity and dedicated support across your team.",
+      enterprise:
+        "For real estate agencies and portfolio managers. Unlimited analysis capacity and dedicated support across your team.",
     },
     planFeatures: {
-      free: ["Basic investment analysis", "Rental yield calculation", "Neighborhood analysis report", "Price comparison across 3 platforms"],
-      pro: ["All free features", "Detailed PDF and Excel reports", "Regional comparison", "Priority email support", "Advanced risk analysis"],
-      enterprise: ["All Pro features", "API access", "Team accounts and management panel", "Dedicated account manager", "Custom integrations"],
+      free: [
+        "Monthly listing analysis",
+        "Neighborhood median comparison",
+        "12-month m² trend",
+        "−No portfolio tracking",
+        "−No PDF regional report",
+      ],
+      pro: [
+        "Unlimited location queries",
+        "Listing comparison",
+        "50-listing portfolio tracking",
+        "PDF regional report",
+        "−No API access",
+      ],
+      enterprise: [
+        "Unlimited analysis",
+        "API access · 10,000 calls / mo",
+        "Bulk CSV listing upload",
+        "Custom regional report",
+        "Account manager",
+        "Single sign-on (SSO)",
+      ],
     },
     comparisonRows: {
       monthlyAnalysis: "Monthly listing analysis",
@@ -64,13 +96,26 @@ export const en: Dictionary = {
     faq: {
       title: "About plans",
       cancelQ: "Can I cancel anytime?",
-      cancelA: "Yes. Access continues until the end of the billing period with no further charges.",
-      quotaQ: "When does my quota reset?",
-      quotaA: "Analysis and report quotas reset at the start of each billing period. Unused quota does not roll over.",
-      changeQ: "Can I change plans?",
-      changeA: "Upgrades take effect immediately with prorated charges for remaining days. Downgrades apply at the end of the current period.",
+      cancelA:
+        "Yes. Access continues until the end of the billing period with no further charges.",
+      quotaQ: "Does unused analysis quota roll over?",
+      quotaA:
+        "No. Analysis quota resets at the end of each billing period. If you regularly exceed the limit, the calculator will recommend a higher plan.",
+      changeQ: "Can I change my plan anytime?",
+      changeA:
+        "Yes. Upgrades take effect immediately with prorated charges for the remaining days. Downgrades apply at the end of the current period; your current quota stays active until then.",
       refundQ: "What is the refund policy?",
-      refundA: "You can request a refund within the first 14 days via the contact form. After 14 days, the remaining period is used.",
+      refundA:
+        "You can request a refund within the first 14 days via the contact form. After 14 days, the remaining period is used.",
+      cardQ: "Is my card information stored?",
+      cardA:
+        "Card data is never stored on emlakmetric servers; payments are processed via a PCI DSS-compliant provider. Cancel your subscription from the dashboard with one click.",
+      invoiceQ: "Can I get a company invoice?",
+      invoiceA:
+        "Yes. Enter your tax office and number in the dashboard and an e-archive invoice is automatically issued at the start of each billing period.",
+      sideTitle: "Payment and\nplan questions",
+      sideSubtitle:
+        "Can't find your answer? Write to us via the contact form; we'll get back to you the same business day.",
       generalLink: "All frequently asked questions",
     },
   },
@@ -97,7 +142,8 @@ export const en: Dictionary = {
     badge: "DATA-DRIVEN REAL ESTATE ANALYSIS",
     titleBefore: "Price alone",
     titleHighlight: "means nothing.",
-    subtitle: "A listing's numbers only make sense when placed side by side with its neighborhood's numbers. We make that comparison.",
+    subtitle:
+      "A listing's numbers only make sense when placed side by side with its neighborhood's numbers. We make that comparison.",
     ctaPrimary: "Start Analysis",
     ctaSecondary: "How It Works",
   },
@@ -105,7 +151,8 @@ export const en: Dictionary = {
     titleBefore: "Base your investment decisions on",
     titleHighlight: "data",
     titleAfter: ".",
-    subtitle: "Paste a listing link and see rental yield, ROI and neighborhood analysis in 20 seconds.",
+    subtitle:
+      "Paste a listing link and see rental yield, ROI and neighborhood analysis in 20 seconds.",
     button: "Analyse Now",
   },
   analysis: {
@@ -127,19 +174,24 @@ export const en: Dictionary = {
     years: "years",
   },
   cookie: {
-    bannerText: "This site uses essential cookies. We ask your consent to enable functional and analytics cookies.",
+    bannerText:
+      "This site uses essential cookies. We ask your consent to enable functional and analytics cookies.",
     learnMore: "Cookie policy",
     acceptAll: "ACCEPT ALL",
     requiredOnly: "REQUIRED ONLY",
     settings: "SETTINGS",
     settingsTitle: "Cookie Settings",
-    settingsDesc: "Choose which cookie categories to enable. Essential cookies are required for the site to work and cannot be disabled.",
+    settingsDesc:
+      "Choose which cookie categories to enable. Essential cookies are required for the site to work and cannot be disabled.",
     required: "Essential cookies",
-    requiredDesc: "Required for session management, security and core site functions.",
+    requiredDesc:
+      "Required for session management, security and core site functions.",
     functional: "Functional cookies",
-    functionalDesc: "Remember your language preference and interface settings.",
+    functionalDesc:
+      "Remember your language preference and interface settings.",
     analytics: "Analytics cookies",
-    analyticsDesc: "Collect anonymous usage statistics to help us improve the site.",
+    analyticsDesc:
+      "Collect anonymous usage statistics to help us improve the site.",
     save: "SAVE",
     close: "CLOSE",
     footerSettings: "Cookie Settings",
