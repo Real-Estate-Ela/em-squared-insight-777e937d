@@ -48,7 +48,7 @@ function LoginPage() {
     if (redirect) {
       window.location.href = redirect;
     } else {
-      navigate({ to: "/" });
+      navigate({ to: "/panel" });
     }
   };
 
