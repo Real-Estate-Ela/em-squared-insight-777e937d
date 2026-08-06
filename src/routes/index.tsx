@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
     meta: [
       {
         title:
-          "emlakmetric — sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
+          "emlakmetric | sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
       },
       {
         name: "description",
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:title",
         content:
-          "emlakmetric — sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
+          "emlakmetric | sahibinden ilan analizi, m² fiyat ve kira getirisi sorgulama",
       },
       {
         property: "og:description",
@@ -338,7 +338,7 @@ function Home() {
                   "em-line-in 1.15s .15s cubic-bezier(.2,.8,.2,1) both",
               }}
             >
-              FİYAT BİR İDDİA.
+              MAHALLE KONUŞUR,
             </span>
             <span
               style={{
@@ -348,7 +348,7 @@ function Home() {
                   "em-line-in 1.15s .38s cubic-bezier(.2,.8,.2,1) both",
               }}
             >
-              M² BİR KANIT
+              RAKAM KARAR VERİR
               <span style={{ color: "#E23D28" }}>.</span>
             </span>
           </h1>
@@ -373,10 +373,10 @@ function Home() {
                   "em-line-in 1.1s .95s cubic-bezier(.2,.8,.2,1) both",
               }}
             >
-              İlanın hikâyesini değil{" "}
-              <span style={{ color: "#0E1116" }}>medyanını</span> okuyoruz.
-              Sahibinden.com&apos;daki canlı veriyi ve girdiğin konumu dört
-              sayıya indiriyoruz — gerisi pazarlık.
+              Her ilanın gerçek değerini{" "}
+              <span style={{ color: "#0E1116" }}>mahallesinin verileri</span>{" "}
+              belirler. m² fiyatı, kira getirisi, amortisman ve likiditeyi tek
+              ekranda karşılaştır.
             </p>
             <a
               href="#analiz"
@@ -494,7 +494,7 @@ function Home() {
           lineColor="rgba(14,17,22,.16)"
           labelColor="#1B4DFF"
         >
-          <StickyTitle words={["Emlakçının", "cümlesi", "var;", "bizde", "metrekare", "var"]} blueFrom={3} blueTo={4} redDot />
+          <StickyTitle words={["İlan", "metnini", "değil,", "verisini", "oku"]} blueFrom={3} blueTo={4} redDot />
           <p
             style={{
               margin: 0,
@@ -506,7 +506,7 @@ function Home() {
           >
             &ldquo;Ferah, yatırıma uygun, emsalsiz&rdquo; bir cümledir. 71.400
             ₺/m² bir ölçüdür. Terminal ilan metnine bakmaz; fiyatı, alanı, katı
-            ve yaşı okur.
+            ve yaşı okur, mahalledeki emsal ilanlarla karşılaştırır.
           </p>
         </StickyLayer>
 
@@ -533,7 +533,7 @@ function Home() {
             }}
           >
             Kopya ilan ayıklanır, aykırı fiyat filtrelenir. Kalan set mahallenin
-            gerçek m² medyanını verir — ilanın o çizginin ne kadar altında
+            gerçek m² medyanını verir. İlanın o çizginin ne kadar altında
             olduğunu tek satırda görürsün.
           </p>
         </StickyLayer>
@@ -649,8 +649,8 @@ function Home() {
                 }}
               >
                 Yapıştır.{" "}
-                <span style={{ color: "#0E1116" }}>Üç saniye.</span> Kararın
-                hazır
+                <span style={{ color: "#0E1116" }}>Üç saniye.</span> Sonuç
+                ekranda
                 <span style={{ color: "#0E1116" }}>.</span>
               </h2>
             </div>
@@ -663,9 +663,9 @@ function Home() {
                 color: "rgba(255,255,255,.8)",
               }}
             >
-              İlan linki, mahalle ya da harita noktası — hangisini verirsen
-              terminal aynı formatta yanıt verir. Ekranı izle: kaynaklar tek tek
-              açılır, sayılar yerine oturur.
+              İlan linki, mahalle ya da harita noktası ver. Terminal aynı
+              formatta yanıt verir. Kaynaklar tek tek açılır, sayılar yerine
+              oturur.
             </p>
           </div>
 
@@ -781,7 +781,7 @@ function Home() {
                 placeholder={
                   tab === "link"
                     ? "sahibinden.com/ilan/9931-daire"
-                    : "Kadıköy, Fikirtepe — cadde veya mahalle"
+                    : "Kadıköy, Fikirtepe veya mahalle adı"
                 }
                 style={{
                   flex: 1,
@@ -1092,7 +1092,7 @@ function Home() {
                     marginBottom: 24,
                   }}
                 >
-                  {col.num} — {col.title}
+                  {col.num} · {col.title}
                 </div>
                 <h3
                   style={{
@@ -1524,8 +1524,8 @@ function Home() {
               </strong>
               dir; ekspertiz ya da değerleme raporu üretmez. Sahibinden.com&apos;daki
               satılık ve kiralık ilan verisini okur, aynı mahalledeki emsal
-              ilanlarla karşılaştırır ve sonucu tek birime —{" "}
-              <strong style={{ fontWeight: 700 }}>m² fiyatı</strong> — indirir.
+              ilanlarla karşılaştırır ve sonucu tek birime,{" "}
+              <strong style={{ fontWeight: 700 }}>m² fiyatına</strong>, indirir.
               İlan linkin yoksa{" "}
               <strong style={{ fontWeight: 700 }}>
                 konuma göre ev değeri sorgulama

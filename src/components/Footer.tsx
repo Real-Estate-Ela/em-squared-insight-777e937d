@@ -224,8 +224,8 @@ export function Footer() {
             >
               İletişim
             </Link>
-            <a href="mailto:merhaba@emlakmetric.com" className="em-footer-link" style={linkStyle}>
-              merhaba@emlakmetric.com
+            <a href="mailto:info@emlakmetric.com" className="em-footer-link" style={linkStyle}>
+              info@emlakmetric.com
             </a>
           </div>
         </div>

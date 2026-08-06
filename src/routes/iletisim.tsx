@@ -348,7 +348,7 @@ function Iletisim() {
                 >
                   <div style={infoLabelStyle}>E-POSTA</div>
                   <a
-                    href="mailto:merhaba@emlakmetric.com"
+                    href="mailto:info@emlakmetric.com"
                     className="em-contact-link"
                     style={{
                       font: "500 clamp(16px, 1.6vw, 21px) 'Space Grotesk', sans-serif",
@@ -356,7 +356,7 @@ function Iletisim() {
                       color: "#1B4DFF",
                     }}
                   >
-                    merhaba@emlakmetric.com
+                    info@emlakmetric.com
                   </a>
                 </div>
                 <div
