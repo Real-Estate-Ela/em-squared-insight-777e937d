@@ -106,6 +106,12 @@ export function Header() {
         />
         <Link
           to="/"
+          onClick={(e) => {
+            if (activePath === "/") {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
           style={{
             display: "flex",
             alignItems: "center",
