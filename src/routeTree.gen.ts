@@ -16,11 +16,14 @@ import { Route as SifreSifirlaRouteImport } from './routes/sifre-sifirla'
 import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as PaketlerRouteImport } from './routes/paketler'
+import { Route as KullanimKosullariRouteImport } from './routes/kullanim-kosullari'
 import { Route as KayitRouteImport } from './routes/kayit'
 import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
 import { Route as GorsellerRouteImport } from './routes/gorseller'
+import { Route as GizlilikPolitikasiRouteImport } from './routes/gizlilik-politikasi'
 import { Route as GirisRouteImport } from './routes/giris'
+import { Route as CerezPolitikasiRouteImport } from './routes/cerez-politikasi'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ApiReportRouteImport } from './routes/api/report'
@@ -61,6 +64,11 @@ const PaketlerRoute = PaketlerRouteImport.update({
   path: '/paketler',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KullanimKosullariRoute = KullanimKosullariRouteImport.update({
+  id: '/kullanim-kosullari',
+  path: '/kullanim-kosullari',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KayitRoute = KayitRouteImport.update({
   id: '/kayit',
   path: '/kayit',
@@ -81,9 +89,19 @@ const GorsellerRoute = GorsellerRouteImport.update({
   path: '/gorseller',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GizlilikPolitikasiRoute = GizlilikPolitikasiRouteImport.update({
+  id: '/gizlilik-politikasi',
+  path: '/gizlilik-politikasi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GirisRoute = GirisRouteImport.update({
   id: '/giris',
   path: '/giris',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CerezPolitikasiRoute = CerezPolitikasiRouteImport.update({
+  id: '/cerez-politikasi',
+  path: '/cerez-politikasi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -109,11 +127,14 @@ const ApiAnalyseRoute = ApiAnalyseRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cerez-politikasi': typeof CerezPolitikasiRoute
   '/giris': typeof GirisRoute
+  '/gizlilik-politikasi': typeof GizlilikPolitikasiRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
+  '/kullanim-kosullari': typeof KullanimKosullariRoute
   '/paketler': typeof PaketlerRoute
   '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
@@ -127,11 +148,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cerez-politikasi': typeof CerezPolitikasiRoute
   '/giris': typeof GirisRoute
+  '/gizlilik-politikasi': typeof GizlilikPolitikasiRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
+  '/kullanim-kosullari': typeof KullanimKosullariRoute
   '/paketler': typeof PaketlerRoute
   '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
@@ -146,11 +170,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cerez-politikasi': typeof CerezPolitikasiRoute
   '/giris': typeof GirisRoute
+  '/gizlilik-politikasi': typeof GizlilikPolitikasiRoute
   '/gorseller': typeof GorsellerRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
+  '/kullanim-kosullari': typeof KullanimKosullariRoute
   '/paketler': typeof PaketlerRoute
   '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
@@ -166,11 +193,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cerez-politikasi'
     | '/giris'
+    | '/gizlilik-politikasi'
     | '/gorseller'
     | '/hakkimizda'
     | '/iletisim'
     | '/kayit'
+    | '/kullanim-kosullari'
     | '/paketler'
     | '/panel'
     | '/profil'
@@ -184,11 +214,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cerez-politikasi'
     | '/giris'
+    | '/gizlilik-politikasi'
     | '/gorseller'
     | '/hakkimizda'
     | '/iletisim'
     | '/kayit'
+    | '/kullanim-kosullari'
     | '/paketler'
     | '/panel'
     | '/profil'
@@ -202,11 +235,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/cerez-politikasi'
     | '/giris'
+    | '/gizlilik-politikasi'
     | '/gorseller'
     | '/hakkimizda'
     | '/iletisim'
     | '/kayit'
+    | '/kullanim-kosullari'
     | '/paketler'
     | '/panel'
     | '/profil'
@@ -221,11 +257,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CerezPolitikasiRoute: typeof CerezPolitikasiRoute
   GirisRoute: typeof GirisRoute
+  GizlilikPolitikasiRoute: typeof GizlilikPolitikasiRoute
   GorsellerRoute: typeof GorsellerRoute
   HakkimizdaRoute: typeof HakkimizdaRoute
   IletisimRoute: typeof IletisimRoute
   KayitRoute: typeof KayitRoute
+  KullanimKosullariRoute: typeof KullanimKosullariRoute
   PaketlerRoute: typeof PaketlerRoute
   PanelRoute: typeof PanelRoute
   ProfilRoute: typeof ProfilRoute
@@ -289,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaketlerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kullanim-kosullari': {
+      id: '/kullanim-kosullari'
+      path: '/kullanim-kosullari'
+      fullPath: '/kullanim-kosullari'
+      preLoaderRoute: typeof KullanimKosullariRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kayit': {
       id: '/kayit'
       path: '/kayit'
@@ -317,11 +363,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GorsellerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gizlilik-politikasi': {
+      id: '/gizlilik-politikasi'
+      path: '/gizlilik-politikasi'
+      fullPath: '/gizlilik-politikasi'
+      preLoaderRoute: typeof GizlilikPolitikasiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/giris': {
       id: '/giris'
       path: '/giris'
       fullPath: '/giris'
       preLoaderRoute: typeof GirisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cerez-politikasi': {
+      id: '/cerez-politikasi'
+      path: '/cerez-politikasi'
+      fullPath: '/cerez-politikasi'
+      preLoaderRoute: typeof CerezPolitikasiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -357,11 +417,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CerezPolitikasiRoute: CerezPolitikasiRoute,
   GirisRoute: GirisRoute,
+  GizlilikPolitikasiRoute: GizlilikPolitikasiRoute,
   GorsellerRoute: GorsellerRoute,
   HakkimizdaRoute: HakkimizdaRoute,
   IletisimRoute: IletisimRoute,
   KayitRoute: KayitRoute,
+  KullanimKosullariRoute: KullanimKosullariRoute,
   PaketlerRoute: PaketlerRoute,
   PanelRoute: PanelRoute,
   ProfilRoute: ProfilRoute,
