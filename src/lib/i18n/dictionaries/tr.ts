@@ -26,6 +26,21 @@ export const tr = {
     perMonth: "/ ay",
     monthlyAnalysisCount: "adet aylık analiz",
     monthlyReportCount: "adet aylık rapor indirme",
+    heroTitle: "Analiz başına\nödeme yok",
+    heroSubtitle: "Aylık analiz hakkına göre üç paket. Yıllık ödemede iki ay ücretsiz.",
+    scaleLabel: "ANALİZ HACMİ",
+    scaleAnalyses: "analiz / ay",
+    unlimited: "sınırsız",
+    vatIncluded: "KDV dahil",
+    forever: "süresiz ücretsiz",
+    users: "kullanıcı",
+    tryFree: "Ücretsiz Başla",
+    tryDays: "14 Gün Dene",
+    requestQuote: "Teklif İste",
+    comparisonTitle: "Satır satır fark",
+    feature: "Özellik",
+    annualNote: "Yıllık ödemede iki ay ücretsiz",
+    cancelNote: "İstediğin zaman iptal · kart saklanmaz",
     planDescriptions: {
       free: "Platformu keşfedin. Gayrimenkul yatırım kararlarınızı veriye dayandırmaya bugün başlayın.",
       pro: "Aktif yatırımcılar için tasarlandı. Geniş analiz kapasitesi ve detaylı raporlarla hiçbir fırsatı kaçırmayın.",
@@ -35,6 +50,26 @@ export const tr = {
       free: ["Temel yatırım analizi", "Kira getirisi hesaplama", "Çevre analizi raporu", "3 platformdan fiyat karşılaştırma"],
       pro: ["Tüm ücretsiz özellikler", "Detaylı PDF ve Excel raporları", "Bölge bazlı karşılaştırma", "Öncelikli e-posta desteği", "Gelişmiş risk analizi"],
       enterprise: ["Tüm Pro özellikler", "API erişimi", "Ekip hesapları ve yönetim paneli", "Dedike hesap yöneticisi", "Özel entegrasyonlar"],
+    },
+    comparisonRows: {
+      monthlyAnalysis: "Aylık ilan analizi",
+      locationQuery: "Konum sorgusu",
+      portfolioTracking: "Portföy takibi",
+      pdfReport: "PDF bölge raporu",
+      apiAccess: "API erişimi",
+      userCount: "Kullanıcı sayısı",
+    },
+    faq: {
+      title: "Paketler hakkında",
+      cancelQ: "İstediğim zaman iptal edebilir miyim?",
+      cancelA: "Evet. Aylık planlarda dönem sonuna kadar erişiminiz devam eder, sonraki ay faturalanmaz. Yıllık planlarda kalan süre kullanılır.",
+      quotaQ: "Kota ne zaman yenilenir?",
+      quotaA: "Her faturalandırma döneminin başında analiz ve rapor hakları sıfırdan başlar. Kullanılmayan hak sonraki aya devretmez.",
+      changeQ: "Plan değiştirebilir miyim?",
+      changeA: "Yükseltme anında uygulanır; mevcut dönemden kalan gün sayısı oranlanır. Düşürme ise dönem sonunda geçerli olur.",
+      refundQ: "İade politikası nedir?",
+      refundA: "İlk 14 gün içinde iade talebini iletişim formu üzerinden gönderebilirsiniz. 14 günden sonra kalan dönem kullanılır.",
+      generalLink: "Tüm sıkça sorulan sorular",
     },
   },
   usage: {
@@ -118,8 +153,43 @@ export interface Dictionary {
     perMonth: string;
     monthlyAnalysisCount: string;
     monthlyReportCount: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    scaleLabel: string;
+    scaleAnalyses: string;
+    unlimited: string;
+    vatIncluded: string;
+    forever: string;
+    users: string;
+    tryFree: string;
+    tryDays: string;
+    requestQuote: string;
+    comparisonTitle: string;
+    feature: string;
+    annualNote: string;
+    cancelNote: string;
     planDescriptions: Record<"free" | "pro" | "enterprise", string>;
     planFeatures: Record<"free" | "pro" | "enterprise", readonly string[]>;
+    comparisonRows: {
+      monthlyAnalysis: string;
+      locationQuery: string;
+      portfolioTracking: string;
+      pdfReport: string;
+      apiAccess: string;
+      userCount: string;
+    };
+    faq: {
+      title: string;
+      cancelQ: string;
+      cancelA: string;
+      quotaQ: string;
+      quotaA: string;
+      changeQ: string;
+      changeA: string;
+      refundQ: string;
+      refundA: string;
+      generalLink: string;
+    };
   };
   usage: {
     heading: string;

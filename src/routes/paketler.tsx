@@ -1,5 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  BillingRepository,
+  BillingService,
+  type Plan,
+  type PlanCode,
+  type Entitlements,
+} from "@/lib/billing/billing";
 
 export const Route = createFileRoute("/paketler")({
   head: () => ({
@@ -8,7 +18,7 @@ export const Route = createFileRoute("/paketler")({
       {
         name: "description",
         content:
-          "emlakmetric analiz paketleri: Başlangıç (ücretsiz), Analist (₺349/ay) ve Kurumsal (₺1.490/ay). Yıllık ödemede iki ay ücretsiz.",
+          "emlakmetric analiz paketlerini karşılaştırın: Başlangıç, Pro ve Kurumsal. Aylık analiz kotasına göre üç plan, yıllık ödemede iki ay ücretsiz.",
       },
       { property: "og:title", content: "Paketler — emlakmetric" },
       {
@@ -16,37 +26,751 @@ export const Route = createFileRoute("/paketler")({
         content:
           "Analiz başına ödeme yok. Aylık analiz hakkına göre üç paket.",
       },
+      { name: "robots", content: "index, follow" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://emlakmetric.com/paketler" },
+      { rel: "alternate", hrefLang: "tr", href: "https://emlakmetric.com/paketler" },
+      { rel: "alternate", hrefLang: "en", href: "https://emlakmetric.com/paketler?lang=en" },
     ],
   }),
   component: Paketler,
 });
 
-const featureFont: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 12,
-  font: "400 12px 'Space Mono', monospace",
-  lineHeight: 1.6,
-  borderTop: "1px solid rgba(14,17,22,.14)",
-  paddingTop: 22,
+function useReveal(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mq.matches) {
+      setVisible(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+const PLAN_ORDER: PlanCode[] = ["free", "pro", "enterprise"];
+
+const COMPARISON_KEYS = [
+  "monthlyAnalysis",
+  "locationQuery",
+  "portfolioTracking",
+  "pdfReport",
+  "apiAccess",
+  "userCount",
+] as const;
+
+type CompKey = (typeof COMPARISON_KEYS)[number];
+
+const COMPARISON_DATA: Record<CompKey, Record<PlanCode, string | { text: string; color: string }>> = {
+  monthlyAnalysis: { free: "5", pro: "250", enterprise: "∞" },
+  locationQuery: { free: "10", pro: "∞", enterprise: "∞" },
+  portfolioTracking: {
+    free: { text: "—", color: "rgba(14,17,22,.25)" },
+    pro: "50",
+    enterprise: "∞",
+  },
+  pdfReport: {
+    free: { text: "—", color: "rgba(14,17,22,.25)" },
+    pro: { text: "✓", color: "#00875A" },
+    enterprise: { text: "✓", color: "#00875A" },
+  },
+  apiAccess: {
+    free: { text: "—", color: "rgba(14,17,22,.25)" },
+    pro: { text: "—", color: "rgba(14,17,22,.25)" },
+    enterprise: { text: "10.000 / ay", color: "#00875A" },
+  },
+  userCount: { free: "1", pro: "3", enterprise: "10+" },
 };
 
-const featureFontDark: React.CSSProperties = {
-  ...featureFont,
-  color: "rgba(255,255,255,.78)",
-  borderTopColor: "rgba(255,255,255,.16)",
-};
+function ScaleAxis({ plans }: { plans: Plan[] }) {
+  const { t } = useI18n();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [hoverX, setHoverX] = useState<number | null>(null);
+  const [springX, setSpringX] = useState<number | null>(null);
+  const springRef = useRef<number | null>(null);
+  const rafRef = useRef(0);
 
-const tableRow: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
-  borderBottom: "1px solid rgba(14,17,22,.1)",
-  font: "400 12px 'Space Mono', monospace",
-};
+  const sorted = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
 
-function Paketler() {
+  const maxQ = 1000;
+  const logScale = (v: number) => Math.log(v + 1) / Math.log(maxQ + 1);
+
+  const markers = sorted.map((p) => ({
+    plan: p,
+    pos: p.analysisQuota === 0 ? 1 : logScale(Math.min(p.analysisQuota, maxQ)),
+  }));
+
+  useEffect(() => {
+    const animate = () => {
+      const target = hoverX;
+      const cur = springRef.current;
+      if (target !== null && cur !== null) {
+        const next = cur + (target - cur) * 0.15;
+        springRef.current = next;
+        setSpringX(next);
+      } else if (target !== null) {
+        springRef.current = target;
+        setSpringX(target);
+      }
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [hoverX]);
+
+  const handleMove = useCallback((clientX: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    setHoverX(pct);
+  }, []);
+
+  const handleLeave = useCallback(() => {
+    setHoverX(null);
+    springRef.current = null;
+    setSpringX(null);
+  }, []);
+
+  const closestPlan = springX !== null
+    ? markers.reduce((best, m) =>
+        Math.abs(m.pos - springX) < Math.abs(best.pos - springX) ? m : best,
+      ).plan
+    : null;
+
+  const logValue = springX !== null
+    ? Math.round(Math.pow(maxQ + 1, springX) - 1)
+    : null;
+
+  return (
+    <div style={{ padding: "0 0 16px" }}>
+      <div
+        style={{
+          font: "400 10px 'Space Mono', monospace",
+          letterSpacing: ".22em",
+          color: "rgba(14,17,22,.45)",
+          marginBottom: 18,
+        }}
+      >
+        {t.pricing.scaleLabel}
+      </div>
+      <div
+        ref={trackRef}
+        onMouseMove={(e) => handleMove(e.clientX)}
+        onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+        onMouseLeave={handleLeave}
+        onTouchEnd={handleLeave}
+        style={{
+          position: "relative",
+          height: 64,
+          cursor: "crosshair",
+          touchAction: "none",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 30,
+            left: 0,
+            right: 0,
+            height: 1,
+            background: "rgba(14,17,22,.2)",
+          }}
+        />
+
+        {markers.map((m) => (
+          <div
+            key={m.plan.code}
+            style={{
+              position: "absolute",
+              left: `${m.pos * 100}%`,
+              top: 18,
+              transform: "translateX(-50%)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 6,
+              transition: closestPlan?.code === m.plan.code
+                ? "transform 200ms ease-out"
+                : "none",
+            }}
+          >
+            <span
+              style={{
+                font: "700 10px 'Space Mono', monospace",
+                letterSpacing: ".14em",
+                color: closestPlan?.code === m.plan.code ? "#1B4DFF" : "rgba(14,17,22,.5)",
+                transition: "color 200ms ease-out",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {m.plan.name.toUpperCase()}
+            </span>
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                border: "1.5px solid",
+                borderColor: closestPlan?.code === m.plan.code ? "#1B4DFF" : "rgba(14,17,22,.35)",
+                background: closestPlan?.code === m.plan.code ? "#1B4DFF" : "#fff",
+                transition: "border-color 200ms ease-out, background 200ms ease-out",
+              }}
+            />
+            <span
+              style={{
+                font: "400 10px 'Space Mono', monospace",
+                color: "rgba(14,17,22,.4)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {m.plan.analysisQuota === 0
+                ? `${m.plan.analysisQuota}`
+                : m.plan.analysisQuota >= 9999
+                  ? "∞"
+                  : m.plan.analysisQuota.toLocaleString()}
+            </span>
+          </div>
+        ))}
+
+        {springX !== null && (
+          <div
+            style={{
+              position: "absolute",
+              left: `${springX * 100}%`,
+              top: 0,
+              height: "100%",
+              width: 1,
+              background: "#1B4DFF",
+              opacity: 0.4,
+              pointerEvents: "none",
+            }}
+          />
+        )}
+
+        {springX !== null && logValue !== null && (
+          <div
+            style={{
+              position: "absolute",
+              left: `${springX * 100}%`,
+              bottom: -6,
+              transform: "translateX(-50%)",
+              background: "#0E1116",
+              color: "#fff",
+              padding: "3px 8px",
+              font: "700 10px 'Space Mono', monospace",
+              letterSpacing: ".08em",
+              whiteSpace: "nowrap",
+              pointerEvents: "none",
+            }}
+          >
+            {logValue >= 999 ? "∞" : logValue} {t.pricing.scaleAnalyses}
+          </div>
+        )}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          font: "400 9px 'Space Mono', monospace",
+          color: "rgba(14,17,22,.3)",
+          letterSpacing: ".12em",
+          marginTop: 4,
+        }}
+      >
+        <span>3</span>
+        <span>1000+</span>
+      </div>
+    </div>
+  );
+}
+
+function PlanCard({
+  plan,
+  index,
+  currentPlanCode,
+  t,
+  visible,
+}: {
+  plan: Plan;
+  index: number;
+  currentPlanCode: PlanCode | null;
+  t: ReturnType<typeof useI18n>["t"];
+  visible: boolean;
+}) {
+  const isCurrent = currentPlanCode === plan.code;
+  const isFeatured = plan.isFeatured;
+  const code = plan.code as PlanCode;
+
+  const cta = code === "free"
+    ? { label: t.pricing.tryFree, to: "/kayit" as const }
+    : code === "pro"
+      ? { label: t.pricing.tryDays, to: "/kayit" as const }
+      : { label: t.pricing.requestQuote, to: "/iletisim" as const };
+
+  const features = t.pricing.planFeatures[code];
+
+  return (
+    <div
+      style={{
+        border: isFeatured ? "2px solid #1B4DFF" : "1px solid rgba(14,17,22,.16)",
+        padding: "clamp(24px, 3vw, 36px)",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "none" : "translateY(20px)",
+        transition: `opacity 250ms ease-out ${index * 100}ms, transform 250ms ease-out ${index * 100}ms`,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: -1,
+          left: -1,
+          width: 8,
+          height: 8,
+          borderLeft: `1.5px solid ${isFeatured ? "#1B4DFF" : "rgba(14,17,22,.3)"}`,
+          borderTop: `1.5px solid ${isFeatured ? "#1B4DFF" : "rgba(14,17,22,.3)"}`,
+        }}
+      />
+
+      {isFeatured && (
+        <div
+          style={{
+            position: "absolute",
+            top: -1,
+            right: 20,
+            transform: "translateY(-50%)",
+            background: "#1B4DFF",
+            color: "#fff",
+            padding: "4px 10px",
+            font: "700 9px 'Space Mono', monospace",
+            letterSpacing: ".16em",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {t.pricing.badge.toUpperCase()}
+        </div>
+      )}
+
+      <div
+        style={{
+          font: "400 10px 'Space Mono', monospace",
+          letterSpacing: ".22em",
+          color: "rgba(14,17,22,.45)",
+        }}
+      >
+        {String(index + 1).padStart(2, "0")} · {plan.name.toUpperCase()}
+      </div>
+
+      <div
+        style={{
+          margin: "22px 0 4px",
+          font: "700 clamp(36px, 4vw, 56px) 'Space Grotesk', sans-serif",
+          letterSpacing: "-0.06em",
+        }}
+      >
+        {plan.formatPrice()}
+      </div>
+
+      <div
+        style={{
+          font: "400 11px 'Space Mono', monospace",
+          letterSpacing: ".14em",
+          color: "rgba(14,17,22,.45)",
+          marginBottom: 20,
+        }}
+      >
+        {plan.isFree
+          ? t.pricing.forever.toUpperCase()
+          : code === "enterprise"
+            ? `${t.pricing.perMonth.toUpperCase()} · 10 ${t.pricing.users.toUpperCase()}`
+            : `${t.pricing.perMonth.toUpperCase()} · ${t.pricing.vatIncluded.toUpperCase()}`}
+      </div>
+
+      <div
+        style={{
+          borderTop: "1px solid rgba(14,17,22,.12)",
+          paddingTop: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span
+            style={{
+              font: "400 11px 'Space Mono', monospace",
+              color: "rgba(14,17,22,.5)",
+            }}
+          >
+            {t.pricing.analysisQuota}
+          </span>
+          <span
+            style={{
+              font: "700 11px 'Space Mono', monospace",
+              color: "#0E1116",
+            }}
+          >
+            {plan.analysisQuota >= 9999 ? t.pricing.unlimited : plan.analysisQuota}
+          </span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span
+            style={{
+              font: "400 11px 'Space Mono', monospace",
+              color: "rgba(14,17,22,.5)",
+            }}
+          >
+            {t.pricing.reportQuota}
+          </span>
+          <span
+            style={{
+              font: "700 11px 'Space Mono', monospace",
+              color: "#0E1116",
+            }}
+          >
+            {plan.reportQuota >= 9999 ? t.pricing.unlimited : plan.reportQuota}
+          </span>
+        </div>
+      </div>
+
+      <div
+        style={{
+          borderTop: "1px solid rgba(14,17,22,.12)",
+          paddingTop: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          flex: 1,
+        }}
+      >
+        {features.map((f) => (
+          <div
+            key={f}
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "flex-start",
+              font: "400 12px 'Space Mono', monospace",
+              lineHeight: 1.5,
+              color: "rgba(14,17,22,.7)",
+            }}
+          >
+            <span style={{ color: "#1B4DFF", flexShrink: 0, marginTop: 1 }}>+</span>
+            <span>{f}</span>
+          </div>
+        ))}
+      </div>
+
+      {isCurrent ? (
+        <div
+          style={{
+            marginTop: 28,
+            width: "100%",
+            padding: 16,
+            font: "700 11px 'Space Mono', monospace",
+            letterSpacing: ".18em",
+            textAlign: "center",
+            border: "1px solid rgba(14,17,22,.2)",
+            color: "rgba(14,17,22,.4)",
+          }}
+        >
+          {t.pricing.currentPlan.toUpperCase()}
+        </div>
+      ) : (
+        <Link
+          to={cta.to}
+          className="em-plan-btn"
+          style={{
+            marginTop: 28,
+            width: "100%",
+            padding: 16,
+            font: "700 11px 'Space Mono', monospace",
+            letterSpacing: ".18em",
+            textAlign: "center",
+            textDecoration: "none",
+            border: isFeatured ? "1px solid #1B4DFF" : "1px solid #0E1116",
+            background: isFeatured ? "#1B4DFF" : "transparent",
+            color: isFeatured ? "#fff" : "#0E1116",
+            cursor: "pointer",
+            minHeight: 44,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {cta.label.toUpperCase()}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function ComparisonTable({
+  plans,
+  t,
+  visible,
+}: {
+  plans: Plan[];
+  t: ReturnType<typeof useI18n>["t"];
+  visible: boolean;
+}) {
+  const sorted = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
+
+  return (
+    <div
+      style={{
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
+      <div style={{ minWidth: 600, border: "1px solid rgba(14,17,22,.16)" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
+            background: "#0E1116",
+            color: "#fff",
+            font: "400 10px 'Space Mono', monospace",
+            letterSpacing: ".18em",
+          }}
+        >
+          <span style={{ padding: "14px 16px" }}>
+            {t.pricing.feature.toUpperCase()}
+          </span>
+          {sorted.map((p) => (
+            <span
+              key={p.code}
+              style={{
+                padding: "14px 16px",
+                color: p.isFeatured ? "#1B4DFF" : "#fff",
+              }}
+            >
+              {p.name.toUpperCase()}
+            </span>
+          ))}
+        </div>
+        {COMPARISON_KEYS.map((key, i) => (
+          <div
+            key={key}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
+              borderBottom:
+                i < COMPARISON_KEYS.length - 1
+                  ? "1px solid rgba(14,17,22,.1)"
+                  : "none",
+              font: "400 12px 'Space Mono', monospace",
+              opacity: visible ? 1 : 0,
+              transform: visible ? "none" : "translateY(8px)",
+              transition: `opacity 200ms ease-out ${i * 60}ms, transform 200ms ease-out ${i * 60}ms`,
+            }}
+          >
+            <span
+              style={{
+                padding: "15px 16px",
+                color: "rgba(14,17,22,.65)",
+              }}
+            >
+              {t.pricing.comparisonRows[key]}
+            </span>
+            {sorted.map((p) => {
+              const cell = COMPARISON_DATA[key][p.code as PlanCode];
+              const isObj = typeof cell === "object";
+              return (
+                <span
+                  key={p.code}
+                  style={{
+                    padding: "15px 16px",
+                    color: isObj ? cell.color : undefined,
+                    font: isObj ? undefined : "700 12px 'Space Mono', monospace",
+                  }}
+                >
+                  {isObj ? cell.text : cell}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PricingFaq({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const faqs = [
+    { q: t.pricing.faq.cancelQ, a: t.pricing.faq.cancelA },
+    { q: t.pricing.faq.quotaQ, a: t.pricing.faq.quotaA },
+    { q: t.pricing.faq.changeQ, a: t.pricing.faq.changeA },
+    { q: t.pricing.faq.refundQ, a: t.pricing.faq.refundA },
+  ];
+
   return (
     <div>
+      <div style={{ borderTop: "1px solid rgba(14,17,22,.16)" }}>
+        {faqs.map((faq, i) => {
+          const isOpen = openIndex === i;
+          return (
+            <div
+              key={i}
+              style={{ borderBottom: "1px solid rgba(14,17,22,.16)" }}
+            >
+              <button
+                type="button"
+                onClick={() => setOpenIndex(isOpen ? null : i)}
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  border: 0,
+                  padding: "20px 0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  cursor: "pointer",
+                  textAlign: "left",
+                  minHeight: 44,
+                }}
+              >
+                <span
+                  style={{
+                    font: "500 clamp(14px, 1.6vw, 18px) 'Space Grotesk', sans-serif",
+                    letterSpacing: "-0.03em",
+                    color: "#0E1116",
+                  }}
+                >
+                  {faq.q}
+                </span>
+                <span
+                  style={{
+                    font: "400 18px 'Space Mono', monospace",
+                    color: "rgba(14,17,22,.4)",
+                    flexShrink: 0,
+                    transition: "transform 200ms ease-out",
+                    transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
+                  }}
+                >
+                  +
+                </span>
+              </button>
+              {isOpen && (
+                <div
+                  style={{
+                    padding: "0 0 20px",
+                    font: "400 13px 'Space Mono', monospace",
+                    lineHeight: 1.85,
+                    color: "rgba(14,17,22,.62)",
+                    maxWidth: 620,
+                  }}
+                >
+                  {faq.a}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 20 }}>
+        <Link
+          to="/sss"
+          style={{
+            font: "400 11px 'Space Mono', monospace",
+            letterSpacing: ".14em",
+            color: "#1B4DFF",
+            textDecoration: "none",
+          }}
+        >
+          {t.pricing.faq.generalLink.toUpperCase()} →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Paketler() {
+  const { t, locale } = useI18n();
+  const { user, loading: authLoading } = useAuth();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const svc = new BillingService(
+      new BillingRepository(getSupabaseBrowserClient()),
+    );
+    svc.listPlans().then((p) => {
+      setPlans(p.sort((a, b) => a.sortOrder - b.sortOrder));
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
+
+    if (!authLoading && user) {
+      svc.entitlements().then(setEntitlements).catch(() => {});
+    }
+  }, [user, authLoading]);
+
+  const currentPlanCode = entitlements?.planCode ?? null;
+
+  const cardsReveal = useReveal(0.1);
+  const tableReveal = useReveal(0.1);
+  const faqReveal = useReveal(0.1);
+
+  const sortedPlans = PLAN_ORDER
+    .map((code) => plans.find((p) => p.code === code))
+    .filter(Boolean) as Plan[];
+
+  const heroLines = t.pricing.heroTitle.split("\n");
+
+  const jsonLd = sortedPlans.length > 0
+    ? JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        itemListElement: sortedPlans.map((p, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          item: {
+            "@type": "Product",
+            name: `emlakmetric ${p.name}`,
+            description: t.pricing.planDescriptions[p.code as PlanCode],
+            offers: {
+              "@type": "Offer",
+              price: (p.priceMonthly / 100).toFixed(2),
+              priceCurrency: p.currency,
+              availability: "https://schema.org/InStock",
+            },
+          },
+        })),
+      })
+    : null;
+
+  return (
+    <div>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd }}
+        />
+      )}
+
+      <style>{`
+        .em-plan-btn { transition: background 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out; }
+        .em-plan-btn:hover { background: #0E1116 !important; color: #fff !important; border-color: #0E1116 !important; }
+      `}</style>
+
+      {/* HERO */}
       <section
         data-bg="light"
         style={{
@@ -64,7 +788,7 @@ function Paketler() {
               marginBottom: 20,
             }}
           >
-            PAKETLER · AYLIK
+            01 · {t.pricing.title.toUpperCase()}
           </div>
           <h1
             style={{
@@ -75,281 +799,85 @@ function Paketler() {
               animation: "em-rise-in 1s both",
             }}
           >
-            Analiz başına
-            <br />
-            ödeme yok<span style={{ color: "#E23D28" }}>.</span>
+            {heroLines.map((line, i) => (
+              <span key={i}>
+                {i > 0 && <br />}
+                {line}
+              </span>
+            ))}
+            <span style={{ color: "#E23D28" }}>.</span>
           </h1>
           <p
             style={{
-              margin: "0 0 clamp(30px, 4vw, 54px)",
+              margin: "0 0 clamp(36px, 5vw, 64px)",
               maxWidth: 620,
               font: "400 13px 'Space Mono', monospace",
               lineHeight: 1.85,
               color: "rgba(14,17,22,.62)",
             }}
           >
-            Aylık analiz hakkına göre üç paket. Yıllık ödemede iki ay
-            ücretsiz. Kurumsal pakette API ve toplu ilan yükleme açılır.
+            {t.pricing.heroSubtitle}
           </p>
 
-          <style>{`
-            .em-plan-btn { transition: background 160ms linear, color 160ms linear, border-color 160ms linear; }
-            .em-plan-btn--ghost:hover { background: #0E1116; color: #fff; }
-            .em-plan-btn--blue:hover { background: #E23D28; border-color: #E23D28; }
-            .em-plan-btn--outline:hover { background: #E23D28; color: #fff; border-color: #E23D28; }
-          `}</style>
-
-          <div
-            className="em-col-1"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 1,
-              background: "rgba(14,17,22,.16)",
-              border: "1px solid rgba(14,17,22,.16)",
-            }}
-          >
-            {/* BAŞLANGIÇ */}
-            <div
-              style={{
-                background: "#fff",
-                padding: "clamp(24px, 3vw, 40px)",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div
-                style={{
-                  font: "400 10px 'Space Mono', monospace",
-                  letterSpacing: ".22em",
-                  color: "rgba(14,17,22,.45)",
-                }}
-              >
-                01 · BAŞLANGIÇ
-              </div>
-              <div
-                style={{
-                  margin: "26px 0 6px",
-                  font: "700 clamp(38px, 4vw, 62px) 'Space Grotesk', sans-serif",
-                  letterSpacing: "-0.06em",
-                }}
-              >
-                ₺0
-              </div>
-              <div
-                style={{
-                  font: "400 11px 'Space Mono', monospace",
-                  letterSpacing: ".16em",
-                  color: "rgba(14,17,22,.45)",
-                  marginBottom: 28,
-                }}
-              >
-                SÜRESİZ ÜCRETSİZ
-              </div>
-              <div style={{ ...featureFont, color: "rgba(14,17,22,.7)" }}>
-                <span>+ 5 ilan analizi / ay</span>
-                <span>+ mahalle medyanı karşılaştırması</span>
-                <span>+ 12 aylık m² trendi</span>
-                <span style={{ color: "#E23D28" }}>− portföy takibi yok</span>
-                <span style={{ color: "#E23D28" }}>
-                  − PDF bölge raporu yok
-                </span>
-              </div>
-              <Link
-                to="/kayit"
-                className="em-plan-btn em-plan-btn--ghost"
-                style={{
-                  marginTop: 34,
-                  width: "100%",
-                  background: "transparent",
-                  color: "#0E1116",
-                  border: "1px solid #0E1116",
-                  padding: 17,
-                  font: "700 11px 'Space Mono', monospace",
-                  letterSpacing: ".2em",
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  textAlign: "center",
-                }}
-              >
-                ÜCRETSİZ BAŞLA
-              </Link>
+          {loaded && sortedPlans.length > 0 && (
+            <div className="em-hide">
+              <ScaleAxis plans={sortedPlans} />
             </div>
-
-            {/* ANALİST */}
-            <div
-              style={{
-                background: "#0E1116",
-                color: "#fff",
-                padding: "clamp(24px, 3vw, 40px)",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <span
-                  style={{
-                    font: "400 10px 'Space Mono', monospace",
-                    letterSpacing: ".22em",
-                    color: "rgba(255,255,255,.5)",
-                  }}
-                >
-                  02 · ANALİST
-                </span>
-                <span
-                  style={{
-                    background: "#1B4DFF",
-                    color: "#fff",
-                    font: "700 9px 'Space Mono', monospace",
-                    letterSpacing: ".18em",
-                    padding: "5px 8px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  EN ÇOK SEÇİLEN
-                </span>
-              </div>
-              <div
-                style={{
-                  margin: "26px 0 6px",
-                  font: "700 clamp(38px, 4vw, 62px) 'Space Grotesk', sans-serif",
-                  letterSpacing: "-0.06em",
-                }}
-              >
-                ₺349
-              </div>
-              <div
-                style={{
-                  font: "400 11px 'Space Mono', monospace",
-                  letterSpacing: ".16em",
-                  color: "rgba(255,255,255,.5)",
-                  marginBottom: 28,
-                }}
-              >
-                AY / KDV DAHİL
-              </div>
-              <div style={featureFontDark}>
-                <span>+ 250 ilan analizi / ay</span>
-                <span>+ sınırsız konum sorgusu</span>
-                <span>+ ilan karşılaştırma</span>
-                <span>+ 50 ilanlık portföy takibi</span>
-                <span>+ PDF bölge raporu</span>
-                <span style={{ color: "#E23D28" }}>− API erişimi yok</span>
-              </div>
-              <Link
-                to="/kayit"
-                className="em-plan-btn em-plan-btn--blue"
-                style={{
-                  marginTop: 34,
-                  width: "100%",
-                  background: "#1B4DFF",
-                  color: "#fff",
-                  border: "1px solid #1B4DFF",
-                  padding: 17,
-                  font: "700 11px 'Space Mono', monospace",
-                  letterSpacing: ".2em",
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  textAlign: "center",
-                }}
-              >
-                14 GÜN DENE
-              </Link>
-            </div>
-
-            {/* KURUMSAL */}
-            <div
-              style={{
-                background: "#fff",
-                padding: "clamp(24px, 3vw, 40px)",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div
-                style={{
-                  font: "400 10px 'Space Mono', monospace",
-                  letterSpacing: ".22em",
-                  color: "rgba(14,17,22,.45)",
-                }}
-              >
-                03 · KURUMSAL
-              </div>
-              <div
-                style={{
-                  margin: "26px 0 6px",
-                  font: "700 clamp(38px, 4vw, 62px) 'Space Grotesk', sans-serif",
-                  letterSpacing: "-0.06em",
-                }}
-              >
-                ₺1.490
-              </div>
-              <div
-                style={{
-                  font: "400 11px 'Space Mono', monospace",
-                  letterSpacing: ".16em",
-                  color: "rgba(14,17,22,.45)",
-                  marginBottom: 28,
-                }}
-              >
-                AY / 10 KULLANICI
-              </div>
-              <div style={{ ...featureFont, color: "rgba(14,17,22,.7)" }}>
-                <span>+ sınırsız analiz</span>
-                <span>+ API erişimi · 10.000 çağrı / ay</span>
-                <span>+ CSV ile toplu ilan yükleme</span>
-                <span>+ özel bölge raporu</span>
-                <span>+ hesap yöneticisi</span>
-                <span>+ tek oturum (SSO)</span>
-              </div>
-              <Link
-                to="/iletisim"
-                className="em-plan-btn em-plan-btn--outline"
-                style={{
-                  marginTop: 34,
-                  width: "100%",
-                  background: "transparent",
-                  color: "#0E1116",
-                  border: "1px solid #0E1116",
-                  padding: 17,
-                  font: "700 11px 'Space Mono', monospace",
-                  letterSpacing: ".2em",
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  textAlign: "center",
-                }}
-              >
-                TEKLİF İSTE
-              </Link>
-            </div>
-          </div>
-
-          <div
-            className="em-stack"
-            style={{
-              display: "flex",
-              gap: 16,
-              marginTop: 16,
-              font: "400 10px 'Space Mono', monospace",
-              letterSpacing: ".16em",
-              color: "rgba(14,17,22,.45)",
-            }}
-          >
-            <span>YILLIK ÖDEMEDE İKİ AY ÜCRETSİZ</span>
-            <span className="em-hide" style={{ marginLeft: "auto" }}>
-              İSTEDİĞİN ZAMAN İPTAL · KART SAKLANMAZ
-            </span>
-          </div>
+          )}
         </div>
       </section>
 
+      {/* CARDS */}
+      <section
+        data-bg="light"
+        style={{
+          background: "#FFFFFF",
+          padding:
+            "clamp(30px, 4vw, 56px) clamp(16px, 4vw, 44px) clamp(40px, 5vw, 70px)",
+        }}
+      >
+        <div
+          ref={cardsReveal.ref}
+          className="em-col-1"
+          style={{
+            maxWidth: 1560,
+            margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "clamp(12px, 2vw, 24px)",
+          }}
+        >
+          {sortedPlans.map((plan, i) => (
+            <PlanCard
+              key={plan.code}
+              plan={plan}
+              index={i}
+              currentPlanCode={currentPlanCode}
+              t={t}
+              visible={cardsReveal.visible}
+            />
+          ))}
+        </div>
+        <div
+          className="em-stack"
+          style={{
+            maxWidth: 1560,
+            margin: "16px auto 0",
+            display: "flex",
+            gap: 16,
+            font: "400 10px 'Space Mono', monospace",
+            letterSpacing: ".16em",
+            color: "rgba(14,17,22,.45)",
+          }}
+        >
+          <span>{t.pricing.annualNote.toUpperCase()}</span>
+          <span className="em-hide" style={{ marginLeft: "auto" }}>
+            {t.pricing.cancelNote.toUpperCase()}
+          </span>
+        </div>
+      </section>
+
+      {/* COMPARISON TABLE */}
       <section
         data-bg="light"
         style={{
@@ -359,6 +887,7 @@ function Paketler() {
         }}
       >
         <div
+          ref={tableReveal.ref}
           style={{
             maxWidth: 1560,
             margin: "0 auto",
@@ -366,6 +895,16 @@ function Paketler() {
             paddingTop: "clamp(30px, 4vw, 52px)",
           }}
         >
+          <div
+            style={{
+              font: "400 11px 'Space Mono', monospace",
+              letterSpacing: ".28em",
+              color: "#1B4DFF",
+              marginBottom: 20,
+            }}
+          >
+            02 · {t.pricing.comparisonTitle.toUpperCase()}
+          </div>
           <h2
             style={{
               margin: "0 0 clamp(24px, 3vw, 40px)",
@@ -373,79 +912,59 @@ function Paketler() {
               letterSpacing: "-0.055em",
             }}
           >
-            Satır satır fark.
+            {t.pricing.comparisonTitle}
+            <span style={{ color: "#E23D28" }}>.</span>
           </h2>
-          <div style={{ border: "1px solid rgba(14,17,22,.16)" }}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
-                background: "#0E1116",
-                color: "#fff",
-                font: "400 10px 'Space Mono', monospace",
-                letterSpacing: ".18em",
-              }}
-            >
-              <span style={{ padding: "14px 16px" }}>ÖZELLİK</span>
-              <span style={{ padding: "14px 16px" }}>BAŞLANGIÇ</span>
-              <span style={{ padding: "14px 16px", color: "#1B4DFF" }}>
-                ANALİST
-              </span>
-              <span style={{ padding: "14px 16px" }}>KURUMSAL</span>
-            </div>
-            {[
-              ["aylık ilan analizi", "5", "250", "sınırsız"],
-              ["konum sorgusu", "10", "sınırsız", "sınırsız"],
-              [
-                "portföy takibi",
-                { text: "✕", color: "#E23D28" },
-                "50 ilan",
-                "sınırsız",
-              ],
-              [
-                "PDF bölge raporu",
-                { text: "✕", color: "#E23D28" },
-                { text: "✓", color: "#00875A" },
-                { text: "✓", color: "#00875A" },
-              ],
-              [
-                "API erişimi",
-                { text: "✕", color: "#E23D28" },
-                { text: "✕", color: "#E23D28" },
-                { text: "10.000 / ay", color: "#00875A" },
-              ],
-              ["kullanıcı sayısı", "1", "3", "10+"],
-            ].map((row, i) => (
-              <div
-                key={i}
-                style={{
-                  ...tableRow,
-                  borderBottom:
-                    i < 5 ? "1px solid rgba(14,17,22,.1)" : "none",
-                }}
-              >
-                {row.map((cell, j) => {
-                  const isObj = typeof cell === "object" && cell !== null;
-                  return (
-                    <span
-                      key={j}
-                      style={{
-                        padding: "15px 16px",
-                        color:
-                          j === 0
-                            ? "rgba(14,17,22,.65)"
-                            : isObj
-                              ? (cell as { color: string }).color
-                              : undefined,
-                      }}
-                    >
-                      {isObj ? (cell as { text: string }).text : cell}
-                    </span>
-                  );
-                })}
-              </div>
-            ))}
+          <ComparisonTable
+            plans={sortedPlans}
+            t={t}
+            visible={tableReveal.visible}
+          />
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section
+        data-bg="light"
+        style={{
+          background: "#FFFFFF",
+          padding:
+            "0 clamp(16px, 4vw, 44px) clamp(80px, 10vw, 140px)",
+        }}
+      >
+        <div
+          ref={faqReveal.ref}
+          style={{
+            maxWidth: 800,
+            margin: "0 auto",
+            borderTop: "1px solid rgba(14,17,22,.16)",
+            paddingTop: "clamp(30px, 4vw, 52px)",
+            opacity: faqReveal.visible ? 1 : 0,
+            transform: faqReveal.visible ? "none" : "translateY(16px)",
+            transition: "opacity 250ms ease-out, transform 250ms ease-out",
+          }}
+        >
+          <div
+            style={{
+              font: "400 11px 'Space Mono', monospace",
+              letterSpacing: ".28em",
+              color: "#1B4DFF",
+              marginBottom: 20,
+            }}
+          >
+            03 · {t.pricing.faq.title.toUpperCase()}
           </div>
+          <h2
+            style={{
+              margin: "0 0 clamp(20px, 3vw, 36px)",
+              font: "700 clamp(24px, 3.2vw, 48px) 'Space Grotesk', sans-serif",
+              letterSpacing: "-0.055em",
+            }}
+          >
+            {t.pricing.faq.title}
+            <span style={{ color: "#E23D28" }}>.</span>
+          </h2>
+          <PricingFaq t={t} />
         </div>
       </section>
     </div>
