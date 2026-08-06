@@ -78,22 +78,32 @@ export function Header() {
           left: 0,
           right: 0,
           zIndex: 90,
-          background: bg,
-          backdropFilter: "blur(20px) saturate(130%)",
-          WebkitBackdropFilter: "blur(20px) saturate(130%)",
-          maskImage:
-            "linear-gradient(180deg, #000 62%, rgba(0,0,0,.45) 86%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(180deg, #000 62%, rgba(0,0,0,.45) 86%, transparent 100%)",
           color: fg,
           transition:
-            "background 240ms linear, color 240ms linear, padding 240ms linear",
+            "color 240ms linear, padding 240ms linear",
           padding: `${scrolled ? "10px" : "17px"} clamp(16px, 4vw, 44px)`,
           display: "flex",
           alignItems: "center",
           gap: 24,
         }}
       >
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: bg,
+            backdropFilter: "blur(20px) saturate(130%)",
+            WebkitBackdropFilter: "blur(20px) saturate(130%)",
+            maskImage:
+              "linear-gradient(180deg, #000 62%, rgba(0,0,0,.45) 86%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(180deg, #000 62%, rgba(0,0,0,.45) 86%, transparent 100%)",
+            transition: "background 240ms linear",
+            pointerEvents: "none",
+            zIndex: -1,
+          }}
+        />
         <Link
           to="/"
           style={{
