@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ParticleField } from "@/components/ParticleField";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { BillingRepository, BillingService, type Entitlements } from "@/lib/billing/billing";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -127,7 +129,7 @@ function Home() {
 
   const [tab, setTab] = useState<"link" | "konum">("link");
   const [query, setQuery] = useState("");
-  const [phase, setPhase] = useState<"idle" | "scan" | "done">("idle");
+  const [phase, setPhase] = useState<"idle" | "scan" | "done" | "quota">("idle");
   const [step, setStep] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const [kira, setKira] = useState(0);
@@ -135,6 +137,17 @@ function Home() {
   const [sapma, setSapma] = useState(0);
   const [skor, setSkor] = useState(0);
   const [typed, setTyped] = useState("");
+  const [quotaResource, setQuotaResource] = useState<"analysis" | "report">("analysis");
+  const [ent, setEnt] = useState<Entitlements | null>(null);
+
+  useEffect(() => {
+    if (!isAuthed) { setEnt(null); return; }
+    const db = getSupabaseBrowserClient();
+    new BillingService(new BillingRepository(db))
+      .entitlements()
+      .then(setEnt)
+      .catch(() => {});
+  }, [isAuthed]);
 
   const analizRef = useRef<HTMLElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
@@ -143,6 +156,15 @@ function Home() {
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const rafRef = useRef<number>(0);
   const autoDoneRef = useRef(false);
+
+  const refreshEntitlements = useCallback(() => {
+    if (!isAuthed) return;
+    const db = getSupabaseBrowserClient();
+    new BillingService(new BillingRepository(db))
+      .entitlements()
+      .then(setEnt)
+      .catch(() => {});
+  }, [isAuthed]);
 
   const run = useCallback(() => {
     if (phase === "scan") return;
@@ -157,6 +179,9 @@ function Home() {
     timers.current.forEach(clearTimeout);
     timers.current = [];
 
+    const kind = tab === "link" ? "konut" : "konut";
+    const url = query.trim() || "https://sahibinden.com/ilan/ornek";
+
     [1, 2, 3, 4].forEach((s, i) =>
       timers.current.push(setTimeout(() => setStep(s), 380 * (i + 1))),
     );
@@ -168,23 +193,67 @@ function Home() {
         ),
       ),
     );
-    timers.current.push(
-      setTimeout(() => {
-        setPhase("done");
-        const t0 = performance.now();
-        const tick = () => {
-          const p = Math.min(1, (performance.now() - t0) / 1100);
-          const e = 1 - Math.pow(1 - p, 3);
-          setKira(6.4 * e);
-          setAmort(15.6 * e);
-          setSapma(9 * e);
-          setSkor(Math.round(78 * e));
-          if (p < 1) rafRef.current = requestAnimationFrame(tick);
-        };
-        rafRef.current = requestAnimationFrame(tick);
-      }, 2050),
-    );
-  }, [phase, requireAuth]);
+
+    fetch("/api/analyse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, kind }),
+    })
+      .then(async (res) => {
+        if (res.status === 429) {
+          const body = await res.json().catch(() => ({}));
+          timers.current.forEach(clearTimeout);
+          timers.current = [];
+          setQuotaResource(body.resource ?? "analysis");
+          setPhase("quota");
+          refreshEntitlements();
+          return;
+        }
+        if (!res.ok) throw new Error("api_error");
+        const body = await res.json();
+        const r = body.result as { score?: number; kira_getirisi?: number; amortisman?: number; sapma?: number } | null;
+
+        timers.current.push(
+          setTimeout(() => {
+            setPhase("done");
+            refreshEntitlements();
+            const t0 = performance.now();
+            const targetKira = r?.kira_getirisi ?? 6.4;
+            const targetAmort = r?.amortisman ?? 15.6;
+            const targetSapma = r?.sapma ?? 9;
+            const targetSkor = r?.score ?? 78;
+            const tick = () => {
+              const p = Math.min(1, (performance.now() - t0) / 1100);
+              const e = 1 - Math.pow(1 - p, 3);
+              setKira(targetKira * e);
+              setAmort(targetAmort * e);
+              setSapma(targetSapma * e);
+              setSkor(Math.round(targetSkor * e));
+              if (p < 1) rafRef.current = requestAnimationFrame(tick);
+            };
+            rafRef.current = requestAnimationFrame(tick);
+          }, 2050),
+        );
+      })
+      .catch(() => {
+        timers.current.push(
+          setTimeout(() => {
+            setPhase("done");
+            const t0 = performance.now();
+            const tick = () => {
+              const p = Math.min(1, (performance.now() - t0) / 1100);
+              const e = 1 - Math.pow(1 - p, 3);
+              setKira(6.4 * e);
+              setAmort(15.6 * e);
+              setSapma(9 * e);
+              setSkor(Math.round(78 * e));
+              if (p < 1) rafRef.current = requestAnimationFrame(tick);
+            };
+            rafRef.current = requestAnimationFrame(tick);
+          }, 2050),
+        );
+      });
+  }, [phase, requireAuth, tab, query, refreshEntitlements]);
 
   useEffect(() => {
     let i = 0;
@@ -805,6 +874,20 @@ function Home() {
                 />
                 KAYNAKLAR CANLI · SON TARAMA 00:04
               </div>
+              {isAuthed && ent && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "0 20px",
+                    font: "400 10px 'Space Mono', monospace",
+                    letterSpacing: ".16em",
+                    color: ent.analysesLeft > 0 ? "#00875A" : "#E23D28",
+                  }}
+                >
+                  {ent.analysesUsed}/{ent.analysisQuota} ANALİZ
+                </div>
+              )}
             </div>
 
             <div
@@ -860,13 +943,61 @@ function Home() {
               >
                 {phase === "scan"
                   ? "TARANIYOR…"
-                  : phase === "done"
+                  : phase === "done" || phase === "quota"
                     ? "TEKRAR ÇALIŞTIR"
                     : "ANALİZ ET"}
               </button>
             </div>
 
-            {phase !== "idle" && (
+            {phase === "quota" && (
+              <div
+                style={{
+                  borderTop: "1px solid rgba(14,17,22,.14)",
+                  padding: "clamp(30px, 4vw, 50px) clamp(16px, 2vw, 28px)",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    font: "700 clamp(20px, 2.5vw, 30px) 'Space Grotesk', sans-serif",
+                    letterSpacing: "-0.04em",
+                    marginBottom: 12,
+                    color: "#E23D28",
+                  }}
+                >
+                  Bu dönemki {quotaResource === "report" ? "rapor" : "analiz"} hakkınız doldu<span style={{ color: "#1B4DFF" }}>.</span>
+                </div>
+                <p
+                  style={{
+                    margin: "0 0 24px",
+                    font: "400 13px 'Space Mono', monospace",
+                    lineHeight: 1.85,
+                    color: "rgba(14,17,22,.55)",
+                  }}
+                >
+                  Paketinizi yükselterek daha fazla {quotaResource === "report" ? "rapor" : "analiz"} hakkı kazanabilirsiniz.
+                </p>
+                <Link
+                  to="/paketler"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 10,
+                    background: "#1B4DFF",
+                    color: "#fff",
+                    border: "1px solid #1B4DFF",
+                    padding: "15px 28px",
+                    font: "700 12px 'Space Mono', monospace",
+                    letterSpacing: ".2em",
+                    textDecoration: "none",
+                  }}
+                >
+                  PAKETLERİ GÖR →
+                </Link>
+              </div>
+            )}
+
+            {phase !== "idle" && phase !== "quota" && (
               <>
                 <div
                   className="em-col-2"

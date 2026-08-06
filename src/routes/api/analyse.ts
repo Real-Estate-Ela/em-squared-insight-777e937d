@@ -41,7 +41,7 @@ export const Route = createFileRoute("/api/analyse")({
         try {
           const service = new BillingService(new BillingRepository(db));
           const analysis = await service.analyse(listingUrl, kind);
-          return new Response(JSON.stringify({ ok: true, id: analysis.id }), {
+          return new Response(JSON.stringify({ ok: true, id: analysis.id, result: analysis.result }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
           });

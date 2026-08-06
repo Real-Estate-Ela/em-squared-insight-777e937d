@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -64,6 +64,16 @@ function PanelContent() {
   const [ent, setEnt] = useState<Entitlements | null>(null);
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
+  const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const refreshEntitlements = useCallback(() => {
+    const db = getSupabaseBrowserClient();
+    new BillingService(new BillingRepository(db))
+      .entitlements()
+      .then(setEnt)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const db = getSupabaseBrowserClient();
@@ -88,6 +98,27 @@ function PanelContent() {
       setLoading(false);
     });
   }, []);
+
+  const handleDownloadReport = useCallback(async (analysisId: string) => {
+    setQuotaError(null);
+    setDownloadingId(analysisId);
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ analysisId, format: "pdf" }),
+      });
+      if (res.status === 429) {
+        setQuotaError("report");
+        refreshEntitlements();
+        return;
+      }
+      if (!res.ok) throw new Error("api_error");
+      refreshEntitlements();
+    } finally {
+      setDownloadingId(null);
+    }
+  }, [refreshEntitlements]);
 
   const greeting = profile?.full_name
     ? profile.full_name.split(" ")[0]
@@ -123,6 +154,14 @@ function PanelContent() {
         .em-panel-btn:hover { background: #0E1116; color: #fff; }
         .em-panel-link { transition: color 160ms linear; }
         .em-panel-link:hover { color: #1B4DFF !important; }
+        @media (max-width: 900px) {
+          .em-panel-grid { grid-template-columns: 1fr 70px 60px 90px 70px !important; font-size: 10px !important; }
+        }
+        @media (max-width: 600px) {
+          .em-panel-grid { grid-template-columns: 1fr 60px 50px !important; }
+          .em-panel-grid > :nth-child(4),
+          .em-panel-grid > :nth-child(5) { display: none; }
+        }
       `}</style>
 
       <section
@@ -369,18 +408,70 @@ function PanelContent() {
                   >
                     Son analizler
                   </h2>
-                  {ent.canAnalyse && (
-                    <span
+                  <span
+                    style={{
+                      font: "400 10px 'Space Mono', monospace",
+                      letterSpacing: ".16em",
+                      color: ent.analysesLeft > 0 ? "#00875A" : "#E23D28",
+                    }}
+                  >
+                    {ent.analysesLeft > 0
+                      ? `${ent.analysesLeft} HAK KALDI`
+                      : "HAK DOLDU"}
+                  </span>
+                </div>
+
+                {quotaError && (
+                  <div
+                    style={{
+                      border: "1px solid #E23D28",
+                      padding: "clamp(24px, 3vw, 36px)",
+                      marginBottom: "clamp(18px, 2vw, 28px)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      gap: 12,
+                    }}
+                  >
+                    <div
                       style={{
-                        font: "400 10px 'Space Mono', monospace",
-                        letterSpacing: ".16em",
-                        color: "#00875A",
+                        font: "700 clamp(18px, 2vw, 24px) 'Space Grotesk', sans-serif",
+                        letterSpacing: "-0.04em",
+                        color: "#E23D28",
                       }}
                     >
-                      {ent.analysesLeft} HAK KALDI
-                    </span>
-                  )}
-                </div>
+                      Bu dönemki {quotaError === "report" ? "rapor" : "analiz"} hakkınız doldu<span style={{ color: "#1B4DFF" }}>.</span>
+                    </div>
+                    <p
+                      style={{
+                        margin: 0,
+                        font: "400 12px 'Space Mono', monospace",
+                        lineHeight: 1.85,
+                        color: "rgba(14,17,22,.55)",
+                      }}
+                    >
+                      Paketinizi yükselterek daha fazla {quotaError === "report" ? "rapor" : "analiz"} hakkı kazanabilirsiniz.
+                    </p>
+                    <Link
+                      to="/paketler"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 10,
+                        background: "#1B4DFF",
+                        color: "#fff",
+                        border: "1px solid #1B4DFF",
+                        padding: "12px 24px",
+                        font: "700 11px 'Space Mono', monospace",
+                        letterSpacing: ".18em",
+                        textDecoration: "none",
+                      }}
+                    >
+                      PAKETLERİ GÖR →
+                    </Link>
+                  </div>
+                )}
 
                 {analyses.length === 0 ? (
                   <div
@@ -433,9 +524,10 @@ function PanelContent() {
                   <div style={{ border: "1px solid rgba(14,17,22,.14)" }}>
                     {/* Table header */}
                     <div
+                      className="em-panel-grid"
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "1fr 120px 100px 140px",
+                        gridTemplateColumns: "1fr 100px 80px 120px 90px",
                         background: "#0E1116",
                         color: "#fff",
                         font: "400 10px 'Space Mono', monospace",
@@ -450,6 +542,9 @@ function PanelContent() {
                       <span style={{ padding: "13px 16px", textAlign: "right" }}>
                         TARİH
                       </span>
+                      <span style={{ padding: "13px 16px", textAlign: "center" }}>
+                        RAPOR
+                      </span>
                     </div>
 
                     {/* Rows */}
@@ -463,10 +558,10 @@ function PanelContent() {
                       return (
                         <div
                           key={a.id}
-                          className="em-panel-row"
+                          className="em-panel-row em-panel-grid"
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "1fr 120px 100px 140px",
+                            gridTemplateColumns: "1fr 100px 80px 120px 90px",
                             borderBottom: "1px solid rgba(14,17,22,.08)",
                             font: "400 12px 'Space Mono', monospace",
                             transition: "background 120ms linear",
@@ -520,6 +615,34 @@ function PanelContent() {
                             {formatDate(a.createdAt)}
                             <br />
                             {formatTime(a.createdAt)}
+                          </span>
+                          <span
+                            style={{
+                              padding: "10px 16px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <button
+                              type="button"
+                              className="em-panel-btn"
+                              onClick={() => handleDownloadReport(a.id)}
+                              disabled={downloadingId === a.id}
+                              style={{
+                                background: "transparent",
+                                color: "#1B4DFF",
+                                border: "1px solid #1B4DFF",
+                                padding: "6px 14px",
+                                font: "700 9px 'Space Mono', monospace",
+                                letterSpacing: ".14em",
+                                cursor: downloadingId === a.id ? "default" : "pointer",
+                                opacity: downloadingId === a.id ? 0.5 : 1,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {downloadingId === a.id ? "..." : "PDF"}
+                            </button>
                           </span>
                         </div>
                       );
