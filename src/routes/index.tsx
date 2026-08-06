@@ -278,7 +278,7 @@ function Home() {
 
   useEffect(() => {
     const el = analizRef.current;
-    if (!el || autoDoneRef.current) return;
+    if (!el || autoDoneRef.current || !isAuthed) return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !autoDoneRef.current) {
@@ -291,7 +291,7 @@ function Home() {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [run]);
+  }, [run, isAuthed]);
 
   useEffect(() => {
     return () => {
@@ -501,7 +501,6 @@ function Home() {
               href="#analiz"
               onClick={(e) => {
                 e.preventDefault();
-                if (requireAuth()) return;
                 const el = document.getElementById("analiz");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }}
