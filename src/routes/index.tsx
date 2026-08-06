@@ -4,6 +4,15 @@ import { ParticleField } from "@/components/ParticleField";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { BillingRepository, BillingService, type Entitlements } from "@/lib/billing/billing";
+import {
+  getDefaultRegions,
+  getRegionsForCity,
+  formatPrice,
+  formatChange,
+  formatYield,
+  type RegionMetric,
+} from "@/lib/analysis/regions";
+import { useUserCity } from "@/hooks/useUserCity";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -95,20 +104,7 @@ const LOG_LINES = [
   "sonuç hazır · 00:00,16",
 ];
 
-const REGIONS = [
-  { city: "İSTANBUL", name: "Kadıköy", price: "96.400 ₺/m²", change: "+4,2%", up: true },
-  { city: "İSTANBUL", name: "Beylikdüzü", price: "62.700 ₺/m²", change: "+3,4%", up: true },
-  { city: "İSTANBUL", name: "Esenyurt", price: "38.900 ₺/m²", change: "−2,3%", up: false },
-  { city: "ANKARA", name: "Çankaya", price: "54.900 ₺/m²", change: "+2,8%", up: true },
-  { city: "ANKARA", name: "Etimesgut", price: "33.400 ₺/m²", change: "+1,9%", up: true },
-  { city: "İZMİR", name: "Bornova", price: "47.150 ₺/m²", change: "−1,1%", up: false },
-  { city: "İZMİR", name: "Karşıyaka", price: "68.300 ₺/m²", change: "+5,1%", up: true },
-  { city: "BURSA", name: "Nilüfer", price: "44.300 ₺/m²", change: "+5,6%", up: true },
-  { city: "ANTALYA", name: "Muratpaşa", price: "71.800 ₺/m²", change: "+7,9%", up: true },
-  { city: "ANTALYA", name: "Konyaaltı", price: "79.500 ₺/m²", change: "+6,4%", up: true },
-  { city: "KOCAELİ", name: "İzmit", price: "41.600 ₺/m²", change: "+2,2%", up: true },
-  { city: "ESKİŞEHİR", name: "Tepebaşı", price: "36.750 ₺/m²", change: "−0,7%", up: false },
-];
+const DEFAULT_REGIONS = getDefaultRegions();
 
 function fmt(n: number) {
   return n.toFixed(1).replace(".", ",");
@@ -139,6 +135,12 @@ function Home() {
   const [typed, setTyped] = useState("");
   const [quotaResource, setQuotaResource] = useState<"analysis" | "report">("analysis");
   const [ent, setEnt] = useState<Entitlements | null>(null);
+  const userCity = useUserCity();
+  const [regions, setRegions] = useState<RegionMetric[]>(DEFAULT_REGIONS);
+
+  useEffect(() => {
+    if (userCity) setRegions(getRegionsForCity(userCity));
+  }, [userCity]);
 
   useEffect(() => {
     if (!isAuthed) { setEnt(null); return; }
@@ -1319,18 +1321,32 @@ function Home() {
                 <span style={{ color: "#1B4DFF" }}>gör.</span>
               </h2>
             </div>
-            <p
-              style={{
-                margin: "0 0 6px auto",
-                maxWidth: 340,
-                font: "400 12px 'Space Mono', monospace",
-                lineHeight: 1.8,
-                color: "rgba(255,255,255,.55)",
-              }}
-            >
-              Mahalle bazlı m² medyanı, son 12 aylık değişim ve kira getirisi
-              bandı. İmleci gezdir; hücreler canlı veriyle açılır.
-            </p>
+            <div style={{ margin: "0 0 6px auto", maxWidth: 340 }}>
+              {userCity && (
+                <div
+                  style={{
+                    font: "700 10px 'Space Mono', monospace",
+                    letterSpacing: ".18em",
+                    color: "#1B4DFF",
+                    marginBottom: 10,
+                  }}
+                >
+                  📍 {userCity.toLocaleUpperCase("tr")} BÖLGESİ
+                </div>
+              )}
+              <p
+                style={{
+                  margin: 0,
+                  font: "400 12px 'Space Mono', monospace",
+                  lineHeight: 1.8,
+                  color: "rgba(255,255,255,.55)",
+                }}
+              >
+                {userCity
+                  ? `${userCity} ve çevresi için bölge bazlı medyan m² fiyatı, son 12 aylık değişim ve kira getirisi.`
+                  : "Mahalle bazlı m² medyanı, son 12 aylık değişim ve kira getirisi bandı. Konum izni verirsen bölgen öne çıkar."}
+              </p>
+            </div>
           </div>
           <div
             ref={mapRef}
@@ -1342,9 +1358,9 @@ function Home() {
               borderLeft: "1px solid rgba(255,255,255,.14)",
             }}
           >
-            {REGIONS.map((r) => (
+            {regions.map((r) => (
               <div
-                key={r.name}
+                key={`${r.city}-${r.district}`}
                 style={{
                   padding: "clamp(18px, 2vw, 28px)",
                   borderRight: "1px solid rgba(255,255,255,.14)",
@@ -1359,7 +1375,7 @@ function Home() {
                     color: "rgba(255,255,255,.42)",
                   }}
                 >
-                  {r.city}
+                  {r.city.toLocaleUpperCase("tr")}
                 </div>
                 <div
                   style={{
@@ -1368,18 +1384,28 @@ function Home() {
                     margin: "10px 0 14px",
                   }}
                 >
-                  {r.name}
+                  {r.district}
+                </div>
+                <div
+                  style={{
+                    font: "400 12px 'Space Mono', monospace",
+                    marginBottom: 6,
+                  }}
+                >
+                  {formatPrice(r.medianM2)}
                 </div>
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    font: "400 12px 'Space Mono', monospace",
+                    font: "400 11px 'Space Mono', monospace",
                   }}
                 >
-                  <span>{r.price}</span>
-                  <span style={{ color: r.up ? "#00875A" : "#E23D28" }}>
-                    {r.change}
+                  <span style={{ color: r.change12m >= 0 ? "#00875A" : "#E23D28" }}>
+                    {formatChange(r.change12m)}
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,.55)" }}>
+                    {formatYield(r.yieldPct)} getiri
                   </span>
                 </div>
               </div>
@@ -1396,7 +1422,7 @@ function Home() {
               color: "rgba(255,255,255,.4)",
             }}
           >
-            <span>MEDYAN M² SATIŞ FİYATI · SON 90 GÜN AKTİF İLAN</span>
+            <span>MEDYAN M² SATIŞ FİYATI · KİRA GETİRİSİ</span>
             <span className="em-hide" style={{ marginLeft: "auto" }}>
               YEŞİL: ARTIŞ · KIRMIZI: DÜŞÜŞ
             </span>
