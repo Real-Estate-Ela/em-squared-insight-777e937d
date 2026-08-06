@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SifreYenileRouteImport } from './routes/sifre-yenile'
 import { Route as SifreSifirlaRouteImport } from './routes/sifre-sifirla'
 import { Route as ProfilRouteImport } from './routes/profil'
+import { Route as PanelRouteImport } from './routes/panel'
 import { Route as PaketlerRouteImport } from './routes/paketler'
 import { Route as KayitRouteImport } from './routes/kayit'
 import { Route as IletisimRouteImport } from './routes/iletisim'
@@ -42,6 +43,11 @@ const SifreSifirlaRoute = SifreSifirlaRouteImport.update({
 const ProfilRoute = ProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PanelRoute = PanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaketlerRoute = PaketlerRouteImport.update({
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
   '/paketler': typeof PaketlerRoute
+  '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
   '/paketler': typeof PaketlerRoute
+  '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/iletisim': typeof IletisimRoute
   '/kayit': typeof KayitRoute
   '/paketler': typeof PaketlerRoute
+  '/panel': typeof PanelRoute
   '/profil': typeof ProfilRoute
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/iletisim'
     | '/kayit'
     | '/paketler'
+    | '/panel'
     | '/profil'
     | '/sifre-sifirla'
     | '/sifre-yenile'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/iletisim'
     | '/kayit'
     | '/paketler'
+    | '/panel'
     | '/profil'
     | '/sifre-sifirla'
     | '/sifre-yenile'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/iletisim'
     | '/kayit'
     | '/paketler'
+    | '/panel'
     | '/profil'
     | '/sifre-sifirla'
     | '/sifre-yenile'
@@ -203,6 +215,7 @@ export interface RootRouteChildren {
   IletisimRoute: typeof IletisimRoute
   KayitRoute: typeof KayitRoute
   PaketlerRoute: typeof PaketlerRoute
+  PanelRoute: typeof PanelRoute
   ProfilRoute: typeof ProfilRoute
   SifreSifirlaRoute: typeof SifreSifirlaRoute
   SifreYenileRoute: typeof SifreYenileRoute
@@ -240,6 +253,13 @@ declare module '@tanstack/react-router' {
       path: '/profil'
       fullPath: '/profil'
       preLoaderRoute: typeof ProfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/panel': {
+      id: '/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof PanelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/paketler': {
@@ -323,6 +343,7 @@ const rootRouteChildren: RootRouteChildren = {
   IletisimRoute: IletisimRoute,
   KayitRoute: KayitRoute,
   PaketlerRoute: PaketlerRoute,
+  PanelRoute: PanelRoute,
   ProfilRoute: ProfilRoute,
   SifreSifirlaRoute: SifreSifirlaRoute,
   SifreYenileRoute: SifreYenileRoute,

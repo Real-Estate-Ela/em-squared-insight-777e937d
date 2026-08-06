@@ -49,7 +49,7 @@ export default defineConfig(({ command, mode }) => {
           },
         },
       }),
-      nitro(),
+      nitro({ preset: "vercel" }),
       react(),
     ],
     server: {
