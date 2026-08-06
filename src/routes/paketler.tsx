@@ -108,7 +108,7 @@ const COMPARISON_DATA: Record<
   locationQuery: { free: "10", pro: "∞", enterprise: "∞" },
   portfolioTracking: {
     free: { text: "✕", color: "#E23D28" },
-    pro: "50",
+    pro: "50 ilan",
     enterprise: "∞",
   },
   pdfReport: {
@@ -227,8 +227,9 @@ function ComparisonTable({
 
   return (
     <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-      <div style={{ minWidth: 600, border: "1px solid rgba(14,17,22,.16)" }}>
+      <div style={{ border: "1px solid rgba(14,17,22,.16)" }}>
         <div
+          className="pk-cmp-head"
           style={{
             display: "grid",
             gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
@@ -257,7 +258,7 @@ function ComparisonTable({
         {COMPARISON_KEYS.map((key, i) => (
           <div
             key={key}
-            className="comp-row"
+            className="comp-row pk-cmp"
             style={{
               display: "grid",
               gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
@@ -285,6 +286,18 @@ function ComparisonTable({
                     fontWeight: isObj ? undefined : 700,
                   }}
                 >
+                  <span
+                    className="pk-cmp-plan"
+                    style={{
+                      display: "none",
+                      font: "400 9px 'Space Mono', monospace",
+                      letterSpacing: ".2em",
+                      color: "rgba(14,17,22,.38)",
+                      marginBottom: 5,
+                    }}
+                  >
+                    {p.name.toUpperCase()}
+                  </span>
                   {isObj ? cell.text : cell}
                 </span>
               );
@@ -501,9 +514,11 @@ function Paketler() {
           background: #0E1116 !important;
           color: #fff !important;
         }
-        .pk-card-btn[data-featured]:hover {
+        .pk-card-btn[data-featured]:hover,
+        .pk-card-btn[data-hot]:hover {
           background: #E23D28 !important;
           border-color: #E23D28 !important;
+          color: #fff !important;
         }
         .pk-cta-primary:hover {
           background: #E23D28 !important;
@@ -519,6 +534,7 @@ function Paketler() {
           height: 44px;
           background: transparent;
           cursor: grab;
+          touch-action: none;
         }
         .pk-slider:active { cursor: grabbing; }
         .pk-slider::-webkit-slider-runnable-track {
@@ -569,6 +585,10 @@ function Paketler() {
           .pk-cards[data-tier="0"] > [data-plan="free"]       { order: -1; }
           .pk-cards[data-tier="1"] > [data-plan="pro"]        { order: -1; }
           .pk-cards[data-tier="2"] > [data-plan="enterprise"] { order: -1; }
+          .pk-cmp { grid-template-columns: repeat(3, 1fr) !important; }
+          .pk-cmp > span:first-child { grid-column: 1 / -1; border-bottom: 1px solid rgba(14,17,22,.08); font-weight: 700; }
+          .pk-cmp-plan { display: block !important; }
+          .pk-cmp-head { display: none !important; }
         }
       `}</style>
 
@@ -623,8 +643,8 @@ function Paketler() {
             style={{
               margin: "0 0 clamp(18px, 2.6vw, 32px)",
               font: "700 clamp(38px, 7.6vw, 128px) 'Space Grotesk', sans-serif",
-              letterSpacing: "-0.06em",
-              lineHeight: 0.88,
+              letterSpacing: "-0.025em",
+              lineHeight: 1.05,
             }}
           >
             {heroLines.map((line, i) => (
@@ -1148,6 +1168,7 @@ function Paketler() {
                       to={cta.to}
                       className="pk-card-btn"
                       data-featured={isFeatured ? "" : undefined}
+                      data-hot={code === "enterprise" ? "" : undefined}
                       style={{
                         position: "relative",
                         marginTop: 34,
@@ -1321,8 +1342,8 @@ function Paketler() {
               margin: "0 0 clamp(18px, 2.4vw, 30px)",
               maxWidth: "18ch",
               font: "700 clamp(30px, 5.4vw, 86px) 'Space Grotesk', sans-serif",
-              letterSpacing: "-0.06em",
-              lineHeight: 0.92,
+              letterSpacing: "-0.025em",
+              lineHeight: 1.05,
             }}
           >
             {t.pricing.closingTitle.split("\n").map((line, i) => (
