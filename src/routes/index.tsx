@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ParticleField } from "@/components/ParticleField";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -112,6 +113,18 @@ function fmt(n: number) {
 }
 
 function Home() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const isAuthed = !authLoading && !!user;
+
+  const requireAuth = useCallback(() => {
+    if (!isAuthed) {
+      navigate({ to: "/giris", search: { redirect: "/#analiz" } });
+      return true;
+    }
+    return false;
+  }, [isAuthed, navigate]);
+
   const [tab, setTab] = useState<"link" | "konum">("link");
   const [query, setQuery] = useState("");
   const [phase, setPhase] = useState<"idle" | "scan" | "done">("idle");
@@ -133,6 +146,7 @@ function Home() {
 
   const run = useCallback(() => {
     if (phase === "scan") return;
+    if (requireAuth()) return;
     setPhase("scan");
     setStep(0);
     setKira(0);
@@ -170,7 +184,7 @@ function Home() {
         rafRef.current = requestAnimationFrame(tick);
       }, 2050),
     );
-  }, [phase]);
+  }, [phase, requireAuth]);
 
   useEffect(() => {
     let i = 0;
@@ -420,6 +434,7 @@ function Home() {
               href="#analiz"
               onClick={(e) => {
                 e.preventDefault();
+                if (requireAuth()) return;
                 const el = document.getElementById("analiz");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }}
