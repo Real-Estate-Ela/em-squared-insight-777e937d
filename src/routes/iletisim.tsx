@@ -416,28 +416,6 @@ function Iletisim() {
                   </p>
                 </div>
               </div>
-              <div
-                style={{
-                  position: "relative",
-                  aspectRatio: "4 / 3",
-                  border: "1px solid rgba(14,17,22,.16)",
-                  borderTop: 0,
-                  background: "rgba(14,17,22,.04)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  style={{
-                    font: "400 10px 'Space Mono', monospace",
-                    letterSpacing: ".18em",
-                    color: "rgba(14,17,22,.3)",
-                  }}
-                >
-                  HARİTA / OFİS
-                </span>
-              </div>
             </div>
           </div>
         </div>

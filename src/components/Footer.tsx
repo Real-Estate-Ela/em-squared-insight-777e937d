@@ -214,7 +214,7 @@ export function Footer() {
             <Link to="/" hash="veri" className="em-footer-link" style={linkStyle}>
               Metodoloji
             </Link>
-            <Link to="/" hash="sss" className="em-footer-link" style={linkStyle}>
+            <Link to="/sss" className="em-footer-link" style={linkStyle}>
               Sıkça sorulanlar
             </Link>
             <Link

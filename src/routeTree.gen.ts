@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SssRouteImport } from './routes/sss'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SifreYenileRouteImport } from './routes/sifre-yenile'
 import { Route as SifreSifirlaRouteImport } from './routes/sifre-sifirla'
@@ -25,6 +26,11 @@ import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ApiReportRouteImport } from './routes/api/report'
 import { Route as ApiAnalyseRouteImport } from './routes/api/analyse'
 
+const SssRoute = SssRouteImport.update({
+  id: '/sss',
+  path: '/sss',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sss': typeof SssRoute
   '/api/analyse': typeof ApiAnalyseRoute
   '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sss': typeof SssRoute
   '/api/analyse': typeof ApiAnalyseRoute
   '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/sifre-sifirla': typeof SifreSifirlaRoute
   '/sifre-yenile': typeof SifreYenileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sss': typeof SssRoute
   '/api/analyse': typeof ApiAnalyseRoute
   '/api/report': typeof ApiReportRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/sss'
     | '/api/analyse'
     | '/api/report'
     | '/auth/callback'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/sss'
     | '/api/analyse'
     | '/api/report'
     | '/auth/callback'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/sifre-sifirla'
     | '/sifre-yenile'
     | '/sitemap.xml'
+    | '/sss'
     | '/api/analyse'
     | '/api/report'
     | '/auth/callback'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   SifreSifirlaRoute: typeof SifreSifirlaRoute
   SifreYenileRoute: typeof SifreYenileRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SssRoute: typeof SssRoute
   ApiAnalyseRoute: typeof ApiAnalyseRoute
   ApiReportRoute: typeof ApiReportRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -227,6 +240,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sss': {
+      id: '/sss'
+      path: '/sss'
+      fullPath: '/sss'
+      preLoaderRoute: typeof SssRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -348,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   SifreSifirlaRoute: SifreSifirlaRoute,
   SifreYenileRoute: SifreYenileRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SssRoute: SssRoute,
   ApiAnalyseRoute: ApiAnalyseRoute,
   ApiReportRoute: ApiReportRoute,
   AuthCallbackRoute: AuthCallbackRoute,
