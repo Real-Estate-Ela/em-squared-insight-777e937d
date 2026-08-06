@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ParticleField } from "@/components/ParticleField";
+import { HeroCity } from "@/components/hero/HeroCity";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { BillingRepository, BillingService, type Entitlements } from "@/lib/billing/billing";
@@ -377,19 +378,13 @@ function Home() {
           padding: "104px clamp(16px, 4vw, 44px) 0",
         }}
       >
-        <ParticleField
-          style={{
-            position: "relative",
-            width: "100%",
-            height: "clamp(250px, 46vh, 520px)",
-            margin: "0 0 clamp(10px, 2.5vw, 34px)",
-          }}
-        />
+        <HeroCity />
         <div
           ref={ringRef}
           className="em-hide"
           style={{
             position: "absolute",
+            zIndex: 20,
             top: 0,
             left: 0,
             width: 108,
@@ -441,6 +436,7 @@ function Home() {
         <div
           style={{
             position: "relative",
+            zIndex: 10,
             maxWidth: 1560,
             width: "100%",
             margin: "0 auto",
@@ -594,6 +590,7 @@ function Home() {
         <div
           style={{
             position: "relative",
+            zIndex: 10,
             display: "flex",
             alignItems: "center",
             gap: 12,
