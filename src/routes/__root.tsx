@@ -12,6 +12,7 @@ import { type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import { CookieConsent } from "../components/CookieConsent";
 import { AuthProvider } from "../components/auth/AuthProvider";
 import { I18nProvider } from "../lib/i18n";
 
@@ -153,6 +154,7 @@ function RootComponent() {
               <Outlet />
             </main>
             <Footer />
+            <CookieConsent />
           </div>
         </I18nProvider>
       </AuthProvider>

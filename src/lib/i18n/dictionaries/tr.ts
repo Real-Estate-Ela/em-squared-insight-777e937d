@@ -124,6 +124,29 @@ export const tr = {
     timesPrice: "bedelin {x} katı",
     years: "yıl",
   },
+  cookie: {
+    bannerText: "Bu site zorunlu çerezler kullanır. İşlevsel ve analitik çerezleri etkinleştirmek için onayınızı alıyoruz.",
+    learnMore: "Çerez politikası",
+    acceptAll: "TÜMÜNÜ KABUL ET",
+    requiredOnly: "YALNIZCA ZORUNLU",
+    settings: "AYARLAR",
+    settingsTitle: "Çerez Ayarları",
+    settingsDesc: "Hangi çerez kategorilerinin aktif olacağını seçin. Zorunlu çerezler sitenin çalışması için gereklidir ve kapatılamaz.",
+    required: "Zorunlu çerezler",
+    requiredDesc: "Oturum yönetimi, güvenlik ve temel site işlevleri için gereklidir.",
+    functional: "İşlevsel çerezler",
+    functionalDesc: "Dil tercihi ve arayüz ayarlarınızı hatırlar.",
+    analytics: "Analitik çerezler",
+    analyticsDesc: "Anonim kullanım istatistikleri toplayarak siteyi geliştirmemize yardımcı olur.",
+    save: "KAYDET",
+    close: "KAPAT",
+    footerSettings: "Çerez Ayarları",
+  },
+  legal: {
+    privacy: "Gizlilik Politikası",
+    terms: "Kullanım Koşulları",
+    cookies: "Çerez Politikası",
+  },
 } as const satisfies Dictionary;
 
 export interface Dictionary {
@@ -242,5 +265,28 @@ export interface Dictionary {
     totalPayment: string;
     timesPrice: string;
     years: string;
+  };
+  cookie: {
+    bannerText: string;
+    learnMore: string;
+    acceptAll: string;
+    requiredOnly: string;
+    settings: string;
+    settingsTitle: string;
+    settingsDesc: string;
+    required: string;
+    requiredDesc: string;
+    functional: string;
+    functionalDesc: string;
+    analytics: string;
+    analyticsDesc: string;
+    save: string;
+    close: string;
+    footerSettings: string;
+  };
+  legal: {
+    privacy: string;
+    terms: string;
+    cookies: string;
   };
 }
