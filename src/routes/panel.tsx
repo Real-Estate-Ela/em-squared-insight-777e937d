@@ -9,11 +9,20 @@ import {
   type Entitlements,
   type Analysis,
 } from "@/lib/billing/billing";
+import { useUserCity } from "@/hooks/useUserCity";
+import {
+  getRegionsForCity,
+  getDefaultRegions,
+  formatPrice,
+  formatChange,
+  formatYield,
+  type RegionMetric,
+} from "@/lib/analysis/regions";
 
 export const Route = createFileRoute("/panel")({
   head: () => ({
     meta: [
-      { title: "Panel — emlakmetric" },
+      { title: "Panelim — emlakmetric" },
       {
         name: "description",
         content: "emlakmetric analiz paneli. İlan analizi, kullanım bilgileri ve geçmiş sorgular.",
@@ -66,6 +75,17 @@ function PanelContent() {
   const [loading, setLoading] = useState(true);
   const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const userCity = useUserCity();
+  const [regions, setRegions] = useState<RegionMetric[]>([]);
+  const [locationDismissed, setLocationDismissed] = useState(false);
+
+  useEffect(() => {
+    if (userCity) {
+      setRegions(getRegionsForCity(userCity));
+    } else {
+      setRegions(getDefaultRegions().slice(0, 4));
+    }
+  }, [userCity]);
 
   const refreshEntitlements = useCallback(() => {
     const db = getSupabaseBrowserClient();
@@ -127,14 +147,14 @@ function PanelContent() {
   const kindLabel = (k: string) =>
     k === "arsa" ? "Arsa" : k === "ticari" ? "Ticari" : "Konut";
 
-  const formatDate = (d: Date) =>
+  const fmtDate = (d: Date) =>
     d.toLocaleDateString("tr-TR", {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
 
-  const formatTime = (d: Date) =>
+  const fmtTime = (d: Date) =>
     d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 
   const extractDomain = (url: string) => {
@@ -145,6 +165,9 @@ function PanelContent() {
     }
   };
 
+  const locationAvailable = typeof navigator !== "undefined" && !!navigator.geolocation;
+  const showLocationPrompt = !userCity && !locationDismissed && locationAvailable;
+
   return (
     <div>
       <style>{`
@@ -154,16 +177,25 @@ function PanelContent() {
         .em-panel-btn:hover { background: #0E1116; color: #fff; }
         .em-panel-link { transition: color 160ms linear; }
         .em-panel-link:hover { color: #1B4DFF !important; }
+        .em-panel-action { transition: background 160ms linear, transform 120ms linear; }
+        .em-panel-action:hover { background: #0036E0; transform: translateY(-1px); }
+        .em-loc-card { transition: border-color 200ms linear; }
+        .em-loc-card:hover { border-color: rgba(27,77,255,.4); }
         @media (max-width: 900px) {
           .em-panel-grid { grid-template-columns: 1fr 70px 60px 90px 70px !important; font-size: 10px !important; }
+          .em-panel-stats { grid-template-columns: repeat(2, 1fr) !important; }
+          .em-panel-region { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 600px) {
           .em-panel-grid { grid-template-columns: 1fr 60px 50px !important; }
           .em-panel-grid > :nth-child(4),
           .em-panel-grid > :nth-child(5) { display: none; }
+          .em-panel-stats { grid-template-columns: 1fr !important; }
+          .em-panel-region { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
+      {/* ═══ HEADER ═══ */}
       <section
         data-bg="light"
         style={{
@@ -172,7 +204,7 @@ function PanelContent() {
         }}
       >
         <div style={{ maxWidth: 1560, margin: "0 auto" }}>
-          <div style={eyebrow}>PANEL</div>
+          <div style={eyebrow}>PANELİM</div>
           <h1
             style={{
               margin: "0 0 10px",
@@ -182,22 +214,148 @@ function PanelContent() {
               animation: "em-rise-in .8s both",
             }}
           >
-            Merhaba, {greeting}
-            <span style={{ color: "#1B4DFF" }}>.</span>
+            {userCity ? (
+              <>
+                {userCity}&apos;dan merhaba, {greeting}
+                <span style={{ color: "#1B4DFF" }}>.</span>
+              </>
+            ) : (
+              <>
+                Merhaba, {greeting}
+                <span style={{ color: "#1B4DFF" }}>.</span>
+              </>
+            )}
           </h1>
-          <p
+          <div
             style={{
-              margin: 0,
-              font: "400 13px 'Space Mono', monospace",
-              lineHeight: 1.85,
-              color: "rgba(14,17,22,.55)",
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              flexWrap: "wrap",
             }}
           >
-            İlan analizi yap, geçmiş sorgularını gör.
-          </p>
+            <p
+              style={{
+                margin: 0,
+                font: "400 13px 'Space Mono', monospace",
+                lineHeight: 1.85,
+                color: "rgba(14,17,22,.55)",
+              }}
+            >
+              İlan analizi yap, geçmiş sorgularını gör.
+            </p>
+            <Link
+              to="/"
+              hash="analiz"
+              className="em-panel-action"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                background: "#1B4DFF",
+                color: "#fff",
+                border: "1px solid #1B4DFF",
+                padding: "10px 20px",
+                font: "700 10px 'Space Mono', monospace",
+                letterSpacing: ".18em",
+                textDecoration: "none",
+                marginLeft: "auto",
+              }}
+            >
+              YENİ ANALİZ →
+            </Link>
+          </div>
         </div>
       </section>
 
+      {/* ═══ LOCATION PROMPT ═══ */}
+      {showLocationPrompt && (
+        <section
+          data-bg="light"
+          style={{
+            background: "#FFFFFF",
+            padding: "0 clamp(16px, 4vw, 44px)",
+          }}
+        >
+          <div style={{ maxWidth: 1560, margin: "0 auto" }}>
+            <div
+              style={{
+                border: "1px solid rgba(27,77,255,.25)",
+                background: "rgba(27,77,255,.03)",
+                padding: "clamp(18px, 2.5vw, 28px) clamp(20px, 3vw, 32px)",
+                display: "flex",
+                alignItems: "center",
+                gap: 20,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 240 }}>
+                <div
+                  style={{
+                    font: "700 14px 'Space Grotesk', sans-serif",
+                    letterSpacing: "-0.02em",
+                    marginBottom: 4,
+                  }}
+                >
+                  Konum bilgini paylaş
+                </div>
+                <p
+                  style={{
+                    margin: 0,
+                    font: "400 11px 'Space Mono', monospace",
+                    lineHeight: 1.75,
+                    color: "rgba(14,17,22,.55)",
+                  }}
+                >
+                  Şehrine özel m² medyanı, kira getirisi ve bölge verilerini panelinde gör.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.geolocation.getCurrentPosition(
+                      () => {},
+                      () => setLocationDismissed(true),
+                      { timeout: 8000 },
+                    );
+                  }}
+                  className="em-panel-action"
+                  style={{
+                    background: "#1B4DFF",
+                    color: "#fff",
+                    border: "1px solid #1B4DFF",
+                    padding: "10px 20px",
+                    font: "700 10px 'Space Mono', monospace",
+                    letterSpacing: ".14em",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  KONUMU PAYLAŞ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocationDismissed(true)}
+                  style={{
+                    background: "transparent",
+                    color: "rgba(14,17,22,.45)",
+                    border: "1px solid rgba(14,17,22,.14)",
+                    padding: "10px 16px",
+                    font: "400 10px 'Space Mono', monospace",
+                    letterSpacing: ".14em",
+                    cursor: "pointer",
+                  }}
+                >
+                  SONRA
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══ STATS + CONTENT ═══ */}
       <section
         data-bg="light"
         style={{
@@ -206,7 +364,6 @@ function PanelContent() {
         }}
       >
         <div style={{ maxWidth: 1560, margin: "0 auto" }}>
-          {/* Usage cards */}
           {loading ? (
             <div
               style={{
@@ -222,8 +379,9 @@ function PanelContent() {
             </div>
           ) : ent ? (
             <>
+              {/* Usage cards */}
               <div
-                className="em-col-1"
+                className="em-panel-stats"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(4, 1fr)",
@@ -245,7 +403,7 @@ function PanelContent() {
                       color: "rgba(14,17,22,.45)",
                     }}
                   >
-                    {formatDate(ent.periodEnd)} tarihine kadar
+                    {fmtDate(ent.periodEnd)} tarihine kadar
                   </span>
                   <Link
                     to="/paketler"
@@ -366,7 +524,7 @@ function PanelContent() {
                     }}
                   >
                     {analyses.length > 0
-                      ? `Son: ${formatDate(analyses[0].createdAt)}`
+                      ? `Son: ${fmtDate(analyses[0].createdAt)}`
                       : "Henüz analiz yok"}
                   </span>
                   <Link
@@ -384,7 +542,158 @@ function PanelContent() {
                 </div>
               </div>
 
-              {/* Recent analyses table */}
+              {/* ═══ REGION DATA ═══ */}
+              {regions.length > 0 && (
+                <div
+                  style={{
+                    marginBottom: "clamp(30px, 4vw, 50px)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "clamp(14px, 2vw, 22px)",
+                    }}
+                  >
+                    <div>
+                      <h2
+                        style={{
+                          margin: 0,
+                          font: "700 clamp(18px, 2vw, 28px) 'Space Grotesk', sans-serif",
+                          letterSpacing: "-0.04em",
+                        }}
+                      >
+                        {userCity ? `${userCity} bölge verileri` : "Bölge verileri"}
+                      </h2>
+                      <p
+                        style={{
+                          margin: "4px 0 0",
+                          font: "400 11px 'Space Mono', monospace",
+                          color: "rgba(14,17,22,.45)",
+                          letterSpacing: ".1em",
+                        }}
+                      >
+                        MEDYAN M² SATIŞ FİYATI · KİRA GETİRİSİ
+                      </p>
+                    </div>
+                    {userCity && (
+                      <span
+                        style={{
+                          font: "400 10px 'Space Mono', monospace",
+                          letterSpacing: ".14em",
+                          color: "#00875A",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            background: "#00875A",
+                          }}
+                        />
+                        KONUM AKTİF
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="em-panel-region"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(4, 1fr)",
+                      gap: 1,
+                      background: "rgba(14,17,22,.14)",
+                      border: "1px solid rgba(14,17,22,.14)",
+                    }}
+                  >
+                    {regions.slice(0, 4).map((r) => (
+                      <div
+                        key={`${r.city}-${r.district}`}
+                        className="em-loc-card"
+                        style={{
+                          ...cardBase,
+                          background: "#fff",
+                          gap: 12,
+                        }}
+                      >
+                        <span style={labelMono}>{r.district.toLocaleUpperCase("tr-TR")}</span>
+                        <div
+                          style={{
+                            font: "700 clamp(22px, 2.5vw, 34px) 'Space Grotesk', sans-serif",
+                            letterSpacing: "-0.05em",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {formatPrice(r.medianM2)}
+                        </div>
+                        <div
+                          style={{
+                            font: "400 11px 'Space Mono', monospace",
+                            color: "rgba(14,17,22,.45)",
+                          }}
+                        >
+                          m² satış fiyatı
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            borderTop: "1px solid rgba(14,17,22,.08)",
+                            paddingTop: 12,
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                font: "400 9px 'Space Mono', monospace",
+                                letterSpacing: ".14em",
+                                color: "rgba(14,17,22,.4)",
+                                marginBottom: 4,
+                              }}
+                            >
+                              12A DEĞİŞİM
+                            </div>
+                            <div
+                              style={{
+                                font: "500 14px 'Space Grotesk', sans-serif",
+                                color: r.change12m >= 0 ? "#00875A" : "#E23D28",
+                              }}
+                            >
+                              {formatChange(r.change12m)}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div
+                              style={{
+                                font: "400 9px 'Space Mono', monospace",
+                                letterSpacing: ".14em",
+                                color: "rgba(14,17,22,.4)",
+                                marginBottom: 4,
+                              }}
+                            >
+                              KİRA GETİRİSİ
+                            </div>
+                            <div
+                              style={{
+                                font: "500 14px 'Space Grotesk', sans-serif",
+                                color: "#1B4DFF",
+                              }}
+                            >
+                              {formatYield(r.yieldPct)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ RECENT ANALYSES ═══ */}
               <div
                 style={{
                   borderTop: "1px solid rgba(14,17,22,.14)",
@@ -612,9 +921,9 @@ function PanelContent() {
                               fontSize: 11,
                             }}
                           >
-                            {formatDate(a.createdAt)}
+                            {fmtDate(a.createdAt)}
                             <br />
-                            {formatTime(a.createdAt)}
+                            {fmtTime(a.createdAt)}
                           </span>
                           <span
                             style={{
