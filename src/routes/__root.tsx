@@ -10,7 +10,6 @@ import {
 import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import heroPreload from "../assets/hero/hero-city-1920.webp?url";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { AuthProvider } from "../components/auth/AuthProvider";
@@ -108,13 +107,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         hrefLang: "en",
         href: "https://emlakmetric.com?lang=en",
       },
-      {
-        rel: "preload",
-        as: "image",
-        type: "image/webp",
-        href: heroPreload,
-      },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+{ rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
