@@ -14,13 +14,13 @@ import {
 export const Route = createFileRoute("/paketler")({
   head: () => ({
     meta: [
-      { title: "Paketler — emlakmetric" },
+      { title: "Paketler | emlakmetric ilan analizi paketleri" },
       {
         name: "description",
         content:
-          "emlakmetric analiz paketlerini karşılaştırın: Başlangıç, Pro ve Kurumsal. Aylık analiz kotasına göre üç plan, yıllık ödemede iki ay ücretsiz.",
+          "emlakmetric analiz paketlerini karşılaştırın. Başlangıç, Pro ve Kurumsal. Aylık analiz kotasına göre üç plan, istediğin zaman iptal.",
       },
-      { property: "og:title", content: "Paketler — emlakmetric" },
+      { property: "og:title", content: "Paketler | emlakmetric" },
       {
         property: "og:description",
         content:
@@ -323,40 +323,29 @@ function PlanCard({
   return (
     <div
       style={{
-        border: isFeatured ? "2px solid #1B4DFF" : "1px solid rgba(14,17,22,.16)",
-        padding: "clamp(24px, 3vw, 36px)",
+        background: isFeatured ? "#0E1116" : "#FFFFFF",
+        border: isFeatured ? "none" : "1px solid rgba(14,17,22,.14)",
+        padding: "clamp(28px, 3vw, 40px)",
         display: "flex",
         flexDirection: "column",
         position: "relative",
         opacity: visible ? 1 : 0,
-        transform: visible ? "none" : "translateY(20px)",
-        transition: `opacity 250ms ease-out ${index * 100}ms, transform 250ms ease-out ${index * 100}ms`,
+        transform: visible ? "none" : "translateY(24px)",
+        transition: `opacity 300ms ease-out ${index * 120}ms, transform 300ms ease-out ${index * 120}ms`,
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          top: -1,
-          left: -1,
-          width: 8,
-          height: 8,
-          borderLeft: `1.5px solid ${isFeatured ? "#1B4DFF" : "rgba(14,17,22,.3)"}`,
-          borderTop: `1.5px solid ${isFeatured ? "#1B4DFF" : "rgba(14,17,22,.3)"}`,
-        }}
-      />
-
       {isFeatured && (
         <div
           style={{
             position: "absolute",
-            top: -1,
-            right: 20,
+            top: 0,
+            right: 24,
             transform: "translateY(-50%)",
             background: "#1B4DFF",
             color: "#fff",
-            padding: "4px 10px",
+            padding: "5px 12px",
             font: "700 9px 'Space Mono', monospace",
-            letterSpacing: ".16em",
+            letterSpacing: ".18em",
             whiteSpace: "nowrap",
           }}
         >
@@ -368,7 +357,8 @@ function PlanCard({
         style={{
           font: "400 10px 'Space Mono', monospace",
           letterSpacing: ".22em",
-          color: "rgba(14,17,22,.45)",
+          color: isFeatured ? "rgba(255,255,255,.5)" : "rgba(14,17,22,.4)",
+          marginBottom: 24,
         }}
       >
         {String(index + 1).padStart(2, "0")} · {plan.name.toUpperCase()}
@@ -376,52 +366,71 @@ function PlanCard({
 
       <div
         style={{
-          margin: "22px 0 4px",
-          font: "700 clamp(36px, 4vw, 56px) 'Space Grotesk', sans-serif",
-          letterSpacing: "-0.06em",
+          display: "flex",
+          alignItems: "baseline",
+          gap: 6,
+          marginBottom: 4,
         }}
       >
-        {plan.formatPrice()}
+        <span
+          style={{
+            font: "700 clamp(40px, 4.5vw, 64px) 'Space Grotesk', sans-serif",
+            letterSpacing: "-0.06em",
+            color: isFeatured ? "#FFFFFF" : "#0E1116",
+          }}
+        >
+          {plan.formatPrice()}
+        </span>
+        {!plan.isFree && (
+          <span
+            style={{
+              font: "400 12px 'Space Mono', monospace",
+              color: isFeatured ? "rgba(255,255,255,.45)" : "rgba(14,17,22,.4)",
+            }}
+          >
+            {t.pricing.perMonth}
+          </span>
+        )}
       </div>
 
       <div
         style={{
           font: "400 11px 'Space Mono', monospace",
-          letterSpacing: ".14em",
-          color: "rgba(14,17,22,.45)",
-          marginBottom: 20,
+          letterSpacing: ".1em",
+          color: isFeatured ? "rgba(255,255,255,.4)" : "rgba(14,17,22,.4)",
+          marginBottom: 28,
         }}
       >
         {plan.isFree
           ? t.pricing.forever.toUpperCase()
           : code === "enterprise"
-            ? `${t.pricing.perMonth.toUpperCase()} · 10 ${t.pricing.users.toUpperCase()}`
-            : `${t.pricing.perMonth.toUpperCase()} · ${t.pricing.vatIncluded.toUpperCase()}`}
+            ? `10 ${t.pricing.users.toUpperCase()} · ${t.pricing.vatIncluded.toUpperCase()}`
+            : t.pricing.vatIncluded.toUpperCase()}
       </div>
 
       <div
         style={{
-          borderTop: "1px solid rgba(14,17,22,.12)",
-          paddingTop: 16,
+          borderTop: `1px solid ${isFeatured ? "rgba(255,255,255,.12)" : "rgba(14,17,22,.1)"}`,
+          paddingTop: 20,
           display: "flex",
           flexDirection: "column",
-          gap: 6,
-          marginBottom: 16,
+          gap: 8,
+          marginBottom: 20,
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span
             style={{
               font: "400 11px 'Space Mono', monospace",
-              color: "rgba(14,17,22,.5)",
+              color: isFeatured ? "rgba(255,255,255,.5)" : "rgba(14,17,22,.5)",
             }}
           >
             {t.pricing.analysisQuota}
           </span>
           <span
             style={{
-              font: "700 11px 'Space Mono', monospace",
-              color: "#0E1116",
+              font: "700 12px 'Space Mono', monospace",
+              color: isFeatured ? "#FFFFFF" : "#0E1116",
             }}
           >
             {plan.analysisQuota >= 9999 ? t.pricing.unlimited : plan.analysisQuota}
@@ -431,15 +440,15 @@ function PlanCard({
           <span
             style={{
               font: "400 11px 'Space Mono', monospace",
-              color: "rgba(14,17,22,.5)",
+              color: isFeatured ? "rgba(255,255,255,.5)" : "rgba(14,17,22,.5)",
             }}
           >
             {t.pricing.reportQuota}
           </span>
           <span
             style={{
-              font: "700 11px 'Space Mono', monospace",
-              color: "#0E1116",
+              font: "700 12px 'Space Mono', monospace",
+              color: isFeatured ? "#FFFFFF" : "#0E1116",
             }}
           >
             {plan.reportQuota >= 9999 ? t.pricing.unlimited : plan.reportQuota}
@@ -449,11 +458,11 @@ function PlanCard({
 
       <div
         style={{
-          borderTop: "1px solid rgba(14,17,22,.12)",
-          paddingTop: 16,
+          borderTop: `1px solid ${isFeatured ? "rgba(255,255,255,.12)" : "rgba(14,17,22,.1)"}`,
+          paddingTop: 20,
           display: "flex",
           flexDirection: "column",
-          gap: 10,
+          gap: 12,
           flex: 1,
         }}
       >
@@ -462,14 +471,23 @@ function PlanCard({
             key={f}
             style={{
               display: "flex",
-              gap: 8,
+              gap: 10,
               alignItems: "flex-start",
               font: "400 12px 'Space Mono', monospace",
               lineHeight: 1.5,
-              color: "rgba(14,17,22,.7)",
+              color: isFeatured ? "rgba(255,255,255,.72)" : "rgba(14,17,22,.65)",
             }}
           >
-            <span style={{ color: "#1B4DFF", flexShrink: 0, marginTop: 1 }}>+</span>
+            <span
+              style={{
+                color: isFeatured ? "#1B4DFF" : "#1B4DFF",
+                flexShrink: 0,
+                marginTop: 1,
+                font: "700 12px 'Space Mono', monospace",
+              }}
+            >
+              +
+            </span>
             <span>{f}</span>
           </div>
         ))}
@@ -478,14 +496,14 @@ function PlanCard({
       {isCurrent ? (
         <div
           style={{
-            marginTop: 28,
+            marginTop: 32,
             width: "100%",
             padding: 16,
             font: "700 11px 'Space Mono', monospace",
             letterSpacing: ".18em",
             textAlign: "center",
-            border: "1px solid rgba(14,17,22,.2)",
-            color: "rgba(14,17,22,.4)",
+            border: `1px solid ${isFeatured ? "rgba(255,255,255,.2)" : "rgba(14,17,22,.2)"}`,
+            color: isFeatured ? "rgba(255,255,255,.4)" : "rgba(14,17,22,.4)",
           }}
         >
           {t.pricing.currentPlan.toUpperCase()}
@@ -494,8 +512,9 @@ function PlanCard({
         <Link
           to={cta.to}
           className="em-plan-btn"
+          data-featured={isFeatured ? "" : undefined}
           style={{
-            marginTop: 28,
+            marginTop: 32,
             width: "100%",
             padding: 16,
             font: "700 11px 'Space Mono', monospace",
@@ -537,7 +556,7 @@ function ComparisonTable({
         WebkitOverflowScrolling: "touch",
       }}
     >
-      <div style={{ minWidth: 600, border: "1px solid rgba(14,17,22,.16)" }}>
+      <div style={{ minWidth: 600, border: "1px solid rgba(14,17,22,.14)" }}>
         <div
           style={{
             display: "grid",
@@ -571,7 +590,7 @@ function ComparisonTable({
               gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
               borderBottom:
                 i < COMPARISON_KEYS.length - 1
-                  ? "1px solid rgba(14,17,22,.1)"
+                  ? "1px solid rgba(14,17,22,.08)"
                   : "none",
               font: "400 12px 'Space Mono', monospace",
               opacity: visible ? 1 : 0,
@@ -582,7 +601,7 @@ function ComparisonTable({
             <span
               style={{
                 padding: "15px 16px",
-                color: "rgba(14,17,22,.65)",
+                color: "rgba(14,17,22,.6)",
               }}
             >
               {t.pricing.comparisonRows[key]}
@@ -621,13 +640,13 @@ function PricingFaq({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
 
   return (
     <div>
-      <div style={{ borderTop: "1px solid rgba(14,17,22,.16)" }}>
+      <div style={{ borderTop: "1px solid rgba(14,17,22,.14)" }}>
         {faqs.map((faq, i) => {
           const isOpen = openIndex === i;
           return (
             <div
               key={i}
-              style={{ borderBottom: "1px solid rgba(14,17,22,.16)" }}
+              style={{ borderBottom: "1px solid rgba(14,17,22,.14)" }}
             >
               <button
                 type="button"
@@ -667,19 +686,25 @@ function PricingFaq({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
                   +
                 </span>
               </button>
-              {isOpen && (
+              <div
+                style={{
+                  overflow: "hidden",
+                  maxHeight: isOpen ? 300 : 0,
+                  transition: "max-height 250ms ease-out",
+                }}
+              >
                 <div
                   style={{
                     padding: "0 0 20px",
                     font: "400 13px 'Space Mono', monospace",
                     lineHeight: 1.85,
-                    color: "rgba(14,17,22,.62)",
+                    color: "rgba(14,17,22,.58)",
                     maxWidth: 620,
                   }}
                 >
                   {faq.a}
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
@@ -702,7 +727,7 @@ function PricingFaq({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
 }
 
 function Paketler() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
@@ -766,8 +791,19 @@ function Paketler() {
       )}
 
       <style>{`
-        .em-plan-btn { transition: background 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out; }
-        .em-plan-btn:hover { background: #0E1116 !important; color: #fff !important; border-color: #0E1116 !important; }
+        .em-plan-btn {
+          transition: background 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out;
+        }
+        .em-plan-btn:hover {
+          background: #1B4DFF !important;
+          color: #fff !important;
+          border-color: #1B4DFF !important;
+        }
+        .em-plan-btn[data-featured]:hover {
+          background: #fff !important;
+          color: #0E1116 !important;
+          border-color: #fff !important;
+        }
       `}</style>
 
       {/* HERO */}
@@ -813,7 +849,7 @@ function Paketler() {
               maxWidth: 620,
               font: "400 13px 'Space Mono', monospace",
               lineHeight: 1.85,
-              color: "rgba(14,17,22,.62)",
+              color: "rgba(14,17,22,.58)",
             }}
           >
             {t.pricing.heroSubtitle}
@@ -867,13 +903,10 @@ function Paketler() {
             gap: 16,
             font: "400 10px 'Space Mono', monospace",
             letterSpacing: ".16em",
-            color: "rgba(14,17,22,.45)",
+            color: "rgba(14,17,22,.4)",
           }}
         >
-          <span>{t.pricing.annualNote.toUpperCase()}</span>
-          <span className="em-hide" style={{ marginLeft: "auto" }}>
-            {t.pricing.cancelNote.toUpperCase()}
-          </span>
+          <span>{t.pricing.cancelNote.toUpperCase()}</span>
         </div>
       </section>
 
@@ -891,7 +924,7 @@ function Paketler() {
           style={{
             maxWidth: 1560,
             margin: "0 auto",
-            borderTop: "1px solid rgba(14,17,22,.16)",
+            borderTop: "1px solid rgba(14,17,22,.14)",
             paddingTop: "clamp(30px, 4vw, 52px)",
           }}
         >
@@ -937,7 +970,7 @@ function Paketler() {
           style={{
             maxWidth: 800,
             margin: "0 auto",
-            borderTop: "1px solid rgba(14,17,22,.16)",
+            borderTop: "1px solid rgba(14,17,22,.14)",
             paddingTop: "clamp(30px, 4vw, 52px)",
             opacity: faqReveal.visible ? 1 : 0,
             transform: faqReveal.visible ? "none" : "translateY(16px)",
