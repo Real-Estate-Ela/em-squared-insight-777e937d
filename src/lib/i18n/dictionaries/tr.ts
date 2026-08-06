@@ -26,8 +26,9 @@ export const tr = {
     perMonth: "/ ay",
     monthlyAnalysisCount: "adet aylık analiz",
     monthlyReportCount: "adet aylık rapor indirme",
-    heroTitle: "Analiz başına\nödeme yok",
-    heroSubtitle: "Aylık analiz hakkına göre üç paket. İstediğin zaman iptal et, kart bilgisi saklanmaz.",
+    heroTitle: "Doğru paket,\ndoğru fiyat",
+    heroSubtitle:
+      "Emlakmetric paketleri aylık ilan analizi hakkına göre üçe ayrılır. Kaydırıcıyı çekip ayda kaç ilan analiz edeceğini seç; sana uygun paketi ve analiz başına düşen maliyeti anında görürsün.",
     scaleLabel: "ANALİZ HACMİ",
     scaleAnalyses: "analiz / ay",
     unlimited: "sınırsız",
@@ -41,15 +42,46 @@ export const tr = {
     feature: "Özellik",
     annualNote: "İstediğin zaman iptal et",
     cancelNote: "İstediğin zaman iptal · kart saklanmaz",
+    pricingLabel: "Paketler ve fiyatlar",
+    calcLabel: "Paket hesaplayıcı: Ayda kaç ilan analiz ediyorsun?",
+    recommendedPlan: "Sana uygun paket",
+    monthlyLabel: "Aylık",
+    perAnalysis: "Analiz başına",
+    suitableForYou: "Sana uygun",
+    freeMonthly: "Her ay ücretsiz",
+    buyPlan: "Paketi satın al",
+    closingTitle: "Üç analiz bedava.\nGerisi paketinde",
+    closingSubtitle:
+      "Kart bilgisi istemiyoruz. İlk üç ilan analizini ücretsiz yap, m² fiyatını mahalle medyanıyla karşılaştır. Daha fazlası için paketini seç, aynı dakikada kullanmaya başla.",
     planDescriptions: {
       free: "Platformu keşfedin. Gayrimenkul yatırım kararlarınızı veriye dayandırmaya bugün başlayın.",
       pro: "Aktif yatırımcılar için tasarlandı. Geniş analiz kapasitesi ve detaylı raporlarla hiçbir fırsatı kaçırmayın.",
-      enterprise: "Gayrimenkul ofisleri ve portföy yöneticileri için. Ekip genelinde sınırsız analiz kapasitesi ve özel destek.",
+      enterprise:
+        "Gayrimenkul ofisleri ve portföy yöneticileri için. Ekip genelinde sınırsız analiz kapasitesi ve özel destek.",
     },
     planFeatures: {
-      free: ["Temel yatırım analizi", "Kira getirisi hesaplama", "Çevre analizi raporu", "3 platformdan fiyat karşılaştırma"],
-      pro: ["Tüm ücretsiz özellikler", "Detaylı PDF ve Excel raporları", "Bölge bazlı karşılaştırma", "Öncelikli e-posta desteği", "Gelişmiş risk analizi"],
-      enterprise: ["Tüm Pro özellikler", "API erişimi", "Ekip hesapları ve yönetim paneli", "Dedike hesap yöneticisi", "Özel entegrasyonlar"],
+      free: [
+        "Aylık ilan analizi",
+        "Mahalle medyanı karşılaştırması",
+        "12 aylık m² trendi",
+        "−Portföy takibi yok",
+        "−PDF bölge raporu yok",
+      ],
+      pro: [
+        "Sınırsız konum sorgusu",
+        "İlan karşılaştırma",
+        "50 ilanlık portföy takibi",
+        "PDF bölge raporu",
+        "−API erişimi yok",
+      ],
+      enterprise: [
+        "Sınırsız analiz",
+        "API erişimi · 10.000 çağrı / ay",
+        "CSV ile toplu ilan yükleme",
+        "Özel bölge raporu",
+        "Hesap yöneticisi",
+        "Tek oturum (SSO)",
+      ],
     },
     comparisonRows: {
       monthlyAnalysis: "Aylık ilan analizi",
@@ -62,13 +94,26 @@ export const tr = {
     faq: {
       title: "Paketler hakkında",
       cancelQ: "İstediğim zaman iptal edebilir miyim?",
-      cancelA: "Evet. Dönem sonuna kadar erişiminiz devam eder, sonraki ay faturalanmaz.",
-      quotaQ: "Kota ne zaman yenilenir?",
-      quotaA: "Her faturalandırma döneminin başında analiz ve rapor hakları sıfırdan başlar. Kullanılmayan hak sonraki aya devretmez.",
-      changeQ: "Plan değiştirebilir miyim?",
-      changeA: "Yükseltme anında uygulanır; mevcut dönemden kalan gün sayısı oranlanır. Düşürme ise dönem sonunda geçerli olur.",
+      cancelA:
+        "Evet. Dönem sonuna kadar erişiminiz devam eder, sonraki ay faturalanmaz.",
+      quotaQ: "Kullanılmayan analiz hakkı devrediyor mu?",
+      quotaA:
+        "Hayır. Analiz hakkı dönem sonunda sıfırlanır. Düzenli olarak limiti aşıyorsan hesaplayıcı seni bir üst pakete yönlendirir.",
+      changeQ: "Paketi istediğim zaman değiştirebilir miyim?",
+      changeA:
+        "Evet. Yükseltme anında geçerli olur, fark kalan güne göre hesaplanır. Düşürme bir sonraki dönemde başlar; mevcut dönemin hakları sonuna kadar kullanılabilir.",
       refundQ: "İade politikası nedir?",
-      refundA: "İlk 14 gün içinde iade talebini iletişim formu üzerinden gönderebilirsiniz. 14 günden sonra kalan dönem kullanılır.",
+      refundA:
+        "İlk 14 gün içinde iade talebini iletişim formu üzerinden gönderebilirsiniz. 14 günden sonra kalan dönem kullanılır.",
+      cardQ: "Kart bilgim saklanıyor mu?",
+      cardA:
+        "Kart verisi Emlakmetric sunucusunda tutulmaz; ödeme, PCI DSS uyumlu sağlayıcı üzerinden alınır. Aboneliği panelden tek tıkla iptal edebilirsin.",
+      invoiceQ: "Faturayı şirket adına alabilir miyim?",
+      invoiceA:
+        "Evet. Vergi dairesi ve numarayı panele girdiğinde e-arşiv fatura dönem başında otomatik düzenlenir.",
+      sideTitle: "Ödeme ve\npaket soruları",
+      sideSubtitle:
+        "Cevabını bulamadıysan teklif formundan yaz; aynı iş günü dönüyoruz.",
       generalLink: "Tüm sıkça sorulan sorular",
     },
   },
@@ -95,7 +140,8 @@ export const tr = {
     badge: "VERİ ODAKLI GAYRİMENKUL ANALİZİ",
     titleBefore: "Fiyat tek başına",
     titleHighlight: "bir şey söylemez.",
-    subtitle: "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Biz o karşılaştırmayı yapıyoruz.",
+    subtitle:
+      "Bir ilanın rakamları, ancak mahallesinin rakamlarıyla yan yana konduğunda anlam kazanır. Biz o karşılaştırmayı yapıyoruz.",
     ctaPrimary: "Analize Başla",
     ctaSecondary: "Nasıl Çalışır",
   },
@@ -103,7 +149,8 @@ export const tr = {
     titleBefore: "Yatırım kararınızı",
     titleHighlight: "veriye",
     titleAfter: "dayandırın.",
-    subtitle: "İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve çevre analizini görün.",
+    subtitle:
+      "İlan linkini yapıştırın, 20 saniyede kira getirisi, ROI ve çevre analizini görün.",
     button: "Hemen Analiz Et",
   },
   analysis: {
@@ -125,19 +172,23 @@ export const tr = {
     years: "yıl",
   },
   cookie: {
-    bannerText: "Bu site zorunlu çerezler kullanır. İşlevsel ve analitik çerezleri etkinleştirmek için onayınızı alıyoruz.",
+    bannerText:
+      "Bu site zorunlu çerezler kullanır. İşlevsel ve analitik çerezleri etkinleştirmek için onayınızı alıyoruz.",
     learnMore: "Çerez politikası",
     acceptAll: "TÜMÜNÜ KABUL ET",
     requiredOnly: "YALNIZCA ZORUNLU",
     settings: "AYARLAR",
     settingsTitle: "Çerez Ayarları",
-    settingsDesc: "Hangi çerez kategorilerinin aktif olacağını seçin. Zorunlu çerezler sitenin çalışması için gereklidir ve kapatılamaz.",
+    settingsDesc:
+      "Hangi çerez kategorilerinin aktif olacağını seçin. Zorunlu çerezler sitenin çalışması için gereklidir ve kapatılamaz.",
     required: "Zorunlu çerezler",
-    requiredDesc: "Oturum yönetimi, güvenlik ve temel site işlevleri için gereklidir.",
+    requiredDesc:
+      "Oturum yönetimi, güvenlik ve temel site işlevleri için gereklidir.",
     functional: "İşlevsel çerezler",
     functionalDesc: "Dil tercihi ve arayüz ayarlarınızı hatırlar.",
     analytics: "Analitik çerezler",
-    analyticsDesc: "Anonim kullanım istatistikleri toplayarak siteyi geliştirmemize yardımcı olur.",
+    analyticsDesc:
+      "Anonim kullanım istatistikleri toplayarak siteyi geliştirmemize yardımcı olur.",
     save: "KAYDET",
     close: "KAPAT",
     footerSettings: "Çerez Ayarları",
@@ -191,6 +242,16 @@ export interface Dictionary {
     feature: string;
     annualNote: string;
     cancelNote: string;
+    pricingLabel: string;
+    calcLabel: string;
+    recommendedPlan: string;
+    monthlyLabel: string;
+    perAnalysis: string;
+    suitableForYou: string;
+    freeMonthly: string;
+    buyPlan: string;
+    closingTitle: string;
+    closingSubtitle: string;
     planDescriptions: Record<"free" | "pro" | "enterprise", string>;
     planFeatures: Record<"free" | "pro" | "enterprise", readonly string[]>;
     comparisonRows: {
@@ -211,6 +272,12 @@ export interface Dictionary {
       changeA: string;
       refundQ: string;
       refundA: string;
+      cardQ: string;
+      cardA: string;
+      invoiceQ: string;
+      invoiceA: string;
+      sideTitle: string;
+      sideSubtitle: string;
       generalLink: string;
     };
   };
