@@ -89,7 +89,7 @@ async function fetchEvds(
 ): Promise<{ items: Record<string, unknown>[]; error: string | null }> {
   const seriesParam = seriesRequest.join("-");
   const url =
-    `${EVDS_BASE}?series=${seriesParam}` +
+    `${EVDS_BASE}/series=${seriesParam}` +
     `&startDate=01-01-2020&endDate=01-01-2999` +
     `&type=json&frequency=${frequency}`;
 
