@@ -145,6 +145,28 @@ export const tr = {
     ctaPrimary: "Analize Başla",
     ctaSecondary: "Nasıl Çalışır",
   },
+  region: {
+    sectionLabel: "03 · BÖLGE",
+    title: "Konumu seç, m² fiyatını",
+    titleHighlight: "gör.",
+    selectProvince: "İl seçin",
+    allTurkey: "Tüm Türkiye",
+    index: "Endeks",
+    yoy: "yıllık",
+    source: "TCMB",
+    noData: "Bu bölge için henüz veri yok",
+    regionData: "bölge verisi",
+    aboveTurkey: "TR'den %{pct} yüksek",
+    belowTurkey: "TR'nin %{pct} altında",
+    officialPrice: "Resmî ₺/m²",
+    indexValue: "Fiyat endeksi",
+    descDefault:
+      "Bölge bazlı konut fiyat endeksi ve ₺/m² birim fiyatı. İl seçerek bölgenizi bulun.",
+    descProvince:
+      "{province} ve çevresi için bölge bazlı konut fiyat endeksi.",
+    footerLabel: "KONUT FİYAT ENDEKSİ · ₺/M² BİRİM FİYATI",
+    loading: "Veri yükleniyor…",
+  },
   cta: {
     titleBefore: "Yatırım kararınızı",
     titleHighlight: "veriye",
@@ -307,6 +329,26 @@ export interface Dictionary {
     subtitle: string;
     ctaPrimary: string;
     ctaSecondary: string;
+  };
+  region: {
+    sectionLabel: string;
+    title: string;
+    titleHighlight: string;
+    selectProvince: string;
+    allTurkey: string;
+    index: string;
+    yoy: string;
+    source: string;
+    noData: string;
+    regionData: string;
+    aboveTurkey: string;
+    belowTurkey: string;
+    officialPrice: string;
+    indexValue: string;
+    descDefault: string;
+    descProvince: string;
+    footerLabel: string;
+    loading: string;
   };
   cta: {
     titleBefore: string;

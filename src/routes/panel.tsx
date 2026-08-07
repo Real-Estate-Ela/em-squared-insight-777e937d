@@ -11,12 +11,11 @@ import {
 } from "@/lib/billing/billing";
 import { useUserCity } from "@/hooks/useUserCity";
 import {
-  getRegionsForCity,
-  getDefaultRegions,
+  fetchRegionData,
   formatPrice,
   formatChange,
-  formatYield,
-  type RegionMetric,
+  formatPeriod,
+  type RegionCard,
 } from "@/lib/analysis/regions";
 
 export const Route = createFileRoute("/panel")({
@@ -76,16 +75,14 @@ function PanelContent() {
   const [quotaError, setQuotaError] = useState<"analysis" | "report" | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const userCity = useUserCity();
-  const [regions, setRegions] = useState<RegionMetric[]>([]);
+  const [regions, setRegions] = useState<RegionCard[]>([]);
   const [locationDismissed, setLocationDismissed] = useState(false);
 
   useEffect(() => {
-    if (userCity) {
-      setRegions(getRegionsForCity(userCity));
-    } else {
-      setRegions(getDefaultRegions().slice(0, 4));
-    }
-  }, [userCity]);
+    fetchRegionData()
+      .then(({ cards }) => setRegions(cards.slice(0, 4)))
+      .catch(() => {});
+  }, []);
 
   const refreshEntitlements = useCallback(() => {
     const db = getSupabaseBrowserClient();
@@ -612,7 +609,7 @@ function PanelContent() {
                   >
                     {regions.slice(0, 4).map((r) => (
                       <div
-                        key={`${r.city}-${r.district}`}
+                        key={r.code}
                         className="em-loc-card"
                         style={{
                           ...cardBase,
@@ -620,7 +617,7 @@ function PanelContent() {
                           gap: 12,
                         }}
                       >
-                        <span style={labelMono}>{r.district.toLocaleUpperCase("tr-TR")}</span>
+                        <span style={labelMono}>{r.name.toLocaleUpperCase("tr-TR")}</span>
                         <div
                           style={{
                             font: "700 clamp(22px, 2.5vw, 34px) 'Space Grotesk', sans-serif",
@@ -628,7 +625,11 @@ function PanelContent() {
                             lineHeight: 1,
                           }}
                         >
-                          {formatPrice(r.medianM2)}
+                          {r.hasUnitPrice && r.medianM2 !== null
+                            ? formatPrice(r.medianM2)
+                            : r.kfeIndex !== null
+                              ? new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 }).format(r.kfeIndex)
+                              : "—"}
                         </div>
                         <div
                           style={{
@@ -636,7 +637,7 @@ function PanelContent() {
                             color: "rgba(14,17,22,.45)",
                           }}
                         >
-                          m² satış fiyatı
+                          {r.hasUnitPrice ? "m² satış fiyatı" : "Fiyat endeksi"}
                         </div>
                         <div
                           style={{
@@ -660,10 +661,10 @@ function PanelContent() {
                             <div
                               style={{
                                 font: "500 14px 'Space Grotesk', sans-serif",
-                                color: r.change12m >= 0 ? "#00875A" : "#E23D28",
+                                color: r.kfeYoyPct !== null && r.kfeYoyPct >= 0 ? "#00875A" : "#E23D28",
                               }}
                             >
-                              {formatChange(r.change12m)}
+                              {r.kfeYoyPct !== null ? formatChange(r.kfeYoyPct) : "—"}
                             </div>
                           </div>
                           <div style={{ textAlign: "right" }}>
@@ -675,7 +676,7 @@ function PanelContent() {
                                 marginBottom: 4,
                               }}
                             >
-                              KİRA GETİRİSİ
+                              DÖNEM
                             </div>
                             <div
                               style={{
@@ -683,7 +684,7 @@ function PanelContent() {
                                 color: "#1B4DFF",
                               }}
                             >
-                              {formatYield(r.yieldPct)}
+                              {r.period ? formatPeriod(r.period, "tr") : "—"}
                             </div>
                           </div>
                         </div>

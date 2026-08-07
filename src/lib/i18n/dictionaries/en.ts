@@ -147,6 +147,28 @@ export const en: Dictionary = {
     ctaPrimary: "Start Analysis",
     ctaSecondary: "How It Works",
   },
+  region: {
+    sectionLabel: "03 · REGION",
+    title: "Pick a location, see the m² price",
+    titleHighlight: "instantly.",
+    selectProvince: "Select province",
+    allTurkey: "All Turkey",
+    index: "Index",
+    yoy: "annual",
+    source: "TCMB",
+    noData: "No data available for this region yet",
+    regionData: "region data",
+    aboveTurkey: "{pct} above TR",
+    belowTurkey: "{pct} below TR",
+    officialPrice: "Official ₺/m²",
+    indexValue: "Price index",
+    descDefault:
+      "Regional housing price index and ₺/m² unit price. Select a province to find your region.",
+    descProvince:
+      "Regional housing price index for {province} and surrounding area.",
+    footerLabel: "HOUSING PRICE INDEX · ₺/M² UNIT PRICE",
+    loading: "Loading data…",
+  },
   cta: {
     titleBefore: "Base your investment decisions on",
     titleHighlight: "data",

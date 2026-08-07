@@ -1,19 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { ParticleField } from "@/components/ParticleField";
 import { HeroCity } from "@/components/hero/HeroCity";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { BillingRepository, BillingService, type Entitlements } from "@/lib/billing/billing";
 import {
-  getDefaultRegions,
-  getRegionsForCity,
+  fetchRegionData,
+  resolveProvinceToKfeRegion,
   formatPrice,
+  formatIndex,
   formatChange,
-  formatYield,
-  type RegionMetric,
+  formatPeriod,
+  type RegionCard,
+  type Province,
+  type RegionInfo,
 } from "@/lib/analysis/regions";
 import { useUserCity } from "@/hooks/useUserCity";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -62,7 +66,6 @@ const LOG_LINES = [
   "sonuç hazır · 00:00,16",
 ];
 
-const DEFAULT_REGIONS = getDefaultRegions();
 
 function fmt(n: number) {
   return n.toFixed(1).replace(".", ",");
@@ -264,11 +267,52 @@ function Home() {
   const [quotaResource, setQuotaResource] = useState<"analysis" | "report">("analysis");
   const [ent, setEnt] = useState<Entitlements | null>(null);
   const userCity = useUserCity();
-  const [regions, setRegions] = useState<RegionMetric[]>(DEFAULT_REGIONS);
+  const { locale, t } = useI18n();
+  const [regionCards, setRegionCards] = useState<RegionCard[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [regionLookup, setRegionLookup] = useState<Map<number, RegionInfo>>(new Map());
+  const [selectedProvinceId, setSelectedProvinceId] = useState<number | null>(null);
+  const [regionLoading, setRegionLoading] = useState(true);
 
   useEffect(() => {
-    if (userCity) setRegions(getRegionsForCity(userCity));
-  }, [userCity]);
+    fetchRegionData()
+      .then(({ cards, provinces: provs, lookup }) => {
+        setRegionCards(cards);
+        setProvinces(provs);
+        setRegionLookup(lookup);
+        setRegionLoading(false);
+      })
+      .catch(() => setRegionLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!userCity || provinces.length === 0) return;
+    const match = provinces.find(
+      (p) => p.name.toLocaleLowerCase("tr") === userCity.toLocaleLowerCase("tr"),
+    );
+    if (match) setSelectedProvinceId(match.id);
+  }, [userCity, provinces]);
+
+  const trCard = useMemo(
+    () => regionCards.find((c) => c.code === "TR") ?? null,
+    [regionCards],
+  );
+
+  const highlightedRegionId = useMemo(() => {
+    if (!selectedProvinceId) return null;
+    const province = provinces.find((p) => p.id === selectedProvinceId);
+    if (!province) return null;
+    const kfeIds = new Set(regionCards.map((c) => c.regionId));
+    return resolveProvinceToKfeRegion(province, regionLookup, kfeIds)?.regionId ?? null;
+  }, [selectedProvinceId, provinces, regionCards, regionLookup]);
+
+  const regionContext = useMemo(() => {
+    if (!selectedProvinceId || !highlightedRegionId) return null;
+    const province = provinces.find((p) => p.id === selectedProvinceId);
+    const region = regionLookup.get(highlightedRegionId);
+    if (!province || !region) return null;
+    return { provinceName: province.name, regionName: region.name };
+  }, [selectedProvinceId, highlightedRegionId, provinces, regionLookup]);
 
   useEffect(() => {
     if (!isAuthed) { setEnt(null); return; }
@@ -1344,7 +1388,7 @@ function Home() {
                   marginBottom: 18,
                 }}
               >
-                03 · BÖLGE
+                {t.region.sectionLabel}
               </div>
               <h2
                 style={{
@@ -1355,12 +1399,12 @@ function Home() {
                   maxWidth: "18ch",
                 }}
               >
-                Konumu seç, m² fiyatını{" "}
-                <span style={{ color: "#1B4DFF" }}>gör.</span>
+                {t.region.title}{" "}
+                <span style={{ color: "#1B4DFF" }}>{t.region.titleHighlight}</span>
               </h2>
             </div>
-            <div style={{ margin: "0 0 6px auto", maxWidth: 340 }}>
-              {userCity && (
+            <div style={{ margin: "0 0 6px auto", maxWidth: 380 }}>
+              {regionContext && (
                 <div
                   style={{
                     font: "700 10px 'Space Mono', monospace",
@@ -1369,9 +1413,43 @@ function Home() {
                     marginBottom: 10,
                   }}
                 >
-                  📍 {userCity.toLocaleUpperCase("tr")} BÖLGESİ
+                  📍 {regionContext.provinceName.toLocaleUpperCase("tr")} · {regionContext.regionName.toLocaleUpperCase("tr")} {t.region.regionData.toLocaleUpperCase("tr")}
                 </div>
               )}
+              <select
+                value={selectedProvinceId ?? ""}
+                onChange={(e) =>
+                  setSelectedProvinceId(
+                    e.target.value ? Number(e.target.value) : null,
+                  )
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  marginBottom: 12,
+                  background: "rgba(255,255,255,.06)",
+                  border: "1px solid rgba(255,255,255,.18)",
+                  borderRadius: 4,
+                  color: "#fff",
+                  font: "400 12px 'Space Mono', monospace",
+                  appearance: "none" as const,
+                  WebkitAppearance: "none" as const,
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ffffff60'/%3E%3C/svg%3E\")",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 12px center",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="" style={{ background: "#0E1116" }}>
+                  {t.region.selectProvince}
+                </option>
+                {provinces.map((p) => (
+                  <option key={p.id} value={p.id} style={{ background: "#0E1116" }}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
               <p
                 style={{
                   margin: 0,
@@ -1380,75 +1458,257 @@ function Home() {
                   color: "rgba(255,255,255,.55)",
                 }}
               >
-                {userCity
-                  ? `${userCity} ve çevresi için bölge bazlı medyan m² fiyatı, son 12 aylık değişim ve kira getirisi.`
-                  : "Mahalle bazlı m² medyanı, son 12 aylık değişim ve kira getirisi bandı. Konum izni verirsen bölgen öne çıkar."}
+                {regionContext
+                  ? t.region.descProvince.replace(
+                      "{province}",
+                      regionContext.provinceName,
+                    )
+                  : t.region.descDefault}
               </p>
             </div>
           </div>
-          <div
-            ref={mapRef}
-            className="em-col-2"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              borderTop: "1px solid rgba(255,255,255,.14)",
-              borderLeft: "1px solid rgba(255,255,255,.14)",
-            }}
-          >
-            {regions.map((r) => (
-              <div
-                key={`${r.city}-${r.district}`}
-                style={{
-                  padding: "clamp(18px, 2vw, 28px)",
-                  borderRight: "1px solid rgba(255,255,255,.14)",
-                  borderBottom: "1px solid rgba(255,255,255,.14)",
-                  transition: "background 260ms linear",
-                }}
-              >
+
+          {regionLoading ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 1,
+                minHeight: 300,
+              }}
+              className="em-col-2"
+            >
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div
+                  key={i}
                   style={{
-                    font: "400 10px 'Space Mono', monospace",
-                    letterSpacing: ".2em",
-                    color: "rgba(255,255,255,.42)",
+                    background: "rgba(255,255,255,.03)",
+                    padding: "clamp(18px, 2vw, 28px)",
+                    border: "1px solid rgba(255,255,255,.08)",
                   }}
                 >
-                  {r.city.toLocaleUpperCase("tr")}
+                  <div
+                    style={{
+                      height: 10,
+                      width: "60%",
+                      background: "rgba(255,255,255,.08)",
+                      borderRadius: 2,
+                      marginBottom: 12,
+                    }}
+                  />
+                  <div
+                    style={{
+                      height: 24,
+                      width: "80%",
+                      background: "rgba(255,255,255,.06)",
+                      borderRadius: 2,
+                      marginBottom: 12,
+                    }}
+                  />
+                  <div
+                    style={{
+                      height: 10,
+                      width: "50%",
+                      background: "rgba(255,255,255,.04)",
+                      borderRadius: 2,
+                    }}
+                  />
                 </div>
-                <div
-                  style={{
-                    font: "500 clamp(19px, 2vw, 27px) 'Space Grotesk', sans-serif",
-                    letterSpacing: "-0.05em",
-                    margin: "10px 0 14px",
-                  }}
-                >
-                  {r.district}
-                </div>
-                <div
-                  style={{
-                    font: "400 12px 'Space Mono', monospace",
-                    marginBottom: 6,
-                  }}
-                >
-                  {formatPrice(r.medianM2)}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    font: "400 11px 'Space Mono', monospace",
-                  }}
-                >
-                  <span style={{ color: r.change12m >= 0 ? "#00875A" : "#E23D28" }}>
-                    {formatChange(r.change12m)}
-                  </span>
-                  <span style={{ color: "rgba(255,255,255,.55)" }}>
-                    {formatYield(r.yieldPct)} getiri
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : regionCards.length === 0 ? (
+            <div
+              style={{
+                padding: "60px 20px",
+                textAlign: "center",
+                font: "400 14px 'Space Mono', monospace",
+                color: "rgba(255,255,255,.45)",
+                border: "1px solid rgba(255,255,255,.1)",
+              }}
+            >
+              {t.region.noData}
+            </div>
+          ) : (
+            <div
+              ref={mapRef}
+              className="em-col-2"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                borderTop: "1px solid rgba(255,255,255,.14)",
+                borderLeft: "1px solid rgba(255,255,255,.14)",
+              }}
+            >
+              {regionCards.map((card) => {
+                const isHighlighted = card.regionId === highlightedRegionId;
+                const trComparison =
+                  !card.hasUnitPrice &&
+                  trCard &&
+                  card.kfeIndex !== null &&
+                  trCard.kfeIndex !== null &&
+                  card.code !== "TR"
+                    ? ((card.kfeIndex / trCard.kfeIndex - 1) * 100)
+                    : null;
+
+                return (
+                  <div
+                    key={card.code}
+                    style={{
+                      padding: "clamp(18px, 2vw, 28px)",
+                      borderRight: "1px solid rgba(255,255,255,.14)",
+                      borderBottom: "1px solid rgba(255,255,255,.14)",
+                      transition: "background 260ms linear, box-shadow 260ms ease",
+                      boxShadow: isHighlighted
+                        ? "inset 0 0 0 2px #1B4DFF"
+                        : "none",
+                    }}
+                  >
+                    <div
+                      style={{
+                        font: "400 10px 'Space Mono', monospace",
+                        letterSpacing: ".2em",
+                        color: isHighlighted
+                          ? "#1B4DFF"
+                          : "rgba(255,255,255,.42)",
+                      }}
+                    >
+                      {card.name.toLocaleUpperCase(locale === "tr" ? "tr" : "en")}
+                    </div>
+
+                    {card.hasUnitPrice && card.medianM2 !== null ? (
+                      <>
+                        <div
+                          style={{
+                            font: "500 clamp(19px, 2vw, 27px) 'Space Grotesk', sans-serif",
+                            letterSpacing: "-0.05em",
+                            margin: "10px 0 14px",
+                          }}
+                        >
+                          {formatPrice(card.medianM2)}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "baseline",
+                            font: "400 11px 'Space Mono', monospace",
+                            marginBottom: 8,
+                          }}
+                        >
+                          {card.kfeYoyPct !== null && (
+                            <span
+                              style={{
+                                color:
+                                  card.kfeYoyPct >= 0 ? "#00875A" : "#E23D28",
+                              }}
+                            >
+                              {formatChange(card.kfeYoyPct)} {t.region.yoy}
+                            </span>
+                          )}
+                          <span
+                            style={{
+                              font: "400 9px 'Space Mono', monospace",
+                              letterSpacing: ".1em",
+                              color: "#00875A",
+                              opacity: 0.7,
+                            }}
+                          >
+                            {t.region.officialPrice}
+                          </span>
+                        </div>
+                      </>
+                    ) : card.kfeIndex !== null ? (
+                      <>
+                        <div
+                          style={{
+                            font: "500 clamp(19px, 2vw, 27px) 'Space Grotesk', sans-serif",
+                            letterSpacing: "-0.05em",
+                            margin: "10px 0 14px",
+                          }}
+                        >
+                          {formatIndex(card.kfeIndex)}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "baseline",
+                            font: "400 11px 'Space Mono', monospace",
+                            marginBottom: trComparison !== null ? 4 : 8,
+                          }}
+                        >
+                          {card.kfeYoyPct !== null && (
+                            <span
+                              style={{
+                                color:
+                                  card.kfeYoyPct >= 0 ? "#00875A" : "#E23D28",
+                              }}
+                            >
+                              {formatChange(card.kfeYoyPct)} {t.region.yoy}
+                            </span>
+                          )}
+                          <span
+                            style={{
+                              font: "400 9px 'Space Mono', monospace",
+                              letterSpacing: ".1em",
+                              color: "rgba(255,255,255,.35)",
+                            }}
+                          >
+                            {t.region.indexValue}
+                          </span>
+                        </div>
+                        {trComparison !== null && (
+                          <div
+                            style={{
+                              font: "400 10px 'Space Mono', monospace",
+                              color: "rgba(255,255,255,.4)",
+                              marginBottom: 8,
+                            }}
+                          >
+                            {trComparison >= 0
+                              ? t.region.aboveTurkey.replace(
+                                  "{pct}",
+                                  Math.abs(trComparison)
+                                    .toFixed(1)
+                                    .replace(".", ","),
+                                )
+                              : t.region.belowTurkey.replace(
+                                  "{pct}",
+                                  Math.abs(trComparison)
+                                    .toFixed(1)
+                                    .replace(".", ","),
+                                )}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div
+                        style={{
+                          font: "400 12px 'Space Mono', monospace",
+                          color: "rgba(255,255,255,.3)",
+                          margin: "10px 0 14px",
+                        }}
+                      >
+                        {t.region.noData}
+                      </div>
+                    )}
+
+                    {card.period && (
+                      <div
+                        style={{
+                          font: "400 9px 'Space Mono', monospace",
+                          color: "rgba(255,255,255,.25)",
+                        }}
+                      >
+                        {t.region.source} · {formatPeriod(card.period, locale)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div
             className="em-stack"
             style={{
@@ -1460,9 +1720,10 @@ function Home() {
               color: "rgba(255,255,255,.4)",
             }}
           >
-            <span>MEDYAN M² SATIŞ FİYATI · KİRA GETİRİSİ</span>
+            <span>{t.region.footerLabel}</span>
             <span className="em-hide" style={{ marginLeft: "auto" }}>
-              YEŞİL: ARTIŞ · KIRMIZI: DÜŞÜŞ
+              {regionCards[0]?.period &&
+                `${t.region.source} · ${formatPeriod(regionCards[0].period, locale)}`}
             </span>
           </div>
         </div>
