@@ -68,6 +68,176 @@ function fmt(n: number) {
   return n.toFixed(1).replace(".", ",");
 }
 
+/* ── CrosshairCursor ──────────────────────────────────── */
+
+function CrosshairCursor({ heroRef }: { heroRef: React.RefObject<HTMLElement | null> }) {
+  const elRef = useRef<HTMLDivElement>(null);
+  const pos = useRef({ x: 0, y: 0 });
+  const target = useRef({ x: 0, y: 0 });
+  const visible = useRef(false);
+  const rafId = useRef(0);
+  const coordRef = useRef<HTMLSpanElement>(null);
+  const reducedMotion = useRef(false);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    const el = elRef.current;
+    if (!hero || !el) return;
+
+    const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) return;
+
+    reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const LERP = 0.18;
+
+    function updateCoord(cx: number, cy: number) {
+      const coord = coordRef.current;
+      if (!coord || !hero) return;
+      const r = hero.getBoundingClientRect();
+      const nx = Math.max(0, Math.min(1, (cx - r.left) / r.width));
+      const ny = Math.max(0, Math.min(1, (cy - r.top) / r.height));
+      const eCol = Math.min(20, Math.max(1, Math.ceil(nx * 20)));
+      const kRow = Math.min(12, Math.max(1, Math.ceil(ny * 12)));
+      const eStr = eCol < 10 ? `E0${eCol}` : `E${eCol}`;
+      const kStr = kRow < 10 ? `K0${kRow}` : `K${kRow}`;
+      coord.textContent = `${eStr} · ${kStr} · m²`;
+    }
+
+    function tick() {
+      if (!visible.current) return;
+      if (reducedMotion.current) {
+        pos.current.x = target.current.x;
+        pos.current.y = target.current.y;
+      } else {
+        pos.current.x += (target.current.x - pos.current.x) * LERP;
+        pos.current.y += (target.current.y - pos.current.y) * LERP;
+      }
+      el!.style.transform = `translate3d(${pos.current.x - 60}px, ${pos.current.y - 60}px, 0)`;
+      updateCoord(pos.current.x, pos.current.y);
+      rafId.current = requestAnimationFrame(tick);
+    }
+
+    function onEnter(e: PointerEvent) {
+      if (e.pointerType !== "mouse") return;
+      target.current.x = e.clientX;
+      target.current.y = e.clientY;
+      pos.current.x = e.clientX;
+      pos.current.y = e.clientY;
+      visible.current = true;
+      el!.style.opacity = "1";
+      hero!.style.cursor = "none";
+      rafId.current = requestAnimationFrame(tick);
+    }
+
+    function onMove(e: PointerEvent) {
+      if (e.pointerType !== "mouse") return;
+      target.current.x = e.clientX;
+      target.current.y = e.clientY;
+      if (!visible.current) {
+        pos.current.x = e.clientX;
+        pos.current.y = e.clientY;
+        visible.current = true;
+        el!.style.opacity = "1";
+        hero!.style.cursor = "none";
+        rafId.current = requestAnimationFrame(tick);
+      }
+    }
+
+    function onLeave(e: PointerEvent) {
+      if (e.pointerType !== "mouse") return;
+      visible.current = false;
+      el!.style.opacity = "0";
+      hero!.style.cursor = "";
+      cancelAnimationFrame(rafId.current);
+    }
+
+    function onOverInteractive(e: PointerEvent) {
+      const t = e.target as HTMLElement;
+      if (t.closest("a, button, [role='button'], input, textarea, select, label")) {
+        el!.style.opacity = "0";
+        hero!.style.cursor = "";
+      }
+    }
+
+    function onOutInteractive(e: PointerEvent) {
+      const t = e.relatedTarget as HTMLElement | null;
+      if (visible.current && (!t || !t.closest("a, button, [role='button'], input, textarea, select, label"))) {
+        el!.style.opacity = "1";
+        hero!.style.cursor = "none";
+      }
+    }
+
+    hero.addEventListener("pointerenter", onEnter);
+    hero.addEventListener("pointermove", onMove);
+    hero.addEventListener("pointerleave", onLeave);
+    hero.addEventListener("pointerover", onOverInteractive);
+    hero.addEventListener("pointerout", onOutInteractive);
+
+    return () => {
+      cancelAnimationFrame(rafId.current);
+      hero.removeEventListener("pointerenter", onEnter);
+      hero.removeEventListener("pointermove", onMove);
+      hero.removeEventListener("pointerleave", onLeave);
+      hero.removeEventListener("pointerover", onOverInteractive);
+      hero.removeEventListener("pointerout", onOutInteractive);
+      hero.style.cursor = "";
+    };
+  }, [heroRef]);
+
+  return (
+    <div
+      ref={elRef}
+      aria-hidden="true"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: 120,
+        pointerEvents: "none",
+        zIndex: 9999,
+        opacity: 0,
+        transition: "opacity 150ms ease-out",
+        willChange: "transform",
+      }}
+    >
+      <svg
+        width="120"
+        height="120"
+        viewBox="-20 -20 160 160"
+        fill="none"
+        style={{ display: "block" }}
+      >
+        <rect x="0" y="0" width="120" height="120" stroke="var(--primary, #1B4DFF)" strokeWidth="1" fill="none" />
+        <g style={{ animation: "em-crosshair-breathe 4s ease-in-out infinite" }}>
+          <line x1="60" y1="-20" x2="60" y2="140" stroke="rgba(226,61,40,.45)" strokeWidth="1" />
+          <line x1="-20" y1="60" x2="140" y2="60" stroke="rgba(226,61,40,.45)" strokeWidth="1" />
+        </g>
+      </svg>
+      <div
+        style={{
+          background: "var(--primary, #1B4DFF)",
+          height: 24,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <span
+          ref={coordRef}
+          style={{
+            font: "400 11px 'IBM Plex Mono', 'Space Mono', monospace",
+            letterSpacing: ".08em",
+            color: "#FFFFFF",
+          }}
+        >
+          E10 · K06 · m²
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function Home() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -109,6 +279,7 @@ function Home() {
       .catch(() => {});
   }, [isAuthed]);
 
+  const heroSectionRef = useRef<HTMLElement>(null);
   const analizRef = useRef<HTMLElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -299,7 +470,9 @@ function Home() {
       }}
     >
       {/* ═══ HERO ═══ */}
+      <CrosshairCursor heroRef={heroSectionRef} />
       <section
+        ref={heroSectionRef}
         id="top"
         data-bg="light"
         style={{

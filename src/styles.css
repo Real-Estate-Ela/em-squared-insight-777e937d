@@ -915,6 +915,10 @@
   55% { transform: scaleX(1); }
   100% { transform: scaleX(1); }
 }
+@keyframes em-crosshair-breathe {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.55; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-in,
