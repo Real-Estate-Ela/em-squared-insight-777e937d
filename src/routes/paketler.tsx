@@ -58,17 +58,15 @@ function useReveal(threshold = 0.15) {
       setVisible(true);
       return;
     }
+    let done = false;
+    const mark = () => { if (!done) { done = true; setVisible(true); } };
     const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          obs.disconnect();
-        }
-      },
+      ([e]) => { if (e.isIntersecting) { mark(); obs.disconnect(); } },
       { threshold },
     );
     obs.observe(el);
-    return () => obs.disconnect();
+    const timer = setTimeout(mark, 600);
+    return () => { obs.disconnect(); clearTimeout(timer); };
   }, [threshold]);
   return { ref, visible };
 }
