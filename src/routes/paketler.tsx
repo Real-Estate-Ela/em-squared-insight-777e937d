@@ -88,9 +88,9 @@ function useCanTilt() {
 const PLAN_ORDER: PlanCode[] = ["free", "pro", "enterprise"];
 
 const FALLBACK_PLANS: Plan[] = [
-  new Plan("free", "Başlangıç", 0, "TRY", 3, 1, false, 0),
-  new Plan("pro", "Analist", 150_000, "TRY", 100, 50, true, 1),
-  new Plan("enterprise", "Kurumsal", 300_000, "TRY", 1000, 500, false, 2),
+  new Plan("free", "Başlangıç", 0, "TRY", 3, 3, false, 0),
+  new Plan("pro", "Analist", 150_000, "TRY", 100, 100, true, 1),
+  new Plan("enterprise", "Kurumsal", 300_000, "TRY", 1000, 1000, false, 2),
 ];
 
 const COMPARISON_KEYS = [
@@ -393,31 +393,36 @@ function PricingFaq({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
 function Paketler() {
   const { locale, t } = useI18n();
   const { user, loading: authLoading } = useAuth();
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [sliderValue, setSliderValue] = useState(46);
   const canTilt = useCanTilt();
 
   useEffect(() => {
+    let cancelled = false;
     const svc = new BillingService(
       new BillingRepository(getSupabaseBrowserClient()),
     );
     svc
       .listPlans()
       .then((p) => {
+        if (cancelled) return;
         const sorted = p.sort((a, b) => a.sortOrder - b.sortOrder);
-        setPlans(sorted.length > 0 ? sorted : FALLBACK_PLANS);
-        setLoaded(true);
+        if (sorted.length > 0) setPlans(sorted);
       })
-      .catch(() => {
-        setPlans(FALLBACK_PLANS);
-        setLoaded(true);
-      });
+      .catch((err) => {
+        if (cancelled) return;
+        console.warn("[paketler] listPlans failed, using fallback:", err);
+        setLoadError(String(err?.message ?? err));
+      })
+      .finally(() => { if (!cancelled) setLoaded(true); });
 
     if (!authLoading && user) {
       svc.entitlements().then(setEntitlements).catch(() => {});
     }
+    return () => { cancelled = true; };
   }, [user, authLoading]);
 
   const currentPlanCode = entitlements?.planCode ?? null;
@@ -685,6 +690,21 @@ function Paketler() {
           </p>
         </div>
       </section>
+
+      {loadError && (
+        <div style={{
+          maxWidth: 1560,
+          margin: "0 auto",
+          padding: "12px clamp(16px, 4vw, 44px)",
+          font: "400 12px 'Space Mono', monospace",
+          color: "rgba(14,17,22,.55)",
+          textAlign: "center",
+        }}>
+          {locale === "tr"
+            ? "Güncel fiyatlar yüklenemedi, varsayılan değerler gösteriliyor."
+            : "Could not load live prices, showing default values."}
+        </div>
+      )}
 
       {/* ═══ CALCULATOR ═══ */}
       {loaded && calc && (
@@ -957,7 +977,11 @@ function Paketler() {
               const isFeatured = plan.isFeatured;
               const isCurrent = currentPlanCode === code;
               const isRecommended = calc?.tier === i;
-              const features = t.pricing.planFeatures[code];
+              const quotaLabel =
+                plan.analysisQuota >= 9999
+                  ? (locale === "tr" ? "Sınırsız analiz" : "Unlimited analysis")
+                  : `${plan.analysisQuota.toLocaleString(fmtLocale)} ${locale === "tr" ? "analiz / ay" : "analyses / mo"}`;
+              const features = [quotaLabel, ...t.pricing.planFeatures[code].slice(1)];
 
               const cta =
                 code === "free"
