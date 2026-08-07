@@ -594,6 +594,28 @@ function Paketler() {
           }
           .pk-slider { height: 52px; }
         }
+        @keyframes em-crosshair-breathe {
+          0%, 100% { opacity: 0.35; }
+          50%      { opacity: 0.55; }
+        }
+        [data-bg="light"]:hover .pk-crosshair {
+          transform: translate(
+            calc((var(--px, 50%) - 50%) * 0.06),
+            calc((var(--py, 50%) - 50%) * 0.06)
+          );
+        }
+        @media (max-width: 600px) {
+          .pk-crosshair { display: none !important; }
+        }
+        @media (min-width: 601px) and (max-width: 900px) {
+          .pk-crosshair { width: 80px !important; }
+          .pk-crosshair svg { width: 80px !important; height: 80px !important; }
+          .pk-crosshair-label span { font-size: 9px !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pk-crosshair-lines { animation: none !important; opacity: 0.45 !important; }
+          .pk-crosshair { transition: none !important; }
+        }
         @media (max-width: 900px) {
           .pk-cards[data-tier="0"] > [data-plan="free"]       { order: -1; }
           .pk-cards[data-tier="1"] > [data-plan="pro"]        { order: -1; }
@@ -629,6 +651,54 @@ function Paketler() {
           }}
         />
         <div style={{ position: "relative", maxWidth: 1560, margin: "0 auto" }}>
+          {/* ── crosshair parcel selector ── */}
+          <div
+            className="pk-crosshair"
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: -110,
+              left: 0,
+              width: 120,
+              pointerEvents: "none",
+              zIndex: 1,
+              transition: "transform 300ms ease-out",
+            }}
+          >
+            <svg
+              width="120"
+              height="120"
+              viewBox="-20 -20 160 160"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ display: "block" }}
+            >
+              <rect x="0" y="0" width="120" height="120" stroke="#1B4DFF" strokeWidth="1" fill="none" />
+              <g className="pk-crosshair-lines" style={{ animation: "em-crosshair-breathe 4s ease-in-out infinite" }}>
+                <line x1="60" y1="-20" x2="60" y2="140" stroke="rgba(226,61,40,.45)" strokeWidth="1" />
+                <line x1="-20" y1="60" x2="140" y2="60" stroke="rgba(226,61,40,.45)" strokeWidth="1" />
+              </g>
+            </svg>
+            <div
+              className="pk-crosshair-label"
+              style={{
+                background: "#1B4DFF",
+                height: 24,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <span style={{
+                font: "400 11px 'IBM Plex Mono', 'Space Mono', monospace",
+                letterSpacing: ".08em",
+                color: "#FFFFFF",
+              }}>
+                E07 · K01 · m²
+              </span>
+            </div>
+          </div>
+
           <div
             style={{
               display: "flex",
