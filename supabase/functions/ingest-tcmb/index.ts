@@ -1,51 +1,69 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const EVDS_BASE = "https://evds2.tcmb.gov.tr/service/evds";
+const EVDS_BASE = "https://evds3.tcmb.gov.tr/igmevdsms-dis";
 
-const KFE_SERIES = [
-  "TP_KFE_TR",
-  "TP_KFE_TR10",
-  "TP_KFE_TR21",
-  "TP_KFE_TR22",
-  "TP_KFE_TR31",
-  "TP_KFE_TR32",
-  "TP_KFE_TR33",
-  "TP_KFE_TR41",
-  "TP_KFE_TR42",
-  "TP_KFE_TR51",
-  "TP_KFE_TR52",
-  "TP_KFE_TR61",
-  "TP_KFE_TR62",
-  "TP_KFE_TR63",
-  "TP_KFE_TR7",
-  "TP_KFE_TR8",
-  "TP_KFE_TR9",
-  "TP_KFE_TRA",
-  "TP_KFE_TRB",
-  "TP_KFE_TRC",
+// Request uses DOT notation; response returns UNDERSCORE keys.
+// e.g. request: TP.KFE.TR → response key: TP_KFE_TR
+
+const KFE_SERIES_REQUEST = [
+  "TP.KFE.TR",
+  "TP.KFE.TR10",
+  "TP.KFE.TR21",
+  "TP.KFE.TR22",
+  "TP.KFE.TR31",
+  "TP.KFE.TR32",
+  "TP.KFE.TR33",
+  "TP.KFE.TR41",
+  "TP.KFE.TR42",
+  "TP.KFE.TR51",
+  "TP.KFE.TR52",
+  "TP.KFE.TR61",
+  "TP.KFE.TR62",
+  "TP.KFE.TR63",
+  "TP.KFE.TR7",
+  "TP.KFE.TR8",
+  "TP.KFE.TR9",
+  "TP.KFE.TRA",
+  "TP.KFE.TRB",
+  "TP.KFE.TRC",
 ];
 
-const BIRIMFIYAT_SERIES = ["TP_BIRIMFIYAT_TR", "TP_BIRIMFIYAT_IST"];
+const KFE_SERIES_RESPONSE = KFE_SERIES_REQUEST.map((s) => s.replace(/\./g, "_"));
+
+const BIRIMFIYAT_SERIES_REQUEST = ["TP.BIRIMFIYAT.TR", "TP.BIRIMFIYAT.IST"];
+const BIRIMFIYAT_SERIES_RESPONSE = BIRIMFIYAT_SERIES_REQUEST.map((s) => s.replace(/\./g, "_"));
 
 const BIRIMFIYAT_REGION_MAP: Record<string, string> = {
   TP_BIRIMFIYAT_TR: "TR",
   TP_BIRIMFIYAT_IST: "TR10",
 };
 
-function evdsCodeToRegionCode(seriesKey: string): string | null {
-  if (BIRIMFIYAT_REGION_MAP[seriesKey]) return BIRIMFIYAT_REGION_MAP[seriesKey];
-  const m = seriesKey.match(/^TP_KFE_(TR\w*)$/);
+function responseKeyToRegionCode(key: string): string | null {
+  if (BIRIMFIYAT_REGION_MAP[key]) return BIRIMFIYAT_REGION_MAP[key];
+  const m = key.match(/^TP_KFE_(TR\w*)$/);
   return m ? m[1] : null;
 }
 
-function evdsCodeToDotNotation(seriesKey: string): string {
-  return seriesKey.replace(/_/g, ".");
-}
+function parseUnixPeriod(item: Record<string, unknown>): string | null {
+  const ut = item.UNIXTIME as { $numberLong?: string } | undefined;
+  if (ut?.$numberLong) {
+    const ms = Number(ut.$numberLong) * 1000;
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) {
+      const y = d.getUTCFullYear();
+      const m = d.getUTCMonth() + 1;
+      return `${y}-${String(m).padStart(2, "0")}-01`;
+    }
+  }
 
-function parseEvdsDate(raw: string): string | null {
-  const monthly = raw.match(/^(\d{4})-(\d{2})$/);
-  if (monthly) return `${monthly[1]}-${monthly[2]}-01`;
+  // Fallback: parse Tarih field
+  const raw = String(item.Tarih ?? item.TARIH ?? item.tarih ?? "");
 
+  // Monthly: "2026-6" or "2026-06"
+  const monthly = raw.match(/^(\d{4})-(\d{1,2})$/);
+  if (monthly) return `${monthly[1]}-${monthly[2].padStart(2, "0")}-01`;
+
+  // Quarterly: "2026-2Ç"
   const quarterly = raw.match(/^(\d{4})-(\d)Ç$/);
   if (quarterly) {
     const q = parseInt(quarterly[2], 10);
@@ -64,22 +82,15 @@ function parseEvdsNumber(raw: unknown): number | null {
   return n;
 }
 
-function todayDDMMYYYY(): string {
-  const d = new Date();
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  return `${dd}-${mm}-${d.getFullYear()}`;
-}
-
 async function fetchEvds(
   apiKey: string,
-  series: string[],
+  seriesRequest: string[],
   frequency: number,
 ): Promise<{ items: Record<string, unknown>[]; error: string | null }> {
-  const seriesParam = series.join("-");
+  const seriesParam = seriesRequest.join("-");
   const url =
     `${EVDS_BASE}?series=${seriesParam}` +
-    `&startDate=01-01-2020&endDate=${todayDDMMYYYY()}` +
+    `&startDate=01-01-2020&endDate=01-01-2999` +
     `&type=json&frequency=${frequency}`;
 
   const res = await fetch(url, {
@@ -111,25 +122,22 @@ interface MetricRow {
 
 function extractMetrics(
   items: Record<string, unknown>[],
-  seriesList: string[],
+  responseKeys: string[],
   metric: string,
   regionMap: Map<string, number>,
 ): MetricRow[] {
   const rows: MetricRow[] = [];
 
   for (const item of items) {
-    const dateRaw = (item.Tarih ?? item.TARIH ?? item.tarih) as string | undefined;
-    if (!dateRaw) continue;
-
-    const period = parseEvdsDate(dateRaw);
+    const period = parseUnixPeriod(item);
     if (!period) continue;
 
-    for (const series of seriesList) {
-      const val = item[series];
+    for (const key of responseKeys) {
+      const val = item[key];
       const num = parseEvdsNumber(val);
       if (num === null) continue;
 
-      const regionCode = evdsCodeToRegionCode(series);
+      const regionCode = responseKeyToRegionCode(key);
       if (!regionCode) continue;
 
       const regionId = regionMap.get(regionCode);
@@ -141,7 +149,7 @@ function extractMetrics(
         period,
         value: num,
         source: "TCMB_EVDS",
-        series_code: evdsCodeToDotNotation(series),
+        series_code: key.replace(/_/g, "."),
       });
     }
   }
@@ -191,11 +199,11 @@ Deno.serve(async (_req: Request) => {
     }
 
     // --- Call 1: KFE index (monthly, frequency=5) ---
-    const kfeResult = await fetchEvds(evdsKey, KFE_SERIES, 5);
+    const kfeResult = await fetchEvds(evdsKey, KFE_SERIES_REQUEST, 5);
     if (kfeResult.error) {
       errors.push(`KFE: ${kfeResult.error}`);
     } else {
-      const kfeRows = extractMetrics(kfeResult.items, KFE_SERIES, "kfe_index", regionMap);
+      const kfeRows = extractMetrics(kfeResult.items, KFE_SERIES_RESPONSE, "kfe_index", regionMap);
       if (kfeRows.length > 0) {
         const BATCH = 500;
         for (let i = 0; i < kfeRows.length; i += BATCH) {
@@ -213,11 +221,11 @@ Deno.serve(async (_req: Request) => {
     }
 
     // --- Call 2: Unit price (quarterly, frequency=6) ---
-    const bfResult = await fetchEvds(evdsKey, BIRIMFIYAT_SERIES, 6);
+    const bfResult = await fetchEvds(evdsKey, BIRIMFIYAT_SERIES_REQUEST, 6);
     if (bfResult.error) {
       errors.push(`BirimFiyat: ${bfResult.error}`);
     } else {
-      const bfRows = extractMetrics(bfResult.items, BIRIMFIYAT_SERIES, "unit_price", regionMap);
+      const bfRows = extractMetrics(bfResult.items, BIRIMFIYAT_SERIES_RESPONSE, "unit_price", regionMap);
       if (bfRows.length > 0) {
         const BATCH = 500;
         for (let i = 0; i < bfRows.length; i += BATCH) {
