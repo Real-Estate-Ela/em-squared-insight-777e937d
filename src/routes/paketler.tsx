@@ -6,7 +6,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   BillingRepository,
   BillingService,
-  type Plan,
+  Plan,
   type PlanCode,
   type Entitlements,
 } from "@/lib/billing/billing";
@@ -88,6 +88,12 @@ function useCanTilt() {
 /* ── constants ─────────────────────────────────────────── */
 
 const PLAN_ORDER: PlanCode[] = ["free", "pro", "enterprise"];
+
+const FALLBACK_PLANS: Plan[] = [
+  new Plan("free", "Başlangıç", 0, "TRY", 3, 1, false, 0),
+  new Plan("pro", "Analist", 150_000, "TRY", 100, 50, true, 1),
+  new Plan("enterprise", "Kurumsal", 300_000, "TRY", 1000, 500, false, 2),
+];
 
 const COMPARISON_KEYS = [
   "monthlyAnalysis",
@@ -402,10 +408,14 @@ function Paketler() {
     svc
       .listPlans()
       .then((p) => {
-        setPlans(p.sort((a, b) => a.sortOrder - b.sortOrder));
+        const sorted = p.sort((a, b) => a.sortOrder - b.sortOrder);
+        setPlans(sorted.length > 0 ? sorted : FALLBACK_PLANS);
         setLoaded(true);
       })
-      .catch(() => setLoaded(true));
+      .catch(() => {
+        setPlans(FALLBACK_PLANS);
+        setLoaded(true);
+      });
 
     if (!authLoading && user) {
       svc.entitlements().then(setEntitlements).catch(() => {});
