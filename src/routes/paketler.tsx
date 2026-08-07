@@ -6,7 +6,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   BillingRepository,
   BillingService,
-  type Plan,
+  Plan,
   type PlanCode,
   type Entitlements,
 } from "@/lib/billing/billing";
@@ -58,17 +58,15 @@ function useReveal(threshold = 0.15) {
       setVisible(true);
       return;
     }
+    let done = false;
+    const mark = () => { if (!done) { done = true; setVisible(true); } };
     const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          obs.disconnect();
-        }
-      },
+      ([e]) => { if (e.isIntersecting) { mark(); obs.disconnect(); } },
       { threshold },
     );
     obs.observe(el);
-    return () => obs.disconnect();
+    const timer = setTimeout(mark, 600);
+    return () => { obs.disconnect(); clearTimeout(timer); };
   }, [threshold]);
   return { ref, visible };
 }
@@ -89,6 +87,12 @@ function useCanTilt() {
 
 const PLAN_ORDER: PlanCode[] = ["free", "pro", "enterprise"];
 
+const FALLBACK_PLANS: Plan[] = [
+  new Plan("free", "Başlangıç", 0, "TRY", 3, 3, false, 0),
+  new Plan("pro", "Analist", 150_000, "TRY", 100, 100, true, 1),
+  new Plan("enterprise", "Kurumsal", 300_000, "TRY", 1000, 1000, false, 2),
+];
+
 const COMPARISON_KEYS = [
   "monthlyAnalysis",
   "locationQuery",
@@ -108,7 +112,7 @@ const COMPARISON_DATA: Record<
   locationQuery: { free: "10", pro: "∞", enterprise: "∞" },
   portfolioTracking: {
     free: { text: "✕", color: "#E23D28" },
-    pro: "50",
+    pro: "50 ilan",
     enterprise: "∞",
   },
   pdfReport: {
@@ -227,8 +231,9 @@ function ComparisonTable({
 
   return (
     <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-      <div style={{ minWidth: 600, border: "1px solid rgba(14,17,22,.16)" }}>
+      <div style={{ border: "1px solid rgba(14,17,22,.16)" }}>
         <div
+          className="pk-cmp-head"
           style={{
             display: "grid",
             gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
@@ -257,7 +262,7 @@ function ComparisonTable({
         {COMPARISON_KEYS.map((key, i) => (
           <div
             key={key}
-            className="comp-row"
+            className="comp-row pk-cmp"
             style={{
               display: "grid",
               gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
@@ -285,6 +290,18 @@ function ComparisonTable({
                     fontWeight: isObj ? undefined : 700,
                   }}
                 >
+                  <span
+                    className="pk-cmp-plan"
+                    style={{
+                      display: "none",
+                      font: "400 9px 'Space Mono', monospace",
+                      letterSpacing: ".2em",
+                      color: "rgba(14,17,22,.38)",
+                      marginBottom: 5,
+                    }}
+                  >
+                    {p.name.toUpperCase()}
+                  </span>
                   {isObj ? cell.text : cell}
                 </span>
               );
@@ -376,27 +393,36 @@ function PricingFaq({ t }: { t: ReturnType<typeof useI18n>["t"] }) {
 function Paketler() {
   const { locale, t } = useI18n();
   const { user, loading: authLoading } = useAuth();
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [sliderValue, setSliderValue] = useState(46);
   const canTilt = useCanTilt();
 
   useEffect(() => {
+    let cancelled = false;
     const svc = new BillingService(
       new BillingRepository(getSupabaseBrowserClient()),
     );
     svc
       .listPlans()
       .then((p) => {
-        setPlans(p.sort((a, b) => a.sortOrder - b.sortOrder));
-        setLoaded(true);
+        if (cancelled) return;
+        const sorted = p.sort((a, b) => a.sortOrder - b.sortOrder);
+        if (sorted.length > 0) setPlans(sorted);
       })
-      .catch(() => setLoaded(true));
+      .catch((err) => {
+        if (cancelled) return;
+        console.warn("[paketler] listPlans failed, using fallback:", err);
+        setLoadError(String(err?.message ?? err));
+      })
+      .finally(() => { if (!cancelled) setLoaded(true); });
 
     if (!authLoading && user) {
       svc.entitlements().then(setEntitlements).catch(() => {});
     }
+    return () => { cancelled = true; };
   }, [user, authLoading]);
 
   const currentPlanCode = entitlements?.planCode ?? null;
@@ -501,9 +527,11 @@ function Paketler() {
           background: #0E1116 !important;
           color: #fff !important;
         }
-        .pk-card-btn[data-featured]:hover {
+        .pk-card-btn[data-featured]:hover,
+        .pk-card-btn[data-hot]:hover {
           background: #E23D28 !important;
           border-color: #E23D28 !important;
+          color: #fff !important;
         }
         .pk-cta-primary:hover {
           background: #E23D28 !important;
@@ -519,6 +547,7 @@ function Paketler() {
           height: 44px;
           background: transparent;
           cursor: grab;
+          touch-action: none;
         }
         .pk-slider:active { cursor: grabbing; }
         .pk-slider::-webkit-slider-runnable-track {
@@ -569,6 +598,10 @@ function Paketler() {
           .pk-cards[data-tier="0"] > [data-plan="free"]       { order: -1; }
           .pk-cards[data-tier="1"] > [data-plan="pro"]        { order: -1; }
           .pk-cards[data-tier="2"] > [data-plan="enterprise"] { order: -1; }
+          .pk-cmp { grid-template-columns: repeat(3, 1fr) !important; }
+          .pk-cmp > span:first-child { grid-column: 1 / -1; border-bottom: 1px solid rgba(14,17,22,.08); font-weight: 700; }
+          .pk-cmp-plan { display: block !important; }
+          .pk-cmp-head { display: none !important; }
         }
       `}</style>
 
@@ -623,8 +656,8 @@ function Paketler() {
             style={{
               margin: "0 0 clamp(18px, 2.6vw, 32px)",
               font: "700 clamp(38px, 7.6vw, 128px) 'Space Grotesk', sans-serif",
-              letterSpacing: "-0.06em",
-              lineHeight: 0.88,
+              letterSpacing: "-0.025em",
+              lineHeight: 1.05,
             }}
           >
             {heroLines.map((line, i) => (
@@ -657,6 +690,21 @@ function Paketler() {
           </p>
         </div>
       </section>
+
+      {loadError && (
+        <div style={{
+          maxWidth: 1560,
+          margin: "0 auto",
+          padding: "12px clamp(16px, 4vw, 44px)",
+          font: "400 12px 'Space Mono', monospace",
+          color: "rgba(14,17,22,.55)",
+          textAlign: "center",
+        }}>
+          {locale === "tr"
+            ? "Güncel fiyatlar yüklenemedi, varsayılan değerler gösteriliyor."
+            : "Could not load live prices, showing default values."}
+        </div>
+      )}
 
       {/* ═══ CALCULATOR ═══ */}
       {loaded && calc && (
@@ -929,7 +977,11 @@ function Paketler() {
               const isFeatured = plan.isFeatured;
               const isCurrent = currentPlanCode === code;
               const isRecommended = calc?.tier === i;
-              const features = t.pricing.planFeatures[code];
+              const quotaLabel =
+                plan.analysisQuota >= 9999
+                  ? (locale === "tr" ? "Sınırsız analiz" : "Unlimited analysis")
+                  : `${plan.analysisQuota.toLocaleString(fmtLocale)} ${locale === "tr" ? "analiz / ay" : "analyses / mo"}`;
+              const features = [quotaLabel, ...t.pricing.planFeatures[code].slice(1)];
 
               const cta =
                 code === "free"
@@ -1148,6 +1200,7 @@ function Paketler() {
                       to={cta.to}
                       className="pk-card-btn"
                       data-featured={isFeatured ? "" : undefined}
+                      data-hot={code === "enterprise" ? "" : undefined}
                       style={{
                         position: "relative",
                         marginTop: 34,
@@ -1321,8 +1374,8 @@ function Paketler() {
               margin: "0 0 clamp(18px, 2.4vw, 30px)",
               maxWidth: "18ch",
               font: "700 clamp(30px, 5.4vw, 86px) 'Space Grotesk', sans-serif",
-              letterSpacing: "-0.06em",
-              lineHeight: 0.92,
+              letterSpacing: "-0.025em",
+              lineHeight: 1.05,
             }}
           >
             {t.pricing.closingTitle.split("\n").map((line, i) => (
